@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react';
+﻿import type { FormEvent } from 'react';
 import {
   Eye,
   EyeOff,
@@ -7,7 +7,8 @@ import {
   Mail,
   User as UserIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { api } from '../services/api';
 import { showToast } from '../services/toastService';
@@ -15,11 +16,12 @@ import type { AuthMode, User } from '../types';
 import { APP_LOGO_FALLBACK, APP_LOGO_SRC } from '../utils/assets';
 
 interface AuthViewProps {
+  initialMode?: AuthMode;
   onLogin: (user: User) => Promise<void> | void;
 }
 
-export default function AuthView({ onLogin }: AuthViewProps) {
-  const [authMode, setAuthMode] = useState<AuthMode>('login');
+export default function AuthView({ initialMode = 'login', onLogin }: AuthViewProps) {
+  const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [registerFirstName, setRegisterFirstName] = useState('');
@@ -32,6 +34,11 @@ export default function AuthView({ onLogin }: AuthViewProps) {
   const [forgotUsername, setForgotUsername] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setAuthMode(initialMode);
+  }, [initialMode]);
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -45,9 +52,9 @@ export default function AuthView({ onLogin }: AuthViewProps) {
     try {
       const result = await api.login(loginUsername, loginPassword);
       await onLogin(result.user);
-      showToast('เข้าสู่ระบบสำเร็จ');
+      showToast('à¹€à¸‚à¹‰à¸²à¸ªà¸¹à¹ˆà¸£à¸°à¸šà¸šà¸ªà¸³à¹€à¸£à¹‡à¸ˆ');
     } catch {
-      showToast('อีเมล/Username หรือรหัสผ่านไม่ถูกต้อง', 'error');
+      showToast('à¸­à¸µà¹€à¸¡à¸¥/Username à¸«à¸£à¸·à¸­à¸£à¸«à¸±à¸ªà¸œà¹ˆà¸²à¸™à¹„à¸¡à¹ˆà¸–à¸¹à¸à¸•à¹‰à¸­à¸‡', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -61,12 +68,12 @@ export default function AuthView({ onLogin }: AuthViewProps) {
     }
 
     if (!termsAccepted) {
-      showToast('กรุณายอมรับเงื่อนไขการใช้บริการ', 'error');
+      showToast('à¸à¸£à¸¸à¸“à¸²à¸¢à¸­à¸¡à¸£à¸±à¸šà¹€à¸‡à¸·à¹ˆà¸­à¸™à¹„à¸‚à¸à¸²à¸£à¹ƒà¸Šà¹‰à¸šà¸£à¸´à¸à¸²à¸£', 'error');
       return;
     }
 
     if (registerPassword.length < 4) {
-      showToast('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร', 'error');
+      showToast('à¸£à¸«à¸±à¸ªà¸œà¹ˆà¸²à¸™à¸•à¹‰à¸­à¸‡à¸¡à¸µà¸­à¸¢à¹ˆà¸²à¸‡à¸™à¹‰à¸­à¸¢ 4 à¸•à¸±à¸§à¸­à¸±à¸à¸©à¸£', 'error');
       return;
     }
 
@@ -82,9 +89,9 @@ export default function AuthView({ onLogin }: AuthViewProps) {
         email: registerEmail,
       });
       await onLogin(result.user);
-      showToast('ลงทะเบียนสำเร็จ');
+      showToast('à¸¥à¸‡à¸—à¸°à¹€à¸šà¸µà¸¢à¸™à¸ªà¸³à¹€à¸£à¹‡à¸ˆ');
     } catch {
-      showToast('มีอีเมลนี้อยู่ในระบบแล้ว', 'error');
+      showToast('à¸¡à¸µà¸­à¸µà¹€à¸¡à¸¥à¸™à¸µà¹‰à¸­à¸¢à¸¹à¹ˆà¹ƒà¸™à¸£à¸°à¸šà¸šà¹à¸¥à¹‰à¸§', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -94,13 +101,13 @@ export default function AuthView({ onLogin }: AuthViewProps) {
     event.preventDefault();
 
     if (!forgotUsername.trim()) {
-      showToast('กรุณากรอกอีเมลหรือ Username ของคุณ', 'error');
+      showToast('à¸à¸£à¸¸à¸“à¸²à¸à¸£à¸­à¸à¸­à¸µà¹€à¸¡à¸¥à¸«à¸£à¸·à¸­ Username à¸‚à¸­à¸‡à¸„à¸¸à¸“', 'error');
       return;
     }
 
-    showToast('ระบบได้ส่งคำขอรีเซ็ตรหัสผ่านไปยังข้อมูลที่ระบุแล้ว', 'info');
+    showToast('à¸£à¸°à¸šà¸šà¹„à¸”à¹‰à¸ªà¹ˆà¸‡à¸„à¸³à¸‚à¸­à¸£à¸µà¹€à¸‹à¹‡à¸•à¸£à¸«à¸±à¸ªà¸œà¹ˆà¸²à¸™à¹„à¸›à¸¢à¸±à¸‡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸—à¸µà¹ˆà¸£à¸°à¸šà¸¸à¹à¸¥à¹‰à¸§', 'info');
     setForgotUsername('');
-    setAuthMode('login');
+    navigate('/login');
   };
 
   return (
@@ -117,7 +124,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
             <div className="flex flex-col items-center">
               <Loader2 className="mb-3 h-10 w-10 animate-spin text-blue-900 dark:text-amber-500" />
               <p className="text-sm font-bold text-slate-600 dark:text-slate-300">
-                กำลังประมวลผล...
+                à¸à¸³à¸¥à¸±à¸‡à¸›à¸£à¸°à¸¡à¸§à¸¥à¸œà¸¥...
               </p>
             </div>
           </div>
@@ -134,7 +141,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
               <div className="absolute -inset-6 rounded-[3rem] bg-blue-200/30 blur-3xl"></div>
               <div className="absolute inset-6 rounded-full bg-amber-200/28 blur-2xl"></div>
             <img
-              alt="โลโก้ บก.สอท.1"
+              alt="à¹‚à¸¥à¹‚à¸à¹‰ à¸šà¸.à¸ªà¸­à¸—.1"
               className="relative h-[12.25rem] w-[12.25rem] scale-[1.02] object-contain brightness-[1.08] contrast-[1.16] saturate-105 drop-shadow-[0_18px_32px_rgba(15,23,42,0.22)]"
               onError={(event) => {
                 const target = event.currentTarget;
@@ -145,15 +152,15 @@ export default function AuthView({ onLogin }: AuthViewProps) {
             />
             </div>
             <h1 className="mb-4 text-4xl font-bold tracking-tight text-slate-900">
-              ระบบจัดเก็บเอกสารราชการ
+              à¸£à¸°à¸šà¸šà¸ˆà¸±à¸”à¹€à¸à¹‡à¸šà¹€à¸­à¸à¸ªà¸²à¸£à¸£à¸²à¸Šà¸à¸²à¸£
             </h1>
             <p className="text-sm font-medium uppercase tracking-widest text-amber-700">
-              สำหรับหน่วยงานราชการและสถานศึกษา
+              à¸ªà¸³à¸«à¸£à¸±à¸šà¸«à¸™à¹ˆà¸§à¸¢à¸‡à¸²à¸™à¸£à¸²à¸Šà¸à¸²à¸£à¹à¸¥à¸°à¸ªà¸–à¸²à¸™à¸¨à¸¶à¸à¸©à¸²
             </p>
           </div>
 
           <div className="absolute bottom-8 left-0 right-0 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
-            © 2026 Gov-Doc Pro
+            Â© 2026 Gov-Doc Pro
           </div>
         </div>
 
@@ -161,17 +168,17 @@ export default function AuthView({ onLogin }: AuthViewProps) {
           <div className="mb-8">
             <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               {authMode === 'login'
-                ? 'เข้าสู่ระบบ'
+                ? 'à¹€à¸‚à¹‰à¸²à¸ªà¸¹à¹ˆà¸£à¸°à¸šà¸š'
                 : authMode === 'register'
-                  ? 'สมัครสมาชิก'
-                  : 'ลืมรหัสผ่าน'}
+                  ? 'à¸ªà¸¡à¸±à¸„à¸£à¸ªà¸¡à¸²à¸Šà¸´à¸'
+                  : 'à¸¥à¸·à¸¡à¸£à¸«à¸±à¸ªà¸œà¹ˆà¸²à¸™'}
             </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               {authMode === 'login'
-                ? 'เข้าสู่ระบบด้วยการเชื่อมต่อแบบเข้ารหัสที่ปลอดภัย'
+                ? 'à¹€à¸‚à¹‰à¸²à¸ªà¸¹à¹ˆà¸£à¸°à¸šà¸šà¸”à¹‰à¸§à¸¢à¸à¸²à¸£à¹€à¸Šà¸·à¹ˆà¸­à¸¡à¸•à¹ˆà¸­à¹à¸šà¸šà¹€à¸‚à¹‰à¸²à¸£à¸«à¸±à¸ªà¸—à¸µà¹ˆà¸›à¸¥à¸­à¸”à¸ à¸±à¸¢'
                 : authMode === 'register'
-                  ? 'สร้างบัญชีเพื่อเข้าถึงข้อมูลเอกสาร'
-                  : 'กรอกอีเมลหรือ Username เพื่อขอรีเซ็ตรหัสผ่าน'}
+                  ? 'à¸ªà¸£à¹‰à¸²à¸‡à¸šà¸±à¸à¸Šà¸µà¹€à¸žà¸·à¹ˆà¸­à¹€à¸‚à¹‰à¸²à¸–à¸¶à¸‡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¹€à¸­à¸à¸ªà¸²à¸£'
+                  : 'à¸à¸£à¸­à¸à¸­à¸µà¹€à¸¡à¸¥à¸«à¸£à¸·à¸­ Username à¹€à¸žà¸·à¹ˆà¸­à¸‚à¸­à¸£à¸µà¹€à¸‹à¹‡à¸•à¸£à¸«à¸±à¸ªà¸œà¹ˆà¸²à¸™'}
             </p>
           </div>
 
@@ -179,7 +186,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
             <form className="space-y-5 animate-in zoom-in-95 fade-in duration-300" onSubmit={handleLogin}>
               <div>
                 <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  อีเมล หรือ Username
+                  à¸­à¸µà¹€à¸¡à¸¥ à¸«à¸£à¸·à¸­ Username
                 </label>
                 <div className="group relative">
                   <UserIcon className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 transition-colors group-focus-within:text-blue-900 dark:group-focus-within:text-amber-500" />
@@ -194,7 +201,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
               </div>
               <div>
                 <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  รหัสผ่าน
+                  à¸£à¸«à¸±à¸ªà¸œà¹ˆà¸²à¸™
                 </label>
                 <div className="group relative">
                   <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 transition-colors group-focus-within:text-blue-900 dark:group-focus-within:text-amber-500" />
@@ -217,10 +224,10 @@ export default function AuthView({ onLogin }: AuthViewProps) {
               <div className="flex justify-end pt-1">
                 <button
                   className="text-xs font-bold text-blue-900 transition-colors hover:underline dark:text-amber-500 dark:hover:text-amber-400"
-                  onClick={() => setAuthMode('forgot')}
+                  onClick={() => navigate('/forgot-password')}
                   type="button"
                 >
-                  ลืมรหัสผ่าน?
+                  à¸¥à¸·à¸¡à¸£à¸«à¸±à¸ªà¸œà¹ˆà¸²à¸™?
                 </button>
               </div>
               <button
@@ -228,19 +235,19 @@ export default function AuthView({ onLogin }: AuthViewProps) {
                 disabled={isLoading}
                 type="submit"
               >
-                {isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+                {isLoading ? 'à¸à¸³à¸¥à¸±à¸‡à¹€à¸‚à¹‰à¸²à¸ªà¸¹à¹ˆà¸£à¸°à¸šà¸š...' : 'à¹€à¸‚à¹‰à¸²à¸ªà¸¹à¹ˆà¸£à¸°à¸šà¸š'}
               </button>
               <p className="mt-6 border-t border-slate-200 pt-6 text-center text-xs font-medium text-slate-500 dark:border-slate-800">
-                ยังไม่มีบัญชีใช่หรือไม่?{' '}
+                à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¸¡à¸µà¸šà¸±à¸à¸Šà¸µà¹ƒà¸Šà¹ˆà¸«à¸£à¸·à¸­à¹„à¸¡à¹ˆ?{' '}
                 <button
                   className="ml-1 font-bold text-blue-900 hover:underline dark:text-amber-500"
                   onClick={() => {
                     setRegisterRole('admin');
-                    setAuthMode('register');
+                    navigate('/register');
                   }}
                   type="button"
                 >
-                  สมัครใช้งาน
+                  à¸ªà¸¡à¸±à¸„à¸£à¹ƒà¸Šà¹‰à¸‡à¸²à¸™
                 </button>
               </p>
             </form>
@@ -251,7 +258,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                    ชื่อ
+                    à¸Šà¸·à¹ˆà¸­
                   </label>
                   <input
                     className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
@@ -263,7 +270,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                    นามสกุล
+                    à¸™à¸²à¸¡à¸ªà¸à¸¸à¸¥
                   </label>
                   <input
                     className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
@@ -276,7 +283,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  เบอร์มือถือ
+                  à¹€à¸šà¸­à¸£à¹Œà¸¡à¸·à¸­à¸–à¸·à¸­
                 </label>
                 <input
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
@@ -288,7 +295,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  อีเมล
+                  à¸­à¸µà¹€à¸¡à¸¥
                 </label>
                 <input
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
@@ -300,7 +307,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  รหัสผ่าน (ขั้นต่ำ 4 ตัวอักษร)
+                  à¸£à¸«à¸±à¸ªà¸œà¹ˆà¸²à¸™ (à¸‚à¸±à¹‰à¸™à¸•à¹ˆà¸³ 4 à¸•à¸±à¸§à¸­à¸±à¸à¸©à¸£)
                 </label>
                 <div className="relative">
                   <input
@@ -322,7 +329,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  ประเภทบัญชี
+                  à¸›à¸£à¸°à¹€à¸ à¸—à¸šà¸±à¸à¸Šà¸µ
                 </label>
                 <select
                   className="w-full appearance-none rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
@@ -331,8 +338,8 @@ export default function AuthView({ onLogin }: AuthViewProps) {
                   }
                   value={registerRole}
                 >
-                  <option value="general">บุคคลทั่วไป</option>
-                  <option value="admin">เจ้าหน้าที่ตำรวจ (Admin)</option>
+                  <option value="general">à¸šà¸¸à¸„à¸„à¸¥à¸—à¸±à¹ˆà¸§à¹„à¸›</option>
+                  <option value="admin">à¹€à¸ˆà¹‰à¸²à¸«à¸™à¹‰à¸²à¸—à¸µà¹ˆà¸•à¸³à¸£à¸§à¸ˆ (Admin)</option>
                 </select>
               </div>
 
@@ -347,13 +354,13 @@ export default function AuthView({ onLogin }: AuthViewProps) {
                   />
                 </div>
                 <label className="ml-2 text-xs text-slate-600 dark:text-slate-400" htmlFor="terms">
-                  ยอมรับ{' '}
+                  à¸¢à¸­à¸¡à¸£à¸±à¸š{' '}
                   <a className="font-bold text-blue-900 hover:underline dark:text-amber-500" href="#">
-                    เงื่อนไขการใช้บริการ
+                    à¹€à¸‡à¸·à¹ˆà¸­à¸™à¹„à¸‚à¸à¸²à¸£à¹ƒà¸Šà¹‰à¸šà¸£à¸´à¸à¸²à¸£
                   </a>{' '}
-                  และ{' '}
+                  à¹à¸¥à¸°{' '}
                   <a className="font-bold text-blue-900 hover:underline dark:text-amber-500" href="#">
-                    นโยบายความเป็นส่วนตัว
+                    à¸™à¹‚à¸¢à¸šà¸²à¸¢à¸„à¸§à¸²à¸¡à¹€à¸›à¹‡à¸™à¸ªà¹ˆà¸§à¸™à¸•à¸±à¸§
                   </a>
                 </label>
               </div>
@@ -363,16 +370,16 @@ export default function AuthView({ onLogin }: AuthViewProps) {
                 disabled={isLoading}
                 type="submit"
               >
-                {isLoading ? 'กำลังประมวลผล...' : 'ยืนยัน'}
+                {isLoading ? 'à¸à¸³à¸¥à¸±à¸‡à¸›à¸£à¸°à¸¡à¸§à¸¥à¸œà¸¥...' : 'à¸¢à¸·à¸™à¸¢à¸±à¸™'}
               </button>
               <p className="mt-6 border-t border-slate-200 pt-6 text-center text-xs font-medium text-slate-500 dark:border-slate-800">
-                มีบัญชีอยู่แล้ว?{' '}
+                à¸¡à¸µà¸šà¸±à¸à¸Šà¸µà¸­à¸¢à¸¹à¹ˆà¹à¸¥à¹‰à¸§?{' '}
                 <button
                   className="ml-1 font-bold text-blue-900 hover:underline dark:text-amber-500"
-                  onClick={() => setAuthMode('login')}
+                  onClick={() => navigate('/login')}
                   type="button"
                 >
-                  กลับไปหน้าเข้าสู่ระบบ
+                  à¸à¸¥à¸±à¸šà¹„à¸›à¸«à¸™à¹‰à¸²à¹€à¸‚à¹‰à¸²à¸ªà¸¹à¹ˆà¸£à¸°à¸šà¸š
                 </button>
               </p>
             </form>
@@ -382,7 +389,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
             <form className="space-y-5 animate-in zoom-in-95 fade-in duration-300" onSubmit={handleForgotPassword}>
               <div>
                 <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  อีเมล หรือ Username
+                  à¸­à¸µà¹€à¸¡à¸¥ à¸«à¸£à¸·à¸­ Username
                 </label>
                 <div className="group relative">
                   <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 transition-colors group-focus-within:text-blue-900 dark:group-focus-within:text-amber-500" />
@@ -399,15 +406,15 @@ export default function AuthView({ onLogin }: AuthViewProps) {
                 className="mt-4 w-full rounded-xl border border-blue-800 bg-blue-900 py-3.5 font-bold text-white shadow-md transition-all hover:bg-blue-950 active:scale-95"
                 type="submit"
               >
-                ส่งคำขอรีเซ็ตรหัสผ่าน
+                à¸ªà¹ˆà¸‡à¸„à¸³à¸‚à¸­à¸£à¸µà¹€à¸‹à¹‡à¸•à¸£à¸«à¸±à¸ªà¸œà¹ˆà¸²à¸™
               </button>
               <p className="mt-8 border-t border-slate-200 pt-8 text-center text-xs font-medium text-slate-500 dark:border-slate-800">
                 <button
                   className="font-bold text-blue-900 hover:underline dark:text-amber-500"
-                  onClick={() => setAuthMode('login')}
+                  onClick={() => navigate('/login')}
                   type="button"
                 >
-                  กลับไปหน้าเข้าสู่ระบบ
+                  à¸à¸¥à¸±à¸šà¹„à¸›à¸«à¸™à¹‰à¸²à¹€à¸‚à¹‰à¸²à¸ªà¸¹à¹ˆà¸£à¸°à¸šà¸š
                 </button>
               </p>
             </form>
@@ -417,3 +424,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
     </div>
   );
 }
+
+
+
+

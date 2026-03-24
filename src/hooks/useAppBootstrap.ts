@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from 'react';
+﻿import type { Dispatch, SetStateAction } from 'react';
 import { useEffect, useState } from 'react';
 
 import { api } from '../services/api';
@@ -11,6 +11,8 @@ interface UseAppBootstrapArgs {
   navigate: (path: string) => void;
   setCurrentUser: Dispatch<SetStateAction<User | null>>;
 }
+
+const PUBLIC_PATHS = new Set(['/', '/login', '/register', '/forgot-password']);
 
 export const useAppBootstrap = ({
   initialPathname,
@@ -35,7 +37,7 @@ export const useAppBootstrap = ({
         if (user) {
           setCurrentUser(user);
           await loadAllData();
-        } else if (initialPathname !== '/login') {
+        } else if (!PUBLIC_PATHS.has(initialPathname)) {
           navigate('/login');
         }
       } finally {

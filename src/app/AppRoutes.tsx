@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from 'react';
+﻿import type { Dispatch, SetStateAction } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import type {
@@ -13,6 +13,7 @@ import AuthView from '../views/AuthView';
 import DashboardView from '../views/DashboardView';
 import DocumentsView from '../views/DocumentsView';
 import DocTypesView from '../views/DocTypesView';
+import LandingView from '../views/LandingView';
 import SettingsView from '../views/SettingsView';
 import UsersView from '../views/UsersView';
 
@@ -48,7 +49,21 @@ export default function AppRoutes({
   users,
 }: AppRoutesProps) {
   if (!currentUser) {
-    return <AuthView onLogin={onLogin} />;
+    return (
+      <Routes>
+        <Route element={<LandingView />} path="/" />
+        <Route element={<AuthView initialMode="login" onLogin={onLogin} />} path="/login" />
+        <Route
+          element={<AuthView initialMode="register" onLogin={onLogin} />}
+          path="/register"
+        />
+        <Route
+          element={<AuthView initialMode="forgot" onLogin={onLogin} />}
+          path="/forgot-password"
+        />
+        <Route element={<Navigate to="/" />} path="*" />
+      </Routes>
+    );
   }
 
   return (
