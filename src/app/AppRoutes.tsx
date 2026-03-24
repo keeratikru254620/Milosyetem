@@ -55,7 +55,7 @@ export default function AppRoutes({
   if (!currentUser) {
     return (
       <Routes>
-        <Route element={<Navigate to="/login" replace />} path="/" />
+        <Route element={<Navigate to="/preview/dashboard" replace />} path="/" />
         <Route element={<AuthView initialMode="login" onLogin={onLogin} />} path="/login" />
         <Route
           element={<AuthView initialMode="register" onLogin={onLogin} />}
@@ -65,7 +65,31 @@ export default function AppRoutes({
           element={<AuthView initialMode="forgot" onLogin={onLogin} />}
           path="/forgot-password"
         />
-        <Route element={<Navigate to="/login" replace />} path="*" />
+        <Route element={<Navigate to="/preview/dashboard" replace />} path="/dashboard" />
+        <Route element={<Navigate to="/preview/documents" replace />} path="/documents" />
+        <Route element={<Navigate to="/preview/doctypes" replace />} path="/doctypes" />
+        <Route element={<Navigate to="/preview/users" replace />} path="/users" />
+        <Route
+          element={<Navigate to="/preview/settings/profile" replace />}
+          path="/settings"
+        />
+        <Route
+          element={<Navigate to="/preview/settings/profile" replace />}
+          path="/settings/profile"
+        />
+        <Route
+          element={<Navigate to="/preview/settings/general" replace />}
+          path="/settings/general"
+        />
+        <Route
+          element={<Navigate to="/preview/settings/security" replace />}
+          path="/settings/security"
+        />
+        <Route
+          element={<Navigate to="/preview/settings/support" replace />}
+          path="/settings/support"
+        />
+        <Route element={<Navigate to="/preview/dashboard" replace />} path="*" />
       </Routes>
     );
   }

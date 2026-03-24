@@ -12,7 +12,21 @@ interface UseAppBootstrapArgs {
   setCurrentUser: Dispatch<SetStateAction<User | null>>;
 }
 
-const PUBLIC_PATHS = new Set(['/', '/login', '/register', '/forgot-password']);
+const PUBLIC_PATHS = new Set([
+  '/',
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/dashboard',
+  '/documents',
+  '/doctypes',
+  '/users',
+  '/settings',
+  '/settings/profile',
+  '/settings/general',
+  '/settings/security',
+  '/settings/support',
+]);
 
 const isPublicPath = (pathname: string) =>
   PUBLIC_PATHS.has(pathname) || pathname === '/preview' || pathname.startsWith('/preview/');
