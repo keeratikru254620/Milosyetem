@@ -28,6 +28,7 @@ interface AppRoutesProps {
   onSaveDocType: (data: SaveDocTypeInput, id?: string) => Promise<unknown> | unknown;
   onSaveDocument: (data: SaveDocumentInput, id?: string) => Promise<unknown> | unknown;
   onSaveUser: (data: SaveUserInput, id?: string) => Promise<unknown> | unknown;
+  routePrefix?: string;
   setIsDarkMode: Dispatch<SetStateAction<boolean>>;
   users: User[];
 }
@@ -44,9 +45,13 @@ export default function AppRoutes({
   onSaveDocType,
   onSaveDocument,
   onSaveUser,
+  routePrefix = '',
   setIsDarkMode,
   users,
 }: AppRoutesProps) {
+  const resolveRoute = (path: string) => `${routePrefix}${path}`;
+  const settingsBasePath = resolveRoute('/settings');
+
   if (!currentUser) {
     return (
       <Routes>
@@ -67,11 +72,19 @@ export default function AppRoutes({
 
   return (
     <Routes>
+      {routePrefix ? (
+        <Route element={<Navigate to={resolveRoute('/dashboard')} replace />} path={routePrefix} />
+      ) : null}
       <Route
         element={
-          <DashboardView currentUser={currentUser} documents={documents} docTypes={docTypes} />
+          <DashboardView
+            currentUser={currentUser}
+            documents={documents}
+            docTypes={docTypes}
+            routePrefix={routePrefix}
+          />
         }
-        path="/dashboard"
+        path={resolveRoute('/dashboard')}
       />
       <Route
         element={
@@ -83,7 +96,7 @@ export default function AppRoutes({
             onSaveDocument={onSaveDocument}
           />
         }
-        path="/documents"
+        path={resolveRoute('/documents')}
       />
       <Route
         element={
@@ -94,7 +107,7 @@ export default function AppRoutes({
             onSaveDocType={onSaveDocType}
           />
         }
-        path="/doctypes"
+        path={resolveRoute('/doctypes')}
       />
       <Route
         element={
@@ -106,23 +119,77 @@ export default function AppRoutes({
               users={users}
             />
           ) : (
-            <Navigate to="/dashboard" />
+            <Navigate to={resolveRoute('/dashboard')} replace />
           )
         }
-        path="/users"
+        path={resolveRoute('/users')}
       />
       <Route
         element={
           <SettingsView
+            basePath={settingsBasePath}
             currentUser={currentUser}
+            initialTab="profile"
             isDarkMode={isDarkMode}
             onSaveUser={onSaveUser}
             setIsDarkMode={setIsDarkMode}
           />
         }
-        path="/settings"
+        path={settingsBasePath}
       />
-      <Route element={<Navigate to="/dashboard" replace />} path="*" />
+      <Route
+        element={
+          <SettingsView
+            basePath={settingsBasePath}
+            currentUser={currentUser}
+            initialTab="profile"
+            isDarkMode={isDarkMode}
+            onSaveUser={onSaveUser}
+            setIsDarkMode={setIsDarkMode}
+          />
+        }
+        path={resolveRoute('/settings/profile')}
+      />
+      <Route
+        element={
+          <SettingsView
+            basePath={settingsBasePath}
+            currentUser={currentUser}
+            initialTab="general"
+            isDarkMode={isDarkMode}
+            onSaveUser={onSaveUser}
+            setIsDarkMode={setIsDarkMode}
+          />
+        }
+        path={resolveRoute('/settings/general')}
+      />
+      <Route
+        element={
+          <SettingsView
+            basePath={settingsBasePath}
+            currentUser={currentUser}
+            initialTab="security"
+            isDarkMode={isDarkMode}
+            onSaveUser={onSaveUser}
+            setIsDarkMode={setIsDarkMode}
+          />
+        }
+        path={resolveRoute('/settings/security')}
+      />
+      <Route
+        element={
+          <SettingsView
+            basePath={settingsBasePath}
+            currentUser={currentUser}
+            initialTab="support"
+            isDarkMode={isDarkMode}
+            onSaveUser={onSaveUser}
+            setIsDarkMode={setIsDarkMode}
+          />
+        }
+        path={resolveRoute('/settings/support')}
+      />
+      <Route element={<Navigate to={resolveRoute('/dashboard')} replace />} path="*" />
     </Routes>
   );
 }

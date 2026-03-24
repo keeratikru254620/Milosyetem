@@ -10,26 +10,32 @@ import {
   UserCircle,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { showToast } from '../services/toastService';
 import type { SaveUserInput, User } from '../types';
 
-type SettingsTab = 'general' | 'profile' | 'security' | 'support';
+export type SettingsTab = 'general' | 'profile' | 'security' | 'support';
 
 interface SettingsViewProps {
+  basePath?: string;
   currentUser: User;
+  initialTab?: SettingsTab;
   isDarkMode: boolean;
   onSaveUser: (data: SaveUserInput, id?: string) => Promise<unknown> | unknown;
   setIsDarkMode: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function SettingsView({
+  basePath = '/settings',
   currentUser,
+  initialTab = 'profile',
   isDarkMode,
   onSaveUser,
   setIsDarkMode,
 }: SettingsViewProps) {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
   const [name, setName] = useState(currentUser.name);
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +50,10 @@ export default function SettingsView({
   useEffect(() => {
     setName(currentUser.name);
   }, [currentUser.name]);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   const handleProfileSave = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -136,7 +146,7 @@ export default function SettingsView({
                   : 'border-transparent text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800/50'
               }`}
               key={id}
-              onClick={() => setActiveTab(id)}
+              onClick={() => navigate(`${basePath}/${id}`)}
             >
               <Icon
                 className={`mr-3 h-5 w-5 transition-colors ${

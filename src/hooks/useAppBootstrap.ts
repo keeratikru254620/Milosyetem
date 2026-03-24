@@ -12,7 +12,10 @@ interface UseAppBootstrapArgs {
   setCurrentUser: Dispatch<SetStateAction<User | null>>;
 }
 
-const PUBLIC_PATHS = new Set(['/','/login', '/register', '/forgot-password']);
+const PUBLIC_PATHS = new Set(['/', '/login', '/register', '/forgot-password']);
+
+const isPublicPath = (pathname: string) =>
+  PUBLIC_PATHS.has(pathname) || pathname === '/preview' || pathname.startsWith('/preview/');
 
 export const useAppBootstrap = ({
   initialPathname,
@@ -37,7 +40,7 @@ export const useAppBootstrap = ({
         if (user) {
           setCurrentUser(user);
           await loadAllData();
-        } else if (!PUBLIC_PATHS.has(initialPathname)) {
+        } else if (!isPublicPath(initialPathname)) {
           navigate('/login');
         }
       } finally {

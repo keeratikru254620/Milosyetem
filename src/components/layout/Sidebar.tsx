@@ -20,6 +20,7 @@ interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onLogout: () => Promise<void> | void;
+  routePrefix?: string;
 }
 
 export default function Sidebar({
@@ -27,8 +28,15 @@ export default function Sidebar({
   isOpen,
   onClose,
   onLogout,
+  routePrefix = '',
 }: SidebarProps) {
   const location = useLocation();
+  const resolveRoute = (path: string) => `${routePrefix}${path}`;
+  const isActiveRoute = (path: string) => {
+    const resolvedPath = resolveRoute(path);
+
+    return location.pathname === resolvedPath || location.pathname.startsWith(`${resolvedPath}/`);
+  };
 
   const handleLogoutClick = async () => {
     const confirmed = await confirmDialog('ออกจากระบบ', 'คุณต้องการออกจากระบบใช่หรือไม่?');
@@ -84,17 +92,17 @@ export default function Sidebar({
           </div>
           <NavItem
             icon={LayoutDashboard}
-            isActive={location.pathname === '/dashboard'}
+            isActive={isActiveRoute('/dashboard')}
             label="ภาพรวมระบบ"
             onClick={onClose}
-            to="/dashboard"
+            to={resolveRoute('/dashboard')}
           />
           <NavItem
             icon={FolderArchive}
-            isActive={location.pathname === '/documents'}
+            isActive={isActiveRoute('/documents')}
             label="ทะเบียนรับ-ส่งเอกสาร"
             onClick={onClose}
-            to="/documents"
+            to={resolveRoute('/documents')}
           />
 
           <div className="mt-4 px-6 py-3 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
@@ -102,18 +110,18 @@ export default function Sidebar({
           </div>
           <NavItem
             icon={Tags}
-            isActive={location.pathname === '/doctypes'}
+            isActive={isActiveRoute('/doctypes')}
             label="ประเภทเอกสาร"
             onClick={onClose}
-            to="/doctypes"
+            to={resolveRoute('/doctypes')}
           />
           {currentUser.role === 'admin' && (
             <NavItem
               icon={UsersRound}
-              isActive={location.pathname === '/users'}
+              isActive={isActiveRoute('/users')}
               label="จัดการบุคลากร"
               onClick={onClose}
-              to="/users"
+              to={resolveRoute('/users')}
             />
           )}
         </nav>
@@ -145,7 +153,7 @@ export default function Sidebar({
               icon={Settings}
               label="การตั้งค่า"
               onClick={onClose}
-              to="/settings"
+              to={resolveRoute('/settings/profile')}
             />
             <button
               className="flex-1 rounded-xl border border-red-100 bg-red-50 py-2.5 text-xs font-bold text-red-600 shadow-sm transition hover:bg-red-100 active:scale-95 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"

@@ -18,6 +18,7 @@ interface DashboardViewProps {
   currentUser: User;
   documents: DocumentData[];
   docTypes: DocType[];
+  routePrefix?: string;
 }
 
 interface StatCard {
@@ -33,8 +34,10 @@ export default function DashboardView({
   currentUser,
   documents,
   docTypes,
+  routePrefix = '',
 }: DashboardViewProps) {
   const navigate = useNavigate();
+  const resolveRoute = (path: string) => `${routePrefix}${path}`;
   const currentMonth = new Date().toISOString().slice(0, 7);
   const newDocsCount = documents.filter(
     (document) => document.date && document.date.startsWith(currentMonth),
@@ -254,7 +257,7 @@ export default function DashboardView({
           </h3>
           <button
             className="group flex items-center text-sm font-bold text-blue-900 transition hover:text-blue-700 dark:text-amber-500 dark:hover:text-amber-400"
-            onClick={() => navigate('/documents')}
+            onClick={() => navigate(resolveRoute('/documents'))}
           >
             ดูทั้งหมด{' '}
             <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -285,7 +288,7 @@ export default function DashboardView({
                     <tr
                       className="group cursor-pointer transition-colors hover:bg-amber-50/30 dark:hover:bg-slate-800/50"
                       key={document._id}
-                      onClick={() => navigate('/documents')}
+                      onClick={() => navigate(resolveRoute('/documents'))}
                     >
                       <td className="px-6 py-4 text-xs font-medium text-slate-500 dark:text-slate-400">
                         {formatThaiDate(document.date)}

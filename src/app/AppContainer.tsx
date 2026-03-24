@@ -10,24 +10,31 @@ import { useIdleLogout } from '../hooks/useIdleLogout';
 import { api } from '../services/api';
 import { confirmDialog } from '../services/confirmService';
 import type {
-  DocType,
-  DocumentData,
   SaveDocTypeInput,
   SaveDocumentInput,
   SaveUserInput,
   User,
 } from '../types';
 import AppRoutes from './AppRoutes';
+import {
+  previewCurrentUser,
+  previewDocTypes,
+  previewDocuments,
+  previewUsers,
+} from './previewData';
 
 export default function AppContainer() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [docTypes, setDocTypes] = useState<DocType[]>([]);
-  const [documents, setDocuments] = useState<DocumentData[]>([]);
+  const [docTypes, setDocTypes] = useState(previewDocTypes.slice(0, 0));
+  const [documents, setDocuments] = useState(previewDocuments.slice(0, 0));
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { isDarkMode, setIsDarkMode } = useDarkMode();
+  const isPreviewRoute =
+    location.pathname === '/preview' || location.pathname.startsWith('/preview/');
+  const routePrefix = isPreviewRoute ? '/preview' : '';
 
   const loadAllData = useCallback(async () => {
     const [loadedUsers, loadedDocTypes, loadedDocuments] = await Promise.all([
@@ -130,6 +137,60 @@ export default function AppContainer() {
     [loadAllData],
   );
 
+  const handlePreviewExit = useCallback(() => {
+    setIsSidebarOpen(false);
+    navigate('/login');
+  }, [navigate]);
+
+  const handlePreviewDelete = useCallback(async (_id: string) => true, []);
+
+  const handlePreviewSaveUser = useCallback(async (data: SaveUserInput, id?: string) => {
+    const baseUser = previewUsers.find((item) => item._id === id) ?? previewCurrentUser;
+
+    return {
+      ...baseUser,
+      ...data,
+      _id: id ?? baseUser._id,
+      username: data.username ?? baseUser.username,
+      name: data.name ?? baseUser.name,
+      role: data.role ?? baseUser.role,
+    };
+  }, []);
+
+  const handlePreviewSaveDocType = useCallback(async (data: SaveDocTypeInput, id?: string) => {
+    const baseDocType = previewDocTypes.find((item) => item._id === id) ?? previewDocTypes[0];
+
+    return {
+      ...baseDocType,
+      ...data,
+      _id: id ?? baseDocType._id,
+      name: data.name ?? baseDocType.name,
+      color: data.color ?? baseDocType.color,
+    };
+  }, []);
+
+  const handlePreviewSaveDocument = useCallback(
+    async (data: SaveDocumentInput, id?: string) => {
+      const baseDocument =
+        previewDocuments.find((item) => item._id === id) ?? previewDocuments[0];
+
+      return {
+        ...baseDocument,
+        ...data,
+        _id: id ?? baseDocument._id,
+        createdAt: baseDocument.createdAt,
+        files: data.files ?? baseDocument.files,
+      };
+    },
+    [],
+  );
+
+  const effectiveCurrentUser = currentUser ?? (isPreviewRoute ? previewCurrentUser : null);
+  const effectiveUsers = isPreviewRoute && users.length === 0 ? previewUsers : users;
+  const effectiveDocTypes = isPreviewRoute && docTypes.length === 0 ? previewDocTypes : docTypes;
+  const effectiveDocuments =
+    isPreviewRoute && documents.length === 0 ? previewDocuments : documents;
+
   if (!isAppReady) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#0B1120]">
@@ -145,7 +206,7 @@ export default function AppContainer() {
     );
   }
 
-  if (!currentUser) {
+  if (!effectiveCurrentUser) {
     return (
       <AppRoutes
         currentUser={null}
@@ -168,29 +229,31 @@ export default function AppContainer() {
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans text-slate-800 transition-colors duration-300 dark:bg-[#0B1120] dark:text-slate-200">
       <Sidebar
-        currentUser={currentUser}
+        currentUser={effectiveCurrentUser}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        onLogout={handleLogout}
+        onLogout={isPreviewRoute ? handlePreviewExit : handleLogout}
+        routePrefix={routePrefix}
       />
 
       <main className="relative flex h-screen flex-1 flex-col overflow-hidden">
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
         <div className="relative flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
           <AppRoutes
-            currentUser={currentUser}
-            docTypes={docTypes}
-            documents={documents}
+            currentUser={effectiveCurrentUser}
+            docTypes={effectiveDocTypes}
+            documents={effectiveDocuments}
             isDarkMode={isDarkMode}
-            onDeleteDocType={handleDeleteDocType}
-            onDeleteDocument={handleDeleteDocument}
-            onDeleteUser={handleDeleteUser}
+            onDeleteDocType={isPreviewRoute ? handlePreviewDelete : handleDeleteDocType}
+            onDeleteDocument={isPreviewRoute ? handlePreviewDelete : handleDeleteDocument}
+            onDeleteUser={isPreviewRoute ? handlePreviewDelete : handleDeleteUser}
             onLogin={handleLogin}
-            onSaveDocType={handleSaveDocType}
-            onSaveDocument={handleSaveDocument}
-            onSaveUser={handleSaveUser}
+            onSaveDocType={isPreviewRoute ? handlePreviewSaveDocType : handleSaveDocType}
+            onSaveDocument={isPreviewRoute ? handlePreviewSaveDocument : handleSaveDocument}
+            onSaveUser={isPreviewRoute ? handlePreviewSaveUser : handleSaveUser}
+            routePrefix={routePrefix}
             setIsDarkMode={setIsDarkMode}
-            users={users}
+            users={effectiveUsers}
           />
         </div>
       </main>

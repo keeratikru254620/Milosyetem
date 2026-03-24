@@ -15,7 +15,20 @@ export const getRoleText = (role: UserRole) => {
   return 'OFFICER';
 };
 
+const normalizePagePath = (pathname: string) => {
+  const previewPath = pathname.startsWith('/preview')
+    ? pathname.replace('/preview', '') || '/'
+    : pathname;
+
+  if (previewPath.startsWith('/settings')) {
+    return '/settings';
+  }
+
+  return previewPath;
+};
+
 export const getPageTitle = (pathname: string) => {
+  const normalizedPath = normalizePagePath(pathname);
   const titles: Record<string, string> = {
     '/dashboard': 'ภาพรวมระบบ',
     '/documents': 'ทะเบียนรับ-ส่งเอกสาร',
@@ -24,5 +37,5 @@ export const getPageTitle = (pathname: string) => {
     '/settings': 'การตั้งค่าระบบ',
   };
 
-  return titles[pathname] ?? '';
+  return titles[normalizedPath] ?? '';
 };
