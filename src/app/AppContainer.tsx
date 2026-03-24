@@ -23,6 +23,18 @@ import {
   previewUsers,
 } from './previewData';
 
+const DIRECT_PREVIEW_PATHS = new Set([
+  '/dashboard',
+  '/documents',
+  '/doctypes',
+  '/users',
+  '/settings',
+  '/settings/profile',
+  '/settings/general',
+  '/settings/security',
+  '/settings/support',
+]);
+
 export default function AppContainer() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -32,9 +44,11 @@ export default function AppContainer() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDarkMode, setIsDarkMode } = useDarkMode();
-  const isPreviewRoute =
+  const isLegacyPreviewRoute =
     location.pathname === '/preview' || location.pathname.startsWith('/preview/');
-  const routePrefix = isPreviewRoute ? '/preview' : '';
+  const isDirectPreviewRoute = DIRECT_PREVIEW_PATHS.has(location.pathname);
+  const isPreviewMode = !currentUser && (isLegacyPreviewRoute || isDirectPreviewRoute);
+  const routePrefix = isLegacyPreviewRoute ? '/preview' : '';
 
   const loadAllData = useCallback(async () => {
     const [loadedUsers, loadedDocTypes, loadedDocuments] = await Promise.all([
@@ -185,11 +199,11 @@ export default function AppContainer() {
     [],
   );
 
-  const effectiveCurrentUser = currentUser ?? (isPreviewRoute ? previewCurrentUser : null);
-  const effectiveUsers = isPreviewRoute && users.length === 0 ? previewUsers : users;
-  const effectiveDocTypes = isPreviewRoute && docTypes.length === 0 ? previewDocTypes : docTypes;
+  const effectiveCurrentUser = currentUser ?? (isPreviewMode ? previewCurrentUser : null);
+  const effectiveUsers = isPreviewMode && users.length === 0 ? previewUsers : users;
+  const effectiveDocTypes = isPreviewMode && docTypes.length === 0 ? previewDocTypes : docTypes;
   const effectiveDocuments =
-    isPreviewRoute && documents.length === 0 ? previewDocuments : documents;
+    isPreviewMode && documents.length === 0 ? previewDocuments : documents;
 
   if (!isAppReady) {
     return (
@@ -232,7 +246,7 @@ export default function AppContainer() {
         currentUser={effectiveCurrentUser}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        onLogout={isPreviewRoute ? handlePreviewExit : handleLogout}
+        onLogout={isPreviewMode ? handlePreviewExit : handleLogout}
         routePrefix={routePrefix}
       />
 
@@ -244,13 +258,13 @@ export default function AppContainer() {
             docTypes={effectiveDocTypes}
             documents={effectiveDocuments}
             isDarkMode={isDarkMode}
-            onDeleteDocType={isPreviewRoute ? handlePreviewDelete : handleDeleteDocType}
-            onDeleteDocument={isPreviewRoute ? handlePreviewDelete : handleDeleteDocument}
-            onDeleteUser={isPreviewRoute ? handlePreviewDelete : handleDeleteUser}
+            onDeleteDocType={isPreviewMode ? handlePreviewDelete : handleDeleteDocType}
+            onDeleteDocument={isPreviewMode ? handlePreviewDelete : handleDeleteDocument}
+            onDeleteUser={isPreviewMode ? handlePreviewDelete : handleDeleteUser}
             onLogin={handleLogin}
-            onSaveDocType={isPreviewRoute ? handlePreviewSaveDocType : handleSaveDocType}
-            onSaveDocument={isPreviewRoute ? handlePreviewSaveDocument : handleSaveDocument}
-            onSaveUser={isPreviewRoute ? handlePreviewSaveUser : handleSaveUser}
+            onSaveDocType={isPreviewMode ? handlePreviewSaveDocType : handleSaveDocType}
+            onSaveDocument={isPreviewMode ? handlePreviewSaveDocument : handleSaveDocument}
+            onSaveUser={isPreviewMode ? handlePreviewSaveUser : handleSaveUser}
             routePrefix={routePrefix}
             setIsDarkMode={setIsDarkMode}
             users={effectiveUsers}
