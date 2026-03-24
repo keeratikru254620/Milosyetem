@@ -48,7 +48,21 @@ export default function AppRoutes({
   users,
 }: AppRoutesProps) {
   if (!currentUser) {
-    return <AuthView onLogin={onLogin} />;
+    return (
+      <Routes>
+        <Route element={<Navigate to="/login" replace />} path="/" />
+        <Route element={<AuthView initialMode="login" onLogin={onLogin} />} path="/login" />
+        <Route
+          element={<AuthView initialMode="register" onLogin={onLogin} />}
+          path="/register"
+        />
+        <Route
+          element={<AuthView initialMode="forgot" onLogin={onLogin} />}
+          path="/forgot-password"
+        />
+        <Route element={<Navigate to="/login" replace />} path="*" />
+      </Routes>
+    );
   }
 
   return (
@@ -108,7 +122,7 @@ export default function AppRoutes({
         }
         path="/settings"
       />
-      <Route element={<Navigate to="/dashboard" />} path="*" />
+      <Route element={<Navigate to="/dashboard" replace />} path="*" />
     </Routes>
   );
 }

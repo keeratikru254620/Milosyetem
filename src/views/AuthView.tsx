@@ -7,7 +7,8 @@ import {
   Mail,
   User as UserIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { api } from '../services/api';
 import { showToast } from '../services/toastService';
@@ -15,11 +16,12 @@ import type { AuthMode, User } from '../types';
 import { APP_LOGO_FALLBACK, APP_LOGO_SRC } from '../utils/assets';
 
 interface AuthViewProps {
+  initialMode?: AuthMode;
   onLogin: (user: User) => Promise<void> | void;
 }
 
-export default function AuthView({ onLogin }: AuthViewProps) {
-  const [authMode, setAuthMode] = useState<AuthMode>('login');
+export default function AuthView({ initialMode = 'login', onLogin }: AuthViewProps) {
+  const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [registerFirstName, setRegisterFirstName] = useState('');
@@ -32,6 +34,11 @@ export default function AuthView({ onLogin }: AuthViewProps) {
   const [forgotUsername, setForgotUsername] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setAuthMode(initialMode);
+  }, [initialMode]);
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -100,7 +107,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
 
     showToast('ระบบได้ส่งคำขอรีเซ็ตรหัสผ่านไปยังข้อมูลที่ระบุแล้ว', 'info');
     setForgotUsername('');
-    setAuthMode('login');
+    navigate('/login');
   };
 
   return (
@@ -133,16 +140,16 @@ export default function AuthView({ onLogin }: AuthViewProps) {
             <div className="relative mb-10 flex h-60 w-60 items-center justify-center">
               <div className="absolute -inset-6 rounded-[3rem] bg-blue-200/30 blur-3xl"></div>
               <div className="absolute inset-6 rounded-full bg-amber-200/28 blur-2xl"></div>
-            <img
-              alt="โลโก้ บก.สอท.1"
-              className="relative h-[12.25rem] w-[12.25rem] scale-[1.02] object-contain brightness-[1.08] contrast-[1.16] saturate-105 drop-shadow-[0_18px_32px_rgba(15,23,42,0.22)]"
-              onError={(event) => {
-                const target = event.currentTarget;
-                target.onerror = null;
-                target.src = APP_LOGO_FALLBACK;
-              }}
-              src={APP_LOGO_SRC}
-            />
+              <img
+                alt="โลโก้ บก.สอท.1"
+                className="relative h-[12.25rem] w-[12.25rem] scale-[1.02] object-contain brightness-[1.08] contrast-[1.16] saturate-105 drop-shadow-[0_18px_32px_rgba(15,23,42,0.22)]"
+                onError={(event) => {
+                  const target = event.currentTarget;
+                  target.onerror = null;
+                  target.src = APP_LOGO_FALLBACK;
+                }}
+                src={APP_LOGO_SRC}
+              />
             </div>
             <h1 className="mb-4 text-4xl font-bold tracking-tight text-slate-900">
               ระบบจัดเก็บเอกสารราชการ
@@ -217,7 +224,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
               <div className="flex justify-end pt-1">
                 <button
                   className="text-xs font-bold text-blue-900 transition-colors hover:underline dark:text-amber-500 dark:hover:text-amber-400"
-                  onClick={() => setAuthMode('forgot')}
+                  onClick={() => navigate('/forgot-password')}
                   type="button"
                 >
                   ลืมรหัสผ่าน?
@@ -236,7 +243,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
                   className="ml-1 font-bold text-blue-900 hover:underline dark:text-amber-500"
                   onClick={() => {
                     setRegisterRole('admin');
-                    setAuthMode('register');
+                    navigate('/register');
                   }}
                   type="button"
                 >
@@ -369,7 +376,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
                 มีบัญชีอยู่แล้ว?{' '}
                 <button
                   className="ml-1 font-bold text-blue-900 hover:underline dark:text-amber-500"
-                  onClick={() => setAuthMode('login')}
+                  onClick={() => navigate('/login')}
                   type="button"
                 >
                   กลับไปหน้าเข้าสู่ระบบ
@@ -404,7 +411,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
               <p className="mt-8 border-t border-slate-200 pt-8 text-center text-xs font-medium text-slate-500 dark:border-slate-800">
                 <button
                   className="font-bold text-blue-900 hover:underline dark:text-amber-500"
-                  onClick={() => setAuthMode('login')}
+                  onClick={() => navigate('/login')}
                   type="button"
                 >
                   กลับไปหน้าเข้าสู่ระบบ
