@@ -23,18 +23,6 @@ import {
   previewUsers,
 } from './previewData';
 
-const DIRECT_PREVIEW_PATHS = new Set([
-  '/dashboard',
-  '/documents',
-  '/doctypes',
-  '/users',
-  '/settings',
-  '/settings/profile',
-  '/settings/general',
-  '/settings/security',
-  '/settings/support',
-]);
-
 export default function AppContainer() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -46,8 +34,7 @@ export default function AppContainer() {
   const { isDarkMode, setIsDarkMode } = useDarkMode();
   const isLegacyPreviewRoute =
     location.pathname === '/preview' || location.pathname.startsWith('/preview/');
-  const isDirectPreviewRoute = DIRECT_PREVIEW_PATHS.has(location.pathname);
-  const isPreviewMode = !currentUser && (isLegacyPreviewRoute || isDirectPreviewRoute);
+  const isPreviewMode = !currentUser && isLegacyPreviewRoute;
   const routePrefix = isLegacyPreviewRoute ? '/preview' : '';
 
   const loadAllData = useCallback(async () => {

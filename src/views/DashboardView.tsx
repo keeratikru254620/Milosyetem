@@ -38,6 +38,7 @@ export default function DashboardView({
 }: DashboardViewProps) {
   const navigate = useNavigate();
   const resolveRoute = (path: string) => `${routePrefix}${path}`;
+
   const currentMonth = new Date().toISOString().slice(0, 7);
   const newDocsCount = documents.filter(
     (document) => document.date && document.date.startsWith(currentMonth),
@@ -108,7 +109,7 @@ export default function DashboardView({
               className={`group relative flex items-center justify-between overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900 ${stat.glow}`}
               key={stat.label}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/5 opacity-0 transition-opacity group-hover:opacity-100"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/5 opacity-0 transition-opacity group-hover:opacity-100" />
               <div className="relative z-10">
                 <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {stat.label}
@@ -138,10 +139,7 @@ export default function DashboardView({
                 className="h-full w-full -rotate-90 rounded-full drop-shadow-md transition-transform duration-500 group-hover:scale-105"
                 viewBox="0 0 100 100"
               >
-                {typeCounts.reduce<{
-                  elements: JSX.Element[];
-                  offset: number;
-                }>(
+                {typeCounts.reduce<{ elements: JSX.Element[]; offset: number }>(
                   (accumulator, docType, index) => {
                     if (docType.count === 0 || documents.length === 0) {
                       return accumulator;
@@ -203,7 +201,7 @@ export default function DashboardView({
                       <span
                         className="h-4 w-4 rounded-full shadow-sm"
                         style={{ backgroundColor: docType.color }}
-                      ></span>
+                      />
                       <span className="text-base font-bold text-slate-700 dark:text-slate-300">
                         {docType.name}
                       </span>
@@ -241,7 +239,7 @@ export default function DashboardView({
                     <div
                       className="h-full rounded-full transition-all duration-1000 ease-out group-hover:brightness-110"
                       style={{ width: `${percentage}%`, backgroundColor: docType.color }}
-                    ></div>
+                    />
                   </div>
                 </div>
               );

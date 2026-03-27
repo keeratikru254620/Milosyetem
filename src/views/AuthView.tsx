@@ -137,12 +137,12 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
           <div className="pointer-events-none absolute left-1/2 top-28 h-56 w-56 -translate-x-1/2 rounded-full bg-sky-200/25 blur-2xl"></div>
 
           <div className="relative z-10 flex animate-float flex-col items-center">
-            <div className="relative mb-10 flex h-60 w-60 items-center justify-center">
-              <div className="absolute -inset-6 rounded-[3rem] bg-blue-200/30 blur-3xl"></div>
-              <div className="absolute inset-6 rounded-full bg-amber-200/28 blur-2xl"></div>
+            <div className="relative mb-12 flex h-72 w-72 items-center justify-center">
+              <div className="absolute inset-3 rounded-[2.75rem] bg-blue-200/40 blur-3xl"></div>
+              <div className="absolute inset-10 rounded-full bg-amber-200/30 blur-3xl"></div>
               <img
                 alt="โลโก้ บก.สอท.1"
-                className="relative h-[12.25rem] w-[12.25rem] scale-[1.02] object-contain brightness-[1.08] contrast-[1.16] saturate-105 drop-shadow-[0_18px_32px_rgba(15,23,42,0.22)]"
+                className="relative h-[14rem] w-[14rem] scale-[1.03] object-contain brightness-[1.08] contrast-[1.16] saturate-105 drop-shadow-[0_24px_40px_rgba(15,23,42,0.25)]"
                 onError={(event) => {
                   const target = event.currentTarget;
                   target.onerror = null;
@@ -165,6 +165,22 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
         </div>
 
         <div className="flex w-full flex-col justify-center p-8 md:p-12 lg:w-1/2">
+          <div className="mb-8 flex justify-center lg:hidden">
+            <div className="relative rounded-[2rem] border border-slate-200/80 bg-white/95 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
+              <div className="absolute inset-2 rounded-[1.5rem] bg-blue-100/50 blur-2xl"></div>
+              <img
+                alt="logo"
+                className="relative h-28 w-28 object-contain drop-shadow-[0_18px_30px_rgba(15,23,42,0.18)]"
+                onError={(event) => {
+                  const target = event.currentTarget;
+                  target.onerror = null;
+                  target.src = APP_LOGO_FALLBACK;
+                }}
+                src={APP_LOGO_SRC}
+              />
+            </div>
+          </div>
+
           <div className="mb-8">
             <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               {authMode === 'login'
