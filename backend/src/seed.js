@@ -1,7 +1,7 @@
 ﻿import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-import { connectDatabase } from './config/db.js';
+import { connectDatabase, getUploadBucket } from './config/db.js';
 import DocType from './models/DocType.js';
 import Document from './models/Document.js';
 import User from './models/User.js';
@@ -72,6 +72,78 @@ const ensureDocument = async ({
       setDefaultsOnInsert: true,
     },
   );
+
+const uploadSeedFile = async ({ fileName, content, contentType }) => {
+  const bucket = getUploadBucket();
+  const existingFile = await bucket.find({ filename: fileName }).sort({ uploadDate: -1 }).next();
+
+  if (existingFile) {
+    return {
+      fileId: existingFile._id,
+      storedName: existingFile.filename,
+      url: `/api/documents/files/${String(existingFile._id)}`,
+      mimeType: existingFile.contentType || contentType,
+      size: existingFile.length,
+    };
+  }
+
+  const uploadStream = bucket.openUploadStream(fileName, {
+    contentType,
+    metadata: { seeded: true, originalName: fileName },
+  });
+
+  uploadStream.end(Buffer.from(content, 'utf8'));
+
+  await new Promise((resolve, reject) => {
+    uploadStream.on('finish', resolve);
+    uploadStream.on('error', reject);
+  });
+
+  return {
+    fileId: uploadStream.id,
+    storedName: uploadStream.filename,
+    url: `/api/documents/files/${String(uploadStream.id)}`,
+    mimeType: contentType,
+    size: Buffer.byteLength(content, 'utf8'),
+  };
+};
+
+const ensureDocumentAttachment = async ({
+  docNo,
+  fileName,
+  content,
+  contentType = 'text/plain; charset=utf-8',
+  extractedText,
+  semanticKeywords = [],
+}) => {
+  const document = await Document.findOne({ docNo });
+
+  if (!document) {
+    throw new Error(`Cannot attach seed file because document ${docNo} was not found`);
+  }
+
+  const existingFile = (document.files || []).find((file) => file.originalName === fileName);
+
+  if (existingFile) {
+    return;
+  }
+
+  const uploadedFile = await uploadSeedFile({ fileName, content, contentType });
+  document.files.push({
+    originalName: fileName,
+    fileId: uploadedFile.fileId,
+    storedName: uploadedFile.storedName,
+    url: uploadedFile.url,
+    mimeType: uploadedFile.mimeType,
+    size: uploadedFile.size,
+    extractedText,
+    extractedTextPreview: extractedText?.slice(0, 240),
+    extractedAt: extractedText ? new Date().toISOString() : undefined,
+    semanticKeywords,
+  });
+
+  await document.save();
+};
 
 const seed = async () => {
   await connectDatabase();
@@ -173,6 +245,32 @@ const seed = async () => {
     ownerId: adminUser._id,
     searchableContent: 'บันทึกข้อความ สรุปผล การประชุม ประจำเดือน แผน งบประมาณ',
     semanticKeywords: ['บันทึกข้อความ', 'ประชุม', 'งบประมาณ', 'สรุปผล'],
+  });
+
+  await ensureDocumentAttachment({
+    docNo: 'CCIB-001/2569',
+    fileName: 'ccib-system-overview.txt',
+    content: [
+      'เอกสารตัวอย่างสำหรับทดสอบระบบจัดเก็บเอกสารราชการ',
+      'ใช้สำหรับตรวจสอบการอัปโหลดและจัดเก็บไฟล์ใน MongoDB GridFS',
+      'หน่วยงาน: กก.1 บก.สอท.1',
+    ].join('\n'),
+    extractedText:
+      'เอกสารตัวอย่างสำหรับทดสอบระบบจัดเก็บเอกสารราชการ ใช้สำหรับตรวจสอบการอัปโหลดและจัดเก็บไฟล์ใน MongoDB GridFS หน่วยงาน กก.1 บก.สอท.1',
+    semanticKeywords: ['ทดสอบระบบ', 'GridFS', 'กก.1 บก.สอท.1'],
+  });
+
+  await ensureDocumentAttachment({
+    docNo: 'CCIB-002/2569',
+    fileName: 'project-order-summary.txt',
+    content: [
+      'คำสั่งแต่งตั้งเจ้าหน้าที่ประจำโครงการ',
+      'ฝ่ายอำนวยการกำหนดรายชื่อผู้รับผิดชอบหลักและผู้ประสานงาน',
+      'ใช้สำหรับอ้างอิงในการบริหารโครงการและติดตามงาน',
+    ].join('\n'),
+    extractedText:
+      'คำสั่งแต่งตั้งเจ้าหน้าที่ประจำโครงการ ฝ่ายอำนวยการกำหนดรายชื่อผู้รับผิดชอบหลักและผู้ประสานงาน ใช้สำหรับอ้างอิงในการบริหารโครงการและติดตามงาน',
+    semanticKeywords: ['คำสั่ง', 'แต่งตั้ง', 'โครงการ'],
   });
 
   console.log('Seed completed successfully');

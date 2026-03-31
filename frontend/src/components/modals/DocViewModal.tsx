@@ -53,6 +53,26 @@ const getFileAccessUrl = (file: StoredFile) => {
   return file.url.startsWith('http') ? file.url : `${backendOrigin}${file.url}`;
 };
 
+const getFileDownloadUrl = (file: StoredFile) => {
+  const fileUrl = getFileAccessUrl(file);
+
+  if (!fileUrl) {
+    return null;
+  }
+
+  try {
+    const url = new URL(fileUrl, window.location.origin);
+
+    if (url.pathname.includes('/api/documents/files/')) {
+      url.searchParams.set('download', '1');
+    }
+
+    return url.toString();
+  } catch {
+    return fileUrl;
+  }
+};
+
 export default function DocViewModal({
   currentUser,
   doc,
@@ -163,6 +183,7 @@ export default function DocViewModal({
                   const { Icon, color } = getFilePresentation(fileName);
                   const isIndexedPdf = hasSearchablePdfContent(file);
                   const fileUrl = getFileAccessUrl(file);
+                  const fileDownloadUrl = getFileDownloadUrl(file);
 
                   return (
                     <div
@@ -197,9 +218,9 @@ export default function DocViewModal({
                             </div>
                           </div>
                         </div>
-                        <div className="ml-4 flex shrink-0 gap-2.5 opacity-0 transition-opacity group-hover:opacity-100">
+                        <div className="ml-4 flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
                           <button
-                            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-blue-50 hover:text-blue-900 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-amber-500"
+                            className="inline-flex min-w-[108px] items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-900 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-amber-500"
                             onClick={() => {
                               if (fileUrl) {
                                 window.open(fileUrl, '_blank', 'noopener,noreferrer');
@@ -209,14 +230,15 @@ export default function DocViewModal({
                               showToast('จำลองเปิดดูไฟล์', 'info');
                             }}
                           >
-                            <Eye className="h-5 w-5" />
+                            <Eye className="mr-2 h-4 w-4" />
+                            เปิดดู
                           </button>
                           <button
-                            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-blue-50 hover:text-blue-900 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-amber-500"
+                            className="inline-flex min-w-[128px] items-center justify-center rounded-xl border border-blue-900 bg-blue-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-950 active:scale-95 dark:border-amber-500 dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"
                             onClick={() => {
-                              if (fileUrl) {
+                              if (fileDownloadUrl) {
                                 const anchor = document.createElement('a');
-                                anchor.href = fileUrl;
+                                anchor.href = fileDownloadUrl;
                                 anchor.download = file.originalName;
                                 anchor.target = '_blank';
                                 anchor.rel = 'noopener noreferrer';
@@ -227,7 +249,8 @@ export default function DocViewModal({
                               showToast('จำลองดาวน์โหลด', 'info');
                             }}
                           >
-                            <Download className="h-5 w-5" />
+                            <Download className="mr-2 h-4 w-4" />
+                            ดาวน์โหลด
                           </button>
                         </div>
                       </div>

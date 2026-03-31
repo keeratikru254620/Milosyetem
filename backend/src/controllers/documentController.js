@@ -1,9 +1,18 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { Readable } from 'node:stream';
+import { finished } from 'node:stream/promises';
 
+import mongoose from 'mongoose';
+
+import { getUploadBucket } from '../config/db.js';
 import Document from '../models/Document.js';
 
-const toUrlPath = (filePath) => `/uploads/${path.basename(filePath)}`;
+const toDiskUrlPath = (filePath) => `/uploads/${path.basename(filePath)}`;
+const toGridFsUrlPath = (fileId) => `/api/documents/files/${String(fileId)}`;
+const isObjectId = (value) => mongoose.Types.ObjectId.isValid(String(value));
+const toObjectId = (value) =>
+  value instanceof mongoose.Types.ObjectId ? value : new mongoose.Types.ObjectId(String(value));
 
 const parseJsonField = (value, fallback) => {
   if (value === undefined || value === null || value === '') {
@@ -23,9 +32,12 @@ const parseJsonField = (value, fallback) => {
 
 const sanitizeStoredFile = (file) => ({
   originalName: file.originalName,
+  fileId: file.fileId ? String(file.fileId) : undefined,
   storedName: file.storedName,
   path: file.path,
-  url: file.url,
+  url:
+    file.url ||
+    (file.fileId ? toGridFsUrlPath(file.fileId) : file.path ? toDiskUrlPath(file.path) : undefined),
   mimeType: file.mimeType,
   size: file.size,
   extractedText: file.extractedText,
@@ -51,33 +63,89 @@ const sanitizeDocument = (document) => ({
   contentIndexedAt: document.contentIndexedAt,
 });
 
-const buildStoredFiles = (uploadedFiles = [], filesMeta = []) => {
-  let uploadIndex = 0;
+const uploadFileToGridFs = async (file, meta = {}) => {
+  const bucket = getUploadBucket();
+  const uploadStream = bucket.openUploadStream(file.originalname || meta.originalName || 'attachment', {
+    contentType: meta.mimeType || file.mimetype || 'application/octet-stream',
+    metadata: {
+      originalName: meta.originalName || file.originalname || 'attachment',
+    },
+  });
 
-  return filesMeta.map((meta) => {
-    if (meta.storedName || meta.path || meta.url) {
-      return {
+  Readable.from(file.buffer).pipe(uploadStream);
+  await finished(uploadStream);
+
+  return {
+    fileId: uploadStream.id,
+    storedName: uploadStream.filename,
+    mimeType: meta.mimeType || file.mimetype,
+    size: meta.size || file.size,
+  };
+};
+
+const buildStoredFiles = async (uploadedFiles = [], filesMeta = []) => {
+  let uploadIndex = 0;
+  const uploadedGridFsIds = [];
+  const storedFiles = [];
+
+  for (const meta of filesMeta) {
+    if (meta.fileId || meta.storedName || meta.path || meta.url) {
+      storedFiles.push({
         ...meta,
+        fileId: meta.fileId && isObjectId(meta.fileId) ? toObjectId(meta.fileId) : undefined,
+        url:
+          meta.url ||
+          (meta.fileId ? toGridFsUrlPath(meta.fileId) : meta.path ? toDiskUrlPath(meta.path) : undefined),
         semanticKeywords: meta.semanticKeywords ?? [],
-      };
+      });
+      continue;
     }
 
     const uploadedFile = uploadedFiles[uploadIndex];
     uploadIndex += 1;
 
-    return {
-      originalName: meta.originalName || uploadedFile?.originalname || 'attachment',
-      storedName: uploadedFile?.filename,
-      path: uploadedFile?.path,
-      url: uploadedFile ? toUrlPath(uploadedFile.path) : undefined,
-      mimeType: meta.mimeType || uploadedFile?.mimetype,
-      size: meta.size || uploadedFile?.size,
+    if (!uploadedFile) {
+      continue;
+    }
+
+    const gridFsFile = await uploadFileToGridFs(uploadedFile, meta);
+    uploadedGridFsIds.push(gridFsFile.fileId);
+
+    storedFiles.push({
+      originalName: meta.originalName || uploadedFile.originalname || 'attachment',
+      fileId: gridFsFile.fileId,
+      storedName: gridFsFile.storedName,
+      url: toGridFsUrlPath(gridFsFile.fileId),
+      mimeType: meta.mimeType || gridFsFile.mimeType,
+      size: meta.size || gridFsFile.size,
       extractedText: meta.extractedText,
       extractedTextPreview: meta.extractedTextPreview,
       extractedAt: meta.extractedAt,
       semanticKeywords: meta.semanticKeywords ?? [],
-    };
-  });
+    });
+  }
+
+  while (uploadIndex < uploadedFiles.length) {
+    const uploadedFile = uploadedFiles[uploadIndex];
+    uploadIndex += 1;
+
+    const gridFsFile = await uploadFileToGridFs(uploadedFile);
+    uploadedGridFsIds.push(gridFsFile.fileId);
+    storedFiles.push({
+      originalName: uploadedFile.originalname || 'attachment',
+      fileId: gridFsFile.fileId,
+      storedName: gridFsFile.storedName,
+      url: toGridFsUrlPath(gridFsFile.fileId),
+      mimeType: gridFsFile.mimeType,
+      size: gridFsFile.size,
+      semanticKeywords: [],
+    });
+  }
+
+  return {
+    storedFiles,
+    uploadedGridFsIds,
+  };
 };
 
 const deletePhysicalFiles = async (files = []) => {
@@ -93,6 +161,51 @@ const deletePhysicalFiles = async (files = []) => {
         }
       }),
   );
+};
+
+const deleteGridFsFiles = async (files = []) => {
+  const bucket = getUploadBucket();
+
+  await Promise.all(
+    files
+      .map((file) => file?.fileId)
+      .filter(Boolean)
+      .map(async (fileId) => {
+        try {
+          await bucket.delete(toObjectId(fileId));
+        } catch {
+          // ignore cleanup failures
+        }
+      }),
+  );
+};
+
+const deleteUploadedGridFsIds = async (fileIds = []) => {
+  if (!fileIds.length) {
+    return;
+  }
+
+  await deleteGridFsFiles(fileIds.map((fileId) => ({ fileId })));
+};
+
+const deleteStoredFiles = async (files = []) => {
+  await Promise.all([deleteGridFsFiles(files), deletePhysicalFiles(files)]);
+};
+
+const getStoredFileKey = (file) => {
+  if (file?.fileId) {
+    return `gridfs:${String(file.fileId)}`;
+  }
+
+  if (file?.storedName) {
+    return `disk:${file.storedName}`;
+  }
+
+  if (file?.path) {
+    return `path:${file.path}`;
+  }
+
+  return `name:${file?.originalName || ''}`;
 };
 
 export const listDocuments = async (req, res, next) => {
@@ -120,8 +233,12 @@ export const getDocumentById = async (req, res, next) => {
 };
 
 export const createDocument = async (req, res, next) => {
+  let uploadedGridFsIds = [];
+
   try {
     const filesMeta = parseJsonField(req.body.filesMeta, []);
+    const builtFiles = await buildStoredFiles(req.files, filesMeta);
+    uploadedGridFsIds = builtFiles.uploadedGridFsIds;
     const document = await Document.create({
       docNo: req.body.docNo || '',
       subject: req.body.subject || '',
@@ -131,7 +248,7 @@ export const createDocument = async (req, res, next) => {
       origin: req.body.origin || '',
       resp: req.body.resp || '',
       ownerId: req.body.ownerId || req.user._id,
-      files: buildStoredFiles(req.files, filesMeta),
+      files: builtFiles.storedFiles,
       searchableContent: req.body.searchableContent || undefined,
       semanticKeywords: parseJsonField(req.body.semanticKeywords, []),
       contentIndexedAt: req.body.contentIndexedAt || undefined,
@@ -139,11 +256,14 @@ export const createDocument = async (req, res, next) => {
 
     res.status(201).json(sanitizeDocument(document));
   } catch (error) {
+    await deleteUploadedGridFsIds(uploadedGridFsIds);
     next(error);
   }
 };
 
 export const updateDocument = async (req, res, next) => {
+  let uploadedGridFsIds = [];
+
   try {
     const document = await Document.findById(req.params.id);
 
@@ -153,15 +273,11 @@ export const updateDocument = async (req, res, next) => {
     }
 
     const filesMeta = parseJsonField(req.body.filesMeta, []);
-    const nextFiles = buildStoredFiles(req.files, filesMeta);
+    const builtFiles = await buildStoredFiles(req.files, filesMeta);
+    uploadedGridFsIds = builtFiles.uploadedGridFsIds;
+    const nextFiles = builtFiles.storedFiles;
     const removedFiles = (document.files || []).filter(
-      (existingFile) =>
-        !nextFiles.some(
-          (nextFile) =>
-            nextFile.storedName &&
-            existingFile.storedName &&
-            nextFile.storedName === existingFile.storedName,
-        ),
+      (existingFile) => !nextFiles.some((nextFile) => getStoredFileKey(nextFile) === getStoredFileKey(existingFile)),
     );
 
     document.docNo = req.body.docNo ?? document.docNo;
@@ -178,10 +294,11 @@ export const updateDocument = async (req, res, next) => {
     document.contentIndexedAt = req.body.contentIndexedAt || undefined;
 
     await document.save();
-    await deletePhysicalFiles(removedFiles);
+    await deleteStoredFiles(removedFiles);
 
     res.json(sanitizeDocument(document));
   } catch (error) {
+    await deleteUploadedGridFsIds(uploadedGridFsIds);
     next(error);
   }
 };
@@ -195,8 +312,44 @@ export const deleteDocument = async (req, res, next) => {
       throw new Error('Document not found');
     }
 
-    await deletePhysicalFiles(document.files);
+    await deleteStoredFiles(document.files);
     res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const streamDocumentFile = async (req, res, next) => {
+  try {
+    const { fileId } = req.params;
+
+    if (!isObjectId(fileId)) {
+      res.status(400);
+      throw new Error('Invalid file id');
+    }
+
+    const document = await Document.findOne({ 'files.fileId': toObjectId(fileId) });
+
+    if (!document) {
+      res.status(404);
+      throw new Error('File not found');
+    }
+
+    const file = document.files.find((item) => String(item.fileId) === fileId);
+    const bucket = getUploadBucket();
+    const bucketFile = await bucket.find({ _id: toObjectId(fileId) }).next();
+
+    if (!file || !bucketFile) {
+      res.status(404);
+      throw new Error('File content not found');
+    }
+
+    const disposition = req.query.download === '1' ? 'attachment' : 'inline';
+    const fileName = encodeURIComponent(file.originalName || bucketFile.filename || 'attachment');
+    res.setHeader('Content-Type', file.mimeType || bucketFile.contentType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `${disposition}; filename*=UTF-8''${fileName}`);
+
+    bucket.openDownloadStream(toObjectId(fileId)).on('error', next).pipe(res);
   } catch (error) {
     next(error);
   }

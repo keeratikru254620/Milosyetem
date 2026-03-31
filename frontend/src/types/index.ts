@@ -20,6 +20,7 @@ export interface DocType {
 export interface StoredFile {
   clientId?: string;
   originalName: string;
+  fileId?: string;
   storedName?: string;
   path?: string;
   url?: string;

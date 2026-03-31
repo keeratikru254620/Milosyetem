@@ -32,6 +32,7 @@ const sanitizeStoredFileForServer = (file: StoredFile): StoredFile => {
   const normalized = normalizeStoredFile(file);
   return {
     originalName: normalized.originalName,
+    fileId: normalized.fileId,
     storedName: normalized.storedName,
     path: normalized.path,
     url: normalized.url,

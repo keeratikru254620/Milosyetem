@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const storedFileSchema = new mongoose.Schema(
   {
     originalName: { type: String, required: true },
+    fileId: mongoose.Schema.Types.ObjectId,
     storedName: String,
     path: String,
     url: String,

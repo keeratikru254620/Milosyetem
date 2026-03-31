@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   BarChart3,
@@ -139,7 +140,7 @@ export default function DashboardView({
                 className="h-full w-full -rotate-90 rounded-full drop-shadow-md transition-transform duration-500 group-hover:scale-105"
                 viewBox="0 0 100 100"
               >
-                {typeCounts.reduce<{ elements: JSX.Element[]; offset: number }>(
+                {typeCounts.reduce<{ elements: ReactElement[]; offset: number }>(
                   (accumulator, docType, index) => {
                     if (docType.count === 0 || documents.length === 0) {
                       return accumulator;

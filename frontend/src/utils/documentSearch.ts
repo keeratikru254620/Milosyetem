@@ -148,6 +148,7 @@ export const normalizeStoredFile = (file: StoredFile | string): StoredFile => {
   return {
     clientId: file.clientId,
     originalName,
+    fileId: file.fileId,
     storedName: file.storedName,
     path: file.path,
     url: file.url,
