@@ -38,7 +38,7 @@ const shutdown = (code = 0) => {
 for (const processConfig of processes) {
   const child = spawn(processConfig.command, processConfig.args, {
     stdio: 'inherit',
-    shell: false,
+    shell: process.platform === 'win32',
   });
 
   child.on('exit', (code) => {
