@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { showToast } from '../services/toastService';
 import type { AuthMode, User } from '../types';
+import { getApiErrorMessage } from '../utils/apiError';
 import { APP_LOGO_FALLBACK, APP_LOGO_SRC } from '../utils/assets';
 
 interface AuthViewProps {
@@ -53,8 +54,14 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
       const result = await api.login(loginUsername, loginPassword);
       await onLogin(result.user);
       showToast('เข้าสู่ระบบสำเร็จ');
-    } catch {
-      showToast('อีเมล/Username หรือรหัสผ่านไม่ถูกต้อง', 'error');
+    } catch (error) {
+      showToast(
+        getApiErrorMessage(error, {
+          invalidCredentialsMessage: 'อีเมล/Username หรือรหัสผ่านไม่ถูกต้อง',
+          fallbackMessage: 'เข้าสู่ระบบไม่สำเร็จ',
+        }),
+        'error',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -90,8 +97,14 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
       });
       await onLogin(result.user);
       showToast('ลงทะเบียนสำเร็จ');
-    } catch {
-      showToast('มีอีเมลนี้อยู่ในระบบแล้ว', 'error');
+    } catch (error) {
+      showToast(
+        getApiErrorMessage(error, {
+          duplicateMessage: 'มีอีเมลนี้อยู่ในระบบแล้ว',
+          fallbackMessage: 'ไม่สามารถสมัครสมาชิกได้',
+        }),
+        'error',
+      );
     } finally {
       setIsLoading(false);
     }

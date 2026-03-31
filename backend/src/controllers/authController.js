@@ -49,6 +49,11 @@ export const register = async (req, res, next) => {
       token: signToken(user._id),
     });
   } catch (error) {
+    if (error?.code === 11000) {
+      res.status(409);
+      error.message = 'User already exists';
+    }
+
     next(error);
   }
 };
