@@ -5,7 +5,7 @@ const router = Router();
 router.get('/', (req, res) => {
   res.json({
     ok: true,
-    service: 'gov-doc-pro-backend',
+    service: 'milosystem-backend',
     timestamp: new Date().toISOString(),
   });
 });

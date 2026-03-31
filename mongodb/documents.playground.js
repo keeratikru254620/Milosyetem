@@ -1,7 +1,7 @@
-use('gov-doc-pro');
+use('milosystem');
 
 // Workspace preset connection:
-// Milosystem Local MongoDB -> mongodb://127.0.0.1:27017/gov-doc-pro
+// Milosystem Local MongoDB -> mongodb://127.0.0.1:27017/milosystem
 
 db.documents
   .find(

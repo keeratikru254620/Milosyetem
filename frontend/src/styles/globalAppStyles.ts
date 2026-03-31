@@ -1,5 +1,5 @@
-const FONT_ID = 'gov-doc-pro-font';
-const STYLE_ID = 'gov-doc-pro-inline-style';
+const FONT_ID = 'milosystem-font';
+const STYLE_ID = 'milosystem-inline-style';
 
 export const injectGlobalAppStyles = () => {
   let mountedFont = false;

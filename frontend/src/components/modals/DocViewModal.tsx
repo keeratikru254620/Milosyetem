@@ -9,6 +9,7 @@ import {
   X,
 } from 'lucide-react';
 
+import { BACKEND_ORIGIN } from '../../services/apiConfig';
 import { showToast } from '../../services/toastService';
 import type { DocType, DocumentData, StoredFile, User } from '../../types';
 import { hasSearchablePdfContent, getStoredFileName } from '../../utils/documentSearch';
@@ -42,15 +43,12 @@ const getFilePresentation = (fileName: string) => {
   return { Icon: FileText, color: 'text-slate-400' };
 };
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').trim();
-const backendOrigin = apiBaseUrl ? new URL(apiBaseUrl).origin : window.location.origin;
-
 const getFileAccessUrl = (file: StoredFile) => {
   if (!file.url) {
     return null;
   }
 
-  return file.url.startsWith('http') ? file.url : `${backendOrigin}${file.url}`;
+  return file.url.startsWith('http') ? file.url : `${BACKEND_ORIGIN}${file.url}`;
 };
 
 const getFileDownloadUrl = (file: StoredFile) => {

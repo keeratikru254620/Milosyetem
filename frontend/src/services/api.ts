@@ -1,8 +1,6 @@
-import { mockApi } from './mockApi';
 import { serverApi } from './serverApi';
+import { API_BASE_URL } from './apiConfig';
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').trim();
+export const isServerApiEnabled = Boolean(API_BASE_URL);
 
-export const isServerApiEnabled = Boolean(apiBaseUrl);
-
-export const api = isServerApiEnabled ? serverApi : mockApi;
+export const api = serverApi;

@@ -1,11 +1,10 @@
 import axios from 'axios';
 
 import { AUTH_TOKEN_KEY } from '../utils/auth';
-
-const baseURL = (import.meta.env.VITE_API_BASE_URL ?? '').trim();
+import { API_BASE_URL } from './apiConfig';
 
 export const http = axios.create({
-  baseURL,
+  baseURL: API_BASE_URL,
 });
 
 http.interceptors.request.use((config) => {

@@ -3,7 +3,7 @@
   "mdb.presetConnections": [
     {
       "name": "Milosystem Local MongoDB",
-      "connectionString": "mongodb://127.0.0.1:27017/gov-doc-pro"
+      "connectionString": "mongodb://127.0.0.1:27017/milosystem"
     }
   ]
 }
