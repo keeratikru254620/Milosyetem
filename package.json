@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --open",
+    "dev": "node scripts/dev.mjs",
     "dev:client": "vite --open",
     "dev:server": "npm --prefix backend run dev",
     "build": "npm run build:client",
