@@ -13,6 +13,8 @@ import AuthView from '../views/AuthView';
 import DashboardView from '../views/DashboardView';
 import DocumentsView from '../views/DocumentsView';
 import DocTypesView from '../views/DocTypesView';
+import LegalView from '../views/LegalView';
+import NotFoundView from '../views/NotFoundView';
 import SettingsView from '../views/SettingsView';
 import UsersView from '../views/UsersView';
 
@@ -65,6 +67,8 @@ export default function AppRoutes({
           element={<AuthView initialMode="forgot" onLogin={onLogin} />}
           path="/forgot-password"
         />
+        <Route element={<LegalView variant="terms" />} path="/terms" />
+        <Route element={<LegalView variant="privacy" />} path="/privacy" />
         <Route element={<Navigate to="/login" replace />} path="/dashboard" />
         <Route element={<Navigate to="/login" replace />} path="/documents" />
         <Route element={<Navigate to="/login" replace />} path="/doctypes" />
@@ -74,7 +78,10 @@ export default function AppRoutes({
         <Route element={<Navigate to="/login" replace />} path="/settings/general" />
         <Route element={<Navigate to="/login" replace />} path="/settings/security" />
         <Route element={<Navigate to="/login" replace />} path="/settings/support" />
-        <Route element={<Navigate to="/login" replace />} path="*" />
+        <Route
+          element={<NotFoundView backLabel="กลับสู่หน้าเข้าสู่ระบบ" backTo="/login" />}
+          path="*"
+        />
       </Routes>
     );
   }
@@ -206,7 +213,15 @@ export default function AppRoutes({
         }
         path={resolveRoute('/settings/support')}
       />
-      <Route element={<Navigate to={resolveRoute('/dashboard')} replace />} path="*" />
+      <Route
+        element={
+          <NotFoundView
+            backLabel="กลับสู่หน้าแดชบอร์ด"
+            backTo={resolveRoute('/dashboard')}
+          />
+        }
+        path="*"
+      />
     </Routes>
   );
 }

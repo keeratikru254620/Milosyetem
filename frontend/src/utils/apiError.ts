@@ -1,5 +1,3 @@
-import { API_PROVIDER } from '../services/apiConfig';
-
 interface ApiErrorMessageOptions {
   duplicateMessage?: string;
   invalidCredentialsMessage?: string;
@@ -12,10 +10,7 @@ export const getApiErrorMessage = (
   {
     duplicateMessage = 'ข้อมูลนี้ถูกใช้งานอยู่แล้ว',
     invalidCredentialsMessage = 'ข้อมูลเข้าสู่ระบบไม่ถูกต้อง',
-    networkMessage =
-      API_PROVIDER === 'firebase'
-        ? 'ไม่สามารถเชื่อมต่อ Firebase ได้ กรุณาตรวจสอบการตั้งค่าและเครือข่าย'
-        : 'ไม่สามารถเชื่อมต่อระบบข้อมูลได้',
+    networkMessage = 'ไม่สามารถเชื่อมต่อ Firebase ได้ กรุณาตรวจสอบการตั้งค่าและเครือข่าย',
     fallbackMessage,
   }: ApiErrorMessageOptions,
 ) => {
@@ -40,6 +35,14 @@ export const getApiErrorMessage = (
 
     if (code === 'auth/network-request-failed') {
       return networkMessage;
+    }
+
+    if (code === 'auth/too-many-requests') {
+      return 'มีความพยายามเข้าสู่ระบบหลายครั้งเกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง';
+    }
+
+    if (code === 'auth/user-disabled') {
+      return 'บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ';
     }
   }
 

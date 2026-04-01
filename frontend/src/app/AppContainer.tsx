@@ -1,5 +1,5 @@
 import { ShieldCheck } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import Header from '../components/layout/Header';
@@ -37,16 +37,16 @@ export default function AppContainer() {
   const isPreviewMode = !currentUser && isLegacyPreviewRoute;
   const routePrefix = isLegacyPreviewRoute ? '/preview' : '';
 
-  const loadAllData = useCallback(async () => {
+  const loadAllData = useCallback(async (targetUser: User | null = currentUser) => {
     const [loadedUsers, loadedDocTypes, loadedDocuments] = await Promise.all([
-      api.getUsers(),
+      targetUser?.role === 'admin' ? api.getUsers() : Promise.resolve([]),
       api.getDocTypes(),
       api.getDocuments(),
     ]);
     setUsers(loadedUsers);
     setDocTypes(loadedDocTypes);
     setDocuments(loadedDocuments);
-  }, []);
+  }, [currentUser]);
 
   const isAppReady = useAppBootstrap({
     initialPathname: location.pathname,
@@ -54,6 +54,33 @@ export default function AppContainer() {
     navigate,
     setCurrentUser,
   });
+
+  useEffect(() => {
+    const normalizedPath = location.pathname.startsWith('/preview')
+      ? location.pathname.replace(/^\/preview/, '') || '/'
+      : location.pathname;
+
+    const titles: Record<string, string> = {
+      '/': currentUser ? 'ภาพรวมระบบ' : 'เข้าสู่ระบบ',
+      '/login': 'เข้าสู่ระบบ',
+      '/register': 'สมัครสมาชิก',
+      '/forgot-password': 'รีเซ็ตรหัสผ่าน',
+      '/terms': 'เงื่อนไขการใช้งาน',
+      '/privacy': 'นโยบายความเป็นส่วนตัว',
+      '/dashboard': 'ภาพรวมระบบ',
+      '/documents': 'ทะเบียนเอกสาร',
+      '/doctypes': 'ประเภทเอกสาร',
+      '/users': 'จัดการผู้ใช้งาน',
+      '/settings': 'การตั้งค่า',
+      '/settings/profile': 'ข้อมูลบัญชี',
+      '/settings/general': 'การตั้งค่าทั่วไป',
+      '/settings/security': 'ความปลอดภัย',
+      '/settings/support': 'ช่วยเหลือ',
+    };
+
+    const pageTitle = titles[normalizedPath] || 'Milosystem';
+    document.title = pageTitle === 'Milosystem' ? pageTitle : `${pageTitle} | Milosystem`;
+  }, [currentUser, location.pathname]);
 
   const handleLogout = useCallback(() => {
     api.logout();
@@ -78,7 +105,7 @@ export default function AppContainer() {
   const handleLogin = useCallback(
     async (user: User) => {
       setCurrentUser(user);
-      await loadAllData();
+      await loadAllData(user);
       navigate('/dashboard');
     },
     [loadAllData, navigate],

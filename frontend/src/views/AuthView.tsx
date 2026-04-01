@@ -23,16 +23,15 @@ interface AuthViewProps {
 
 export default function AuthView({ initialMode = 'login', onLogin }: AuthViewProps) {
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
-  const [loginUsername, setLoginUsername] = useState('');
+  const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [registerFirstName, setRegisterFirstName] = useState('');
   const [registerLastName, setRegisterLastName] = useState('');
   const [registerPhone, setRegisterPhone] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
-  const [registerRole, setRegisterRole] = useState<'admin' | 'general'>('admin');
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [forgotUsername, setForgotUsername] = useState('');
+  const [forgotEmail, setForgotEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -51,13 +50,13 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     setIsLoading(true);
 
     try {
-      const result = await api.login(loginUsername, loginPassword);
+      const result = await api.login(loginEmail, loginPassword);
       await onLogin(result.user);
       showToast('เข้าสู่ระบบสำเร็จ');
     } catch (error) {
       showToast(
         getApiErrorMessage(error, {
-          invalidCredentialsMessage: 'อีเมล/Username หรือรหัสผ่านไม่ถูกต้อง',
+          invalidCredentialsMessage: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
           fallbackMessage: 'เข้าสู่ระบบไม่สำเร็จ',
         }),
         'error',
@@ -91,12 +90,12 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
         username: registerEmail,
         password: registerPassword,
         name: `${registerFirstName} ${registerLastName}`.trim(),
-        role: registerRole,
+        role: 'general',
         phone: registerPhone,
         email: registerEmail,
       });
-      await onLogin(result.user);
-      showToast('ลงทะเบียนสำเร็จ');
+      showToast('สมัครสมาชิกสำเร็จ กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ', 'success');
+      navigate('/login');
     } catch (error) {
       showToast(
         getApiErrorMessage(error, {
@@ -110,17 +109,35 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     }
   };
 
-  const handleForgotPassword = (event: FormEvent<HTMLFormElement>) => {
+  const handleForgotPassword = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!forgotUsername.trim()) {
-      showToast('กรุณากรอกอีเมลหรือ Username ของคุณ', 'error');
+    if (isLoading) {
       return;
     }
 
-    showToast('ระบบได้ส่งคำขอรีเซ็ตรหัสผ่านไปยังข้อมูลที่ระบุแล้ว', 'info');
-    setForgotUsername('');
-    navigate('/login');
+    if (!forgotEmail.trim()) {
+      showToast('กรุณากรอกอีเมลที่ใช้เข้าสู่ระบบ', 'error');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      await api.requestPasswordReset(forgotEmail.trim());
+      showToast('ระบบได้ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณแล้ว', 'success');
+      setForgotEmail('');
+      navigate('/login');
+    } catch (error) {
+      showToast(
+        getApiErrorMessage(error, {
+          fallbackMessage: 'ไม่สามารถส่งคำขอรีเซ็ตรหัสผ่านได้',
+        }),
+        'error',
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -207,7 +224,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                 ? 'เข้าสู่ระบบด้วยการเชื่อมต่อแบบเข้ารหัสที่ปลอดภัย'
                 : authMode === 'register'
                   ? 'สร้างบัญชีเพื่อเข้าถึงข้อมูลเอกสาร'
-                  : 'กรอกอีเมลหรือ Username เพื่อขอรีเซ็ตรหัสผ่าน'}
+                  : 'กรอกอีเมลเพื่อขอรีเซ็ตรหัสผ่าน'}
             </p>
           </div>
 
@@ -215,16 +232,17 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
             <form className="space-y-5 animate-in zoom-in-95 fade-in duration-300" onSubmit={handleLogin}>
               <div>
                 <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  อีเมล หรือ Username
+                  อีเมล
                 </label>
                 <div className="group relative">
                   <UserIcon className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 transition-colors group-focus-within:text-blue-900 dark:group-focus-within:text-amber-500" />
                   <input
+                    autoComplete="email"
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 font-mono text-sm shadow-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700/50 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
-                    onChange={(event) => setLoginUsername(event.target.value)}
+                    onChange={(event) => setLoginEmail(event.target.value)}
                     required
                     type="text"
-                    value={loginUsername}
+                    value={loginEmail}
                   />
                 </div>
               </div>
@@ -235,6 +253,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                 <div className="group relative">
                   <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 transition-colors group-focus-within:text-blue-900 dark:group-focus-within:text-amber-500" />
                   <input
+                    autoComplete="current-password"
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-12 pr-12 font-mono text-sm shadow-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700/50 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
                     onChange={(event) => setLoginPassword(event.target.value)}
                     required
@@ -270,10 +289,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                 ยังไม่มีบัญชีใช่หรือไม่?{' '}
                 <button
                   className="ml-1 font-bold text-blue-900 hover:underline dark:text-amber-500"
-                  onClick={() => {
-                    setRegisterRole('admin');
-                    navigate('/register');
-                  }}
+                  onClick={() => navigate('/register')}
                   type="button"
                 >
                   สมัครใช้งาน
@@ -290,6 +306,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                     ชื่อ
                   </label>
                   <input
+                    autoComplete="given-name"
                     className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
                     onChange={(event) => setRegisterFirstName(event.target.value)}
                     required
@@ -302,6 +319,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                     นามสกุล
                   </label>
                   <input
+                    autoComplete="family-name"
                     className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
                     onChange={(event) => setRegisterLastName(event.target.value)}
                     required
@@ -315,6 +333,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                   เบอร์มือถือ
                 </label>
                 <input
+                  autoComplete="tel"
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
                   onChange={(event) => setRegisterPhone(event.target.value)}
                   required
@@ -327,6 +346,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                   อีเมล
                 </label>
                 <input
+                  autoComplete="email"
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
                   onChange={(event) => setRegisterEmail(event.target.value)}
                   required
@@ -340,6 +360,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                 </label>
                 <div className="relative">
                   <input
+                    autoComplete="new-password"
                     className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-4 pr-10 font-mono text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
                     minLength={4}
                     onChange={(event) => setRegisterPassword(event.target.value)}
@@ -360,16 +381,9 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                 <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
                   ประเภทบัญชี
                 </label>
-                <select
-                  className="w-full appearance-none rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
-                  onChange={(event) =>
-                    setRegisterRole(event.target.value as 'admin' | 'general')
-                  }
-                  value={registerRole}
-                >
-                  <option value="general">บุคคลทั่วไป</option>
-                  <option value="admin">เจ้าหน้าที่ตำรวจ (Admin)</option>
-                </select>
+                <div className="rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-sm text-blue-900 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-100">
+                  บัญชีที่สมัครจากหน้าเว็บไซต์จะถูกสร้างเป็นผู้ใช้งานทั่วไป และสามารถกำหนดสิทธิ์เพิ่มเติมโดยผู้ดูแลระบบภายหลัง
+                </div>
               </div>
 
               <div className="mb-2 mt-2 flex items-start">
@@ -384,13 +398,21 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                 </div>
                 <label className="ml-2 text-xs text-slate-600 dark:text-slate-400" htmlFor="terms">
                   ยอมรับ{' '}
-                  <a className="font-bold text-blue-900 hover:underline dark:text-amber-500" href="#">
+                  <button
+                    className="font-bold text-blue-900 hover:underline dark:text-amber-500"
+                    onClick={() => navigate('/terms')}
+                    type="button"
+                  >
                     เงื่อนไขการใช้บริการ
-                  </a>{' '}
+                  </button>{' '}
                   และ{' '}
-                  <a className="font-bold text-blue-900 hover:underline dark:text-amber-500" href="#">
+                  <button
+                    className="font-bold text-blue-900 hover:underline dark:text-amber-500"
+                    onClick={() => navigate('/privacy')}
+                    type="button"
+                  >
                     นโยบายความเป็นส่วนตัว
-                  </a>
+                  </button>
                 </label>
               </div>
 
@@ -418,16 +440,17 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
             <form className="space-y-5 animate-in zoom-in-95 fade-in duration-300" onSubmit={handleForgotPassword}>
               <div>
                 <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  อีเมล หรือ Username
+                  อีเมล
                 </label>
                 <div className="group relative">
                   <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 transition-colors group-focus-within:text-blue-900 dark:group-focus-within:text-amber-500" />
                   <input
+                    autoComplete="email"
                     className="w-full rounded-xl border border-slate-300 bg-white py-3.5 pl-12 pr-4 font-mono text-sm shadow-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700/50 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
-                    onChange={(event) => setForgotUsername(event.target.value)}
+                    onChange={(event) => setForgotEmail(event.target.value)}
                     required
                     type="text"
-                    value={forgotUsername}
+                    value={forgotEmail}
                   />
                 </div>
               </div>

@@ -10,11 +10,18 @@ import { buildDocumentSearchIndex, normalizeStoredFile } from '../utils/document
 
 const DOC_TYPES_KEY = 'milosystem:docTypes';
 const DOCUMENTS_KEY = 'milosystem:documents';
+const LOCAL_DB_NAME = 'milosystem-local-db';
+const LOCAL_DB_VERSION = 1;
+const LOCAL_DB_STORE = 'app-data';
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 
-const getStorageItem = <T>(key: string, fallback: T): T => {
-  if (typeof window === 'undefined') {
+let localDbPromise: Promise<IDBDatabase | null> | null = null;
+
+const hasWindow = () => typeof window !== 'undefined';
+
+const getLocalStorageItem = <T>(key: string, fallback: T): T => {
+  if (!hasWindow()) {
     return clone(fallback);
   }
 
@@ -31,19 +38,119 @@ const getStorageItem = <T>(key: string, fallback: T): T => {
   }
 };
 
-const setStorageItem = <T>(key: string, value: T) => {
-  if (typeof window === 'undefined') {
+const removeLocalStorageItem = (key: string) => {
+  if (!hasWindow()) {
+    return;
+  }
+
+  window.localStorage.removeItem(key);
+};
+
+const setLocalStorageItem = <T>(key: string, value: T) => {
+  if (!hasWindow()) {
     return;
   }
 
   window.localStorage.setItem(key, JSON.stringify(value));
 };
 
-const getDocTypes = () => getStorageItem<DocType[]>(DOC_TYPES_KEY, previewDocTypes);
-const getDocuments = () => getStorageItem<DocumentData[]>(DOCUMENTS_KEY, previewDocuments);
+const requestToPromise = <T>(request: IDBRequest<T>) =>
+  new Promise<T>((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error ?? new Error('IndexedDB request failed'));
+  });
 
-const saveDocTypes = (docTypes: DocType[]) => setStorageItem(DOC_TYPES_KEY, docTypes);
-const saveDocuments = (documents: DocumentData[]) => setStorageItem(DOCUMENTS_KEY, documents);
+const openLocalDb = async () => {
+  if (!hasWindow() || !('indexedDB' in window)) {
+    return null;
+  }
+
+  if (!localDbPromise) {
+    localDbPromise = new Promise<IDBDatabase>((resolve, reject) => {
+      const request = window.indexedDB.open(LOCAL_DB_NAME, LOCAL_DB_VERSION);
+
+      request.onupgradeneeded = () => {
+        const database = request.result;
+
+        if (!database.objectStoreNames.contains(LOCAL_DB_STORE)) {
+          database.createObjectStore(LOCAL_DB_STORE);
+        }
+      };
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error ?? new Error('Unable to open IndexedDB'));
+    }).catch((): IDBDatabase | null => null);
+  }
+
+  return localDbPromise;
+};
+
+const readIndexedDbItem = async <T>(key: string) => {
+  const database = await openLocalDb();
+
+  if (!database) {
+    return undefined;
+  }
+
+  const transaction = database.transaction(LOCAL_DB_STORE, 'readonly');
+  const store = transaction.objectStore(LOCAL_DB_STORE);
+  const result = await requestToPromise(store.get(key));
+
+  return result as T | undefined;
+};
+
+const writeIndexedDbItem = async <T>(key: string, value: T) => {
+  const database = await openLocalDb();
+
+  if (!database) {
+    return false;
+  }
+
+  const transaction = database.transaction(LOCAL_DB_STORE, 'readwrite');
+  const store = transaction.objectStore(LOCAL_DB_STORE);
+  await requestToPromise(store.put(clone(value), key));
+  return true;
+};
+
+const getPersistedItem = async <T>(key: string, fallback: T): Promise<T> => {
+  const indexedDbValue = await readIndexedDbItem<T>(key);
+
+  if (indexedDbValue !== undefined) {
+    return clone(indexedDbValue);
+  }
+
+  const localStorageValue = getLocalStorageItem<T>(key, fallback);
+  const hasLegacyValue =
+    hasWindow() && window.localStorage.getItem(key) !== null;
+
+  if (hasLegacyValue) {
+    const migrated = await writeIndexedDbItem(key, localStorageValue);
+
+    if (migrated) {
+      removeLocalStorageItem(key);
+    }
+  }
+
+  return clone(localStorageValue);
+};
+
+const setPersistedItem = async <T>(key: string, value: T) => {
+  const savedToIndexedDb = await writeIndexedDbItem(key, value);
+
+  if (savedToIndexedDb) {
+    removeLocalStorageItem(key);
+    return;
+  }
+
+  setLocalStorageItem(key, value);
+};
+
+const getDocTypes = () => getPersistedItem<DocType[]>(DOC_TYPES_KEY, previewDocTypes);
+const getDocuments = () =>
+  getPersistedItem<DocumentData[]>(DOCUMENTS_KEY, previewDocuments);
+
+const saveDocTypes = (docTypes: DocType[]) => setPersistedItem(DOC_TYPES_KEY, docTypes);
+const saveDocuments = (documents: DocumentData[]) => setPersistedItem(DOCUMENTS_KEY, documents);
 
 const createId = (prefix: string) =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -118,10 +225,10 @@ const mapLocalFiles = async (filesMeta: StoredFile[] = [], uploadedFiles: File[]
 
 export const localDataApi = {
   getDocTypes: async () =>
-    [...getDocTypes()].sort((left, right) => left.name.localeCompare(right.name, 'th')),
+    [...(await getDocTypes())].sort((left, right) => left.name.localeCompare(right.name, 'th')),
 
   saveDocType: async (payload: SaveDocTypeInput, id?: string) => {
-    const docTypes = getDocTypes();
+    const docTypes = await getDocTypes();
     const name = (payload.name || '').trim();
     const color = (payload.color || '#1e3a8a').trim();
 
@@ -139,26 +246,26 @@ export const localDataApi = {
       ? docTypes.map((docType) => (docType._id === id ? nextDocType : docType))
       : [nextDocType, ...docTypes];
 
-    saveDocTypes(nextDocTypes);
+    await saveDocTypes(nextDocTypes);
     return nextDocType;
   },
 
   deleteDocType: async (id: string) => {
-    const documents = getDocuments();
+    const documents = await getDocuments();
 
     if (documents.some((document) => document.typeId === id)) {
       throw new Error('ไม่สามารถลบประเภทเอกสารที่ถูกใช้งานอยู่ได้');
     }
 
-    saveDocTypes(getDocTypes().filter((docType) => docType._id !== id));
+    await saveDocTypes((await getDocTypes()).filter((docType) => docType._id !== id));
     return true;
   },
 
   getDocuments: async () =>
-    [...getDocuments()].sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
+    [...(await getDocuments())].sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
 
   saveDocument: async (payload: SaveDocumentInput, id?: string) => {
-    const documents = getDocuments();
+    const documents = await getDocuments();
     const existingDocument = id ? documents.find((document) => document._id === id) : null;
     const nextFiles = await mapLocalFiles(payload.files ?? [], payload.uploadedFiles ?? []);
     const indexed = buildDocumentSearchIndex({
@@ -194,12 +301,12 @@ export const localDataApi = {
       ? documents.map((document) => (document._id === nextDocument._id ? nextDocument : document))
       : [nextDocument, ...documents];
 
-    saveDocuments(nextDocuments);
+    await saveDocuments(nextDocuments);
     return nextDocument;
   },
 
   deleteDocument: async (id: string) => {
-    saveDocuments(getDocuments().filter((document) => document._id !== id));
+    await saveDocuments((await getDocuments()).filter((document) => document._id !== id));
     return true;
   },
 };

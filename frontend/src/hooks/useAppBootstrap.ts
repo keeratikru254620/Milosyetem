@@ -7,7 +7,7 @@ import type { User } from '../types';
 
 interface UseAppBootstrapArgs {
   initialPathname: string;
-  loadAllData: () => Promise<void>;
+  loadAllData: (user?: User | null) => Promise<void>;
   navigate: (path: string) => void;
   setCurrentUser: Dispatch<SetStateAction<User | null>>;
 }
@@ -17,6 +17,8 @@ const PUBLIC_PATHS = new Set([
   '/login',
   '/register',
   '/forgot-password',
+  '/terms',
+  '/privacy',
   '/dashboard',
   '/documents',
   '/doctypes',
@@ -53,7 +55,7 @@ export const useAppBootstrap = ({
 
         if (user) {
           setCurrentUser(user);
-          await loadAllData();
+          await loadAllData(user);
         } else if (!isPublicPath(initialPathname)) {
           navigate('/login');
         }
