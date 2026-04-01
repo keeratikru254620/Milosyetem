@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { API_PROVIDER } from '../services/apiConfig';
 
 interface ApiErrorMessageOptions {
   duplicateMessage?: string;
@@ -12,29 +12,34 @@ export const getApiErrorMessage = (
   {
     duplicateMessage = 'ข้อมูลนี้ถูกใช้งานอยู่แล้ว',
     invalidCredentialsMessage = 'ข้อมูลเข้าสู่ระบบไม่ถูกต้อง',
-    networkMessage = 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาเปิด backend ก่อน',
+    networkMessage =
+      API_PROVIDER === 'firebase'
+        ? 'ไม่สามารถเชื่อมต่อ Firebase ได้ กรุณาตรวจสอบการตั้งค่าและเครือข่าย'
+        : 'ไม่สามารถเชื่อมต่อระบบข้อมูลได้',
     fallbackMessage,
   }: ApiErrorMessageOptions,
 ) => {
-  if (axios.isAxiosError(error)) {
-    if (!error.response) {
-      return networkMessage;
-    }
+  if (error && typeof error === 'object' && 'code' in error) {
+    const code = String((error as { code?: string }).code || '').trim();
 
-    const statusCode = error.response.status;
-    const responseMessage =
-      typeof error.response.data?.message === 'string' ? error.response.data.message.trim() : '';
-
-    if (statusCode === 409) {
+    if (
+      code === 'auth/email-already-in-use' ||
+      code === 'auth/account-exists-with-different-credential'
+    ) {
       return duplicateMessage;
     }
 
-    if (statusCode === 401) {
+    if (
+      code === 'auth/invalid-credential' ||
+      code === 'auth/invalid-login-credentials' ||
+      code === 'auth/user-not-found' ||
+      code === 'auth/wrong-password'
+    ) {
       return invalidCredentialsMessage;
     }
 
-    if (responseMessage) {
-      return responseMessage;
+    if (code === 'auth/network-request-failed') {
+      return networkMessage;
     }
   }
 

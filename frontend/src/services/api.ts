@@ -1,6 +1,10 @@
-import { serverApi } from './serverApi';
-import { API_BASE_URL } from './apiConfig';
+import { firebaseApi } from './firebaseApi';
+import { localDataApi } from './localDataApi';
 
-export const isServerApiEnabled = Boolean(API_BASE_URL);
+export const isServerApiEnabled = false;
+export const isFirebaseApiEnabled = true;
 
-export const api = serverApi;
+export const api = {
+  ...firebaseApi,
+  ...localDataApi,
+};

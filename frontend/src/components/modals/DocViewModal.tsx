@@ -9,7 +9,6 @@ import {
   X,
 } from 'lucide-react';
 
-import { BACKEND_ORIGIN } from '../../services/apiConfig';
 import { showToast } from '../../services/toastService';
 import type { DocType, DocumentData, StoredFile, User } from '../../types';
 import { hasSearchablePdfContent, getStoredFileName } from '../../utils/documentSearch';
@@ -48,7 +47,7 @@ const getFileAccessUrl = (file: StoredFile) => {
     return null;
   }
 
-  return file.url.startsWith('http') ? file.url : `${BACKEND_ORIGIN}${file.url}`;
+  return file.url;
 };
 
 const getFileDownloadUrl = (file: StoredFile) => {
@@ -60,11 +59,6 @@ const getFileDownloadUrl = (file: StoredFile) => {
 
   try {
     const url = new URL(fileUrl, window.location.origin);
-
-    if (url.pathname.includes('/api/documents/files/')) {
-      url.searchParams.set('download', '1');
-    }
-
     return url.toString();
   } catch {
     return fileUrl;

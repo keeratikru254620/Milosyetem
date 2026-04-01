@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { confirmDialog } from '../services/confirmService';
 import { showToast } from '../services/toastService';
 import type { DocType, DocumentData, SaveDocTypeInput } from '../types';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface DocTypesViewProps {
   docTypes: DocType[];
@@ -44,15 +45,26 @@ export default function DocTypesView({
       return;
     }
 
-    await onSaveDocType(
-      {
-        name: form.name.trim(),
-        color: form.color,
-      },
-      editing?._id,
-    );
-    showToast(editing ? 'อัปเดตประเภทเอกสารสำเร็จ' : 'เพิ่มประเภทเอกสารสำเร็จ');
-    resetForm();
+    try {
+      await onSaveDocType(
+        {
+          name: form.name.trim(),
+          color: form.color,
+        },
+        editing?._id,
+      );
+      showToast(editing ? 'อัปเดตประเภทเอกสารสำเร็จ' : 'เพิ่มประเภทเอกสารสำเร็จ');
+      resetForm();
+    } catch (error) {
+      showToast(
+        getApiErrorMessage(error, {
+          fallbackMessage: editing
+            ? 'อัปเดตประเภทเอกสารไม่สำเร็จ'
+            : 'เพิ่มประเภทเอกสารไม่สำเร็จ',
+        }),
+        'error',
+      );
+    }
   };
 
   const handleDelete = async (docType: DocType, count: number) => {
@@ -70,10 +82,20 @@ export default function DocTypesView({
       return;
     }
 
-    await onDeleteDocType(docType._id);
-    showToast('ลบประเภทเอกสารสำเร็จ');
-    if (editing?._id === docType._id) {
-      resetForm();
+    try {
+      await onDeleteDocType(docType._id);
+      showToast('ลบประเภทเอกสารสำเร็จ');
+
+      if (editing?._id === docType._id) {
+        resetForm();
+      }
+    } catch (error) {
+      showToast(
+        getApiErrorMessage(error, {
+          fallbackMessage: 'ลบประเภทเอกสารไม่สำเร็จ',
+        }),
+        'error',
+      );
     }
   };
 

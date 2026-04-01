@@ -1,6 +1,8 @@
 node_modules/
 dist/
 .env
+.env.local
+frontend/.env.local
 .codex-dev.log
 .codex-dev.err.log
 *.tsbuildinfo

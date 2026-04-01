@@ -5,6 +5,7 @@ import UserFormModal from '../components/modals/UserFormModal';
 import { confirmDialog } from '../services/confirmService';
 import { showToast } from '../services/toastService';
 import type { SaveUserInput, User } from '../types';
+import { getApiErrorMessage } from '../utils/apiError';
 import { getRoleText } from '../utils/format';
 
 interface UsersViewProps {
@@ -32,8 +33,17 @@ export default function UsersView({
       return;
     }
 
-    await onDeleteUser(id);
-    showToast('ลบผู้ใช้งานสำเร็จ');
+    try {
+      await onDeleteUser(id);
+      showToast('ลบผู้ใช้งานสำเร็จ');
+    } catch (error) {
+      showToast(
+        getApiErrorMessage(error, {
+          fallbackMessage: 'ไม่สามารถลบผู้ใช้งานได้',
+        }),
+        'error',
+      );
+    }
   };
 
   const getRoleBadgeStyles = (role: User['role']) => {
