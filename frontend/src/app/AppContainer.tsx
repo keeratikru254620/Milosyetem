@@ -7,8 +7,8 @@ import Sidebar from '../components/layout/Sidebar';
 import { useAppBootstrap } from '../hooks/useAppBootstrap';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { useIdleLogout } from '../hooks/useIdleLogout';
-import { api } from '../services/api';
 import { confirmDialog } from '../services/confirmService';
+import { localAppService } from '../services/localAppService';
 import type {
   SaveDocTypeInput,
   SaveDocumentInput,
@@ -39,9 +39,9 @@ export default function AppContainer() {
 
   const loadAllData = useCallback(async (targetUser: User | null = currentUser) => {
     const [loadedUsers, loadedDocTypes, loadedDocuments] = await Promise.all([
-      targetUser?.role === 'admin' ? api.getUsers() : Promise.resolve([]),
-      api.getDocTypes(),
-      api.getDocuments(),
+      targetUser?.role === 'admin' ? localAppService.getUsers() : Promise.resolve([]),
+      localAppService.getDocTypes(),
+      localAppService.getDocuments(),
     ]);
     setUsers(loadedUsers);
     setDocTypes(loadedDocTypes);
@@ -83,7 +83,7 @@ export default function AppContainer() {
   }, [currentUser, location.pathname]);
 
   const handleLogout = useCallback(() => {
-    api.logout();
+    localAppService.logout();
     setCurrentUser(null);
     setIsSidebarOpen(false);
     navigate('/login');
@@ -113,7 +113,7 @@ export default function AppContainer() {
 
   const handleSaveUser = useCallback(
     async (data: SaveUserInput, id?: string) => {
-      const savedUser = await api.saveUser(data, id);
+      const savedUser = await localAppService.saveUser(data, id);
       await loadAllData();
       setCurrentUser((previous) =>
         previous && previous._id === savedUser._id ? { ...previous, ...savedUser } : previous,
@@ -125,7 +125,7 @@ export default function AppContainer() {
 
   const handleDeleteUser = useCallback(
     async (id: string) => {
-      await api.deleteUser(id);
+      await localAppService.deleteUser(id);
       await loadAllData();
     },
     [loadAllData],
@@ -133,7 +133,7 @@ export default function AppContainer() {
 
   const handleSaveDocType = useCallback(
     async (data: SaveDocTypeInput, id?: string) => {
-      const savedDocType = await api.saveDocType(data, id);
+      const savedDocType = await localAppService.saveDocType(data, id);
       await loadAllData();
       return savedDocType;
     },
@@ -142,7 +142,7 @@ export default function AppContainer() {
 
   const handleDeleteDocType = useCallback(
     async (id: string) => {
-      await api.deleteDocType(id);
+      await localAppService.deleteDocType(id);
       await loadAllData();
     },
     [loadAllData],
@@ -150,7 +150,7 @@ export default function AppContainer() {
 
   const handleSaveDocument = useCallback(
     async (data: SaveDocumentInput, id?: string) => {
-      const savedDocument = await api.saveDocument(data, id);
+      const savedDocument = await localAppService.saveDocument(data, id);
       await loadAllData();
       return savedDocument;
     },
@@ -159,7 +159,7 @@ export default function AppContainer() {
 
   const handleDeleteDocument = useCallback(
     async (id: string) => {
-      await api.deleteDocument(id);
+      await localAppService.deleteDocument(id);
       await loadAllData();
     },
     [loadAllData],

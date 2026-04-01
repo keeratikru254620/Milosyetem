@@ -10,10 +10,10 @@ import {
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { api } from '../services/api';
+import { localAppService } from '../services/localAppService';
 import { showToast } from '../services/toastService';
 import type { AuthMode, User } from '../types';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getErrorMessage } from '../utils/errorMessage';
 import { APP_LOGO_FALLBACK, APP_LOGO_SRC } from '../utils/assets';
 
 interface AuthViewProps {
@@ -50,12 +50,12 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     setIsLoading(true);
 
     try {
-      const result = await api.login(loginEmail, loginPassword);
+      const result = await localAppService.login(loginEmail, loginPassword);
       await onLogin(result.user);
       showToast('เข้าสู่ระบบสำเร็จ');
     } catch (error) {
       showToast(
-        getApiErrorMessage(error, {
+        getErrorMessage(error, {
           invalidCredentialsMessage: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
           fallbackMessage: 'เข้าสู่ระบบไม่สำเร็จ',
         }),
@@ -86,7 +86,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     setIsLoading(true);
 
     try {
-      const result = await api.register({
+      await localAppService.register({
         username: registerEmail,
         password: registerPassword,
         name: `${registerFirstName} ${registerLastName}`.trim(),
@@ -98,7 +98,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
       navigate('/login');
     } catch (error) {
       showToast(
-        getApiErrorMessage(error, {
+        getErrorMessage(error, {
           duplicateMessage: 'มีอีเมลนี้อยู่ในระบบแล้ว',
           fallbackMessage: 'ไม่สามารถสมัครสมาชิกได้',
         }),
@@ -124,13 +124,13 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     setIsLoading(true);
 
     try {
-      await api.requestPasswordReset(forgotEmail.trim());
-      showToast('ระบบได้ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณแล้ว', 'success');
+      const temporaryPassword = await localAppService.requestPasswordReset(forgotEmail.trim());
+      showToast(`รีเซ็ตรหัสผ่านชั่วคราวเป็น ${temporaryPassword} แล้ว`, 'success');
       setForgotEmail('');
       navigate('/login');
     } catch (error) {
       showToast(
-        getApiErrorMessage(error, {
+        getErrorMessage(error, {
           fallbackMessage: 'ไม่สามารถส่งคำขอรีเซ็ตรหัสผ่านได้',
         }),
         'error',

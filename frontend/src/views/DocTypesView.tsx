@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { confirmDialog } from '../services/confirmService';
 import { showToast } from '../services/toastService';
 import type { DocType, DocumentData, SaveDocTypeInput } from '../types';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getErrorMessage } from '../utils/errorMessage';
 
 interface DocTypesViewProps {
   docTypes: DocType[];
@@ -57,7 +57,7 @@ export default function DocTypesView({
       resetForm();
     } catch (error) {
       showToast(
-        getApiErrorMessage(error, {
+        getErrorMessage(error, {
           fallbackMessage: editing
             ? 'อัปเดตประเภทเอกสารไม่สำเร็จ'
             : 'เพิ่มประเภทเอกสารไม่สำเร็จ',
@@ -91,7 +91,7 @@ export default function DocTypesView({
       }
     } catch (error) {
       showToast(
-        getApiErrorMessage(error, {
+        getErrorMessage(error, {
           fallbackMessage: 'ลบประเภทเอกสารไม่สำเร็จ',
         }),
         'error',

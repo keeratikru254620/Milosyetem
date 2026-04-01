@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { showToast } from '../../services/toastService';
 import type { SaveUserInput, User } from '../../types';
-import { getApiErrorMessage } from '../../utils/apiError';
+import { getErrorMessage } from '../../utils/errorMessage';
 
 interface UserFormModalProps {
   allUsers: User[];
@@ -70,7 +70,7 @@ export default function UserFormModal({
       onClose();
     } catch (error) {
       showToast(
-        getApiErrorMessage(error, {
+        getErrorMessage(error, {
           duplicateMessage: 'มีผู้ใช้งานระบบนี้อยู่แล้ว',
           fallbackMessage: isEdit ? 'อัปเดตผู้ใช้งานไม่สำเร็จ' : 'เพิ่มผู้ใช้งานไม่สำเร็จ',
         }),
