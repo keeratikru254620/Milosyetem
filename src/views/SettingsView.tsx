@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { showToast } from '../services/toastService';
 import type { SaveUserInput, User } from '../types';
+import { getErrorMessage } from '../utils/auth';
 
 export type SettingsTab = 'general' | 'profile' | 'security' | 'support';
 
@@ -67,6 +68,13 @@ export default function SettingsView({
     try {
       await onSaveUser({ name: name.trim() }, currentUser._id);
       showToast('บันทึกข้อมูลสำเร็จ');
+    } catch (error) {
+      showToast(
+        getErrorMessage(error, {
+          fallbackMessage: 'ไม่สามารถบันทึกข้อมูลผู้ใช้ได้',
+        }),
+        'error',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -79,12 +87,24 @@ export default function SettingsView({
       return;
     }
 
+    if (password.trim().length < 6) {
+      showToast('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร', 'error');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       await onSaveUser({ password }, currentUser._id);
       setPassword('');
       showToast('เปลี่ยนรหัสผ่านสำเร็จ');
+    } catch (error) {
+      showToast(
+        getErrorMessage(error, {
+          fallbackMessage: 'ไม่สามารถอัปเดตรหัสผ่านได้',
+        }),
+        'error',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -120,8 +140,17 @@ export default function SettingsView({
         const context = canvas.getContext('2d');
         context?.drawImage(image, 0, 0, width, height);
 
-        await onSaveUser({ avatar: canvas.toDataURL('image/jpeg', 0.8) }, currentUser._id);
-        showToast('อัปเดตรูปสำเร็จ');
+        try {
+          await onSaveUser({ avatar: canvas.toDataURL('image/jpeg', 0.8) }, currentUser._id);
+          showToast('อัปเดตรูปสำเร็จ');
+        } catch (error) {
+          showToast(
+            getErrorMessage(error, {
+              fallbackMessage: 'ไม่สามารถอัปเดตรูปโปรไฟล์ได้',
+            }),
+            'error',
+          );
+        }
       };
 
       image.src = String(loadEvent.target?.result ?? '');

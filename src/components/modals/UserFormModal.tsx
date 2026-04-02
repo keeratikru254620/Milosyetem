@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { showToast } from '../../services/toastService';
 import type { SaveUserInput, User } from '../../types';
-import { getErrorMessage } from '../../utils/errorMessage';
+import { getErrorMessage } from '../../utils/auth';
 
 interface UserFormModalProps {
   allUsers: User[];

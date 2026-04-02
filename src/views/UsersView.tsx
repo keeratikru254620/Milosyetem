@@ -5,7 +5,7 @@ import UserFormModal from '../components/modals/UserFormModal';
 import { confirmDialog } from '../services/confirmService';
 import { showToast } from '../services/toastService';
 import type { SaveUserInput, User } from '../types';
-import { getErrorMessage } from '../utils/errorMessage';
+import { getErrorMessage } from '../utils/auth';
 import { getRoleText } from '../utils/format';
 
 interface UsersViewProps {

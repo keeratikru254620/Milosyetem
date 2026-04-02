@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { confirmDialog } from '../services/confirmService';
 import { showToast } from '../services/toastService';
 import type { DocType, DocumentData, SaveDocTypeInput } from '../types';
-import { getErrorMessage } from '../utils/errorMessage';
+import { getErrorMessage } from '../utils/auth';
 
 interface DocTypesViewProps {
   docTypes: DocType[];

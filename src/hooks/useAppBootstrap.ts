@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useEffect, useState } from 'react';
 
-import { localAppService } from '../services/localAppService';
+import { api } from '../services/api';
 import { injectGlobalAppStyles } from '../styles/globalAppStyles';
 import type { User } from '../types';
 
@@ -47,7 +47,7 @@ export const useAppBootstrap = ({
 
     const bootstrap = async () => {
       try {
-        const user = await localAppService.verifySession();
+        const user = await api.verifySession();
 
         if (!isMounted) {
           return;

@@ -10,10 +10,10 @@ import {
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { localAppService } from '../services/localAppService';
+import { api } from '../services/api';
 import { showToast } from '../services/toastService';
 import type { AuthMode, User } from '../types';
-import { getErrorMessage } from '../utils/errorMessage';
+import { getErrorMessage } from '../utils/auth';
 import { APP_LOGO_FALLBACK, APP_LOGO_SRC } from '../utils/assets';
 
 interface AuthViewProps {
@@ -50,13 +50,15 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     setIsLoading(true);
 
     try {
-      const result = await localAppService.login(loginEmail, loginPassword);
+      const result = await api.login(loginEmail, loginPassword);
       await onLogin(result.user);
       showToast('เข้าสู่ระบบสำเร็จ');
     } catch (error) {
       showToast(
         getErrorMessage(error, {
           invalidCredentialsMessage: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+          emailNotVerifiedMessage: 'กรุณายืนยันอีเมลจากกล่องจดหมายก่อนเข้าสู่ระบบ',
+          disabledAccountMessage: 'บัญชีนี้ถูกปิดการใช้งานแล้ว',
           fallbackMessage: 'เข้าสู่ระบบไม่สำเร็จ',
         }),
         'error',
@@ -78,15 +80,15 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
       return;
     }
 
-    if (registerPassword.length < 4) {
-      showToast('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร', 'error');
+    if (registerPassword.length < 6) {
+      showToast('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร', 'error');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      await localAppService.register({
+      await api.register({
         username: registerEmail,
         password: registerPassword,
         name: `${registerFirstName} ${registerLastName}`.trim(),
@@ -124,8 +126,8 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     setIsLoading(true);
 
     try {
-      const temporaryPassword = await localAppService.requestPasswordReset(forgotEmail.trim());
-      showToast(`รีเซ็ตรหัสผ่านชั่วคราวเป็น ${temporaryPassword} แล้ว`, 'success');
+      await api.requestPasswordReset(forgotEmail.trim());
+      showToast('ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณแล้ว', 'success');
       setForgotEmail('');
       navigate('/login');
     } catch (error) {
@@ -356,13 +358,13 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  รหัสผ่าน (ขั้นต่ำ 4 ตัวอักษร)
+                  รหัสผ่าน (ขั้นต่ำ 6 ตัวอักษร)
                 </label>
                 <div className="relative">
                   <input
                     autoComplete="new-password"
                     className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-4 pr-10 font-mono text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
-                    minLength={4}
+                    minLength={6}
                     onChange={(event) => setRegisterPassword(event.target.value)}
                     required
                     type={showPassword ? 'text' : 'password'}
