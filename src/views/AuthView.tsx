@@ -1,16 +1,18 @@
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import {
   Eye,
   EyeOff,
   Loader2,
   Lock,
   Mail,
+  ShieldCheck,
   User as UserIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { api } from '../services/api';
+import { isFirebaseConfigured } from '../services/firebaseConfig';
 import { showToast } from '../services/toastService';
 import type { AuthMode, User } from '../types';
 import { getErrorMessage } from '../utils/auth';
@@ -21,20 +23,145 @@ interface AuthViewProps {
   onLogin: (user: User) => Promise<void> | void;
 }
 
+interface AuthInputProps {
+  autoComplete?: string;
+  icon: ReactNode;
+  label: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  rightSlot?: ReactNode;
+  type?: string;
+  value: string;
+}
+
+function AuthInput({
+  autoComplete,
+  icon,
+  label,
+  onChange,
+  placeholder,
+  required = true,
+  rightSlot,
+  type = 'text',
+  value,
+}: AuthInputProps) {
+  return (
+    <div>
+      <label className="mb-3 block text-sm font-semibold tracking-wide text-slate-500">
+        {label}
+      </label>
+      <div className="group relative">
+        <div className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#233B84]">
+          {icon}
+        </div>
+        <input
+          autoComplete={autoComplete}
+          className="h-16 w-full rounded-[1.2rem] border border-slate-200 bg-white pl-16 pr-14 text-lg font-normal text-slate-700 shadow-[0_6px_20px_rgba(15,23,42,0.06)] outline-none transition-all placeholder:text-slate-400 focus:border-[#233B84] focus:shadow-[0_0_0_4px_rgba(35,59,132,0.08)]"
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          required={required}
+          type={type}
+          value={value}
+        />
+        {rightSlot ? (
+          <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400">{rightSlot}</div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+interface RoleCardProps {
+  description: string;
+  icon: ReactNode;
+  isSelected: boolean;
+  label: string;
+  onClick: () => void;
+}
+
+function RoleCard({ description, icon, isSelected, label, onClick }: RoleCardProps) {
+  return (
+    <button
+      aria-pressed={isSelected}
+      className={`rounded-[1.25rem] border p-4 text-left transition-all ${
+        isSelected
+          ? 'border-[#233B84] bg-[#EEF3FF] shadow-[0_10px_24px_rgba(35,59,132,0.12)]'
+          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+      }`}
+      onClick={onClick}
+      type="button"
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
+            isSelected ? 'bg-[#233B84] text-white' : 'bg-slate-100 text-slate-500'
+          }`}
+        >
+          {icon}
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-slate-800">{label}</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function AuthBrandPanel() {
+  return (
+    <section className="relative hidden w-[50%] shrink-0 flex-col justify-between overflow-hidden bg-[linear-gradient(180deg,#EAF2FF_0%,#DDE9FA_52%,#D9E5F5_100%)] px-12 py-10 lg:flex">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.9),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(35,59,132,0.08),_transparent_36%)]" />
+      <div className="pointer-events-none absolute left-[-6rem] top-[-7rem] h-72 w-72 rounded-full bg-white/80 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-[-5rem] right-[-5rem] h-60 w-60 rounded-full bg-[#233B84]/10 blur-3xl" />
+
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center">
+        <div className="flex h-[22rem] w-[22rem] items-center justify-center rounded-[2.4rem] border border-white/80 bg-white/88 p-8 shadow-[0_28px_70px_rgba(35,59,132,0.12)] backdrop-blur-xl">
+          <img
+            alt="CCID logo"
+            className="h-full w-full object-contain drop-shadow-[0_18px_30px_rgba(15,23,42,0.22)]"
+            onError={(event) => {
+              const target = event.currentTarget;
+              target.onerror = null;
+              target.src = APP_LOGO_FALLBACK;
+            }}
+            src={APP_LOGO_SRC}
+          />
+        </div>
+
+        <div className="mt-12 text-center">
+          <h1 className="font-display text-[4rem] font-bold leading-[0.96] tracking-tight text-slate-800">
+            ระบบจัดเก็บเอกสาร
+            <br />
+            ราชการ
+          </h1>
+          <div className="mx-auto mt-7 h-1.5 w-24 rounded-full bg-[#E68618]" />
+          <p className="mt-6 text-[1.7rem] font-semibold tracking-tight text-[#E68618]">
+            สำหรับหน่วยงานและองค์กร
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function AuthView({ initialMode = 'login', onLogin }: AuthViewProps) {
+  const navigate = useNavigate();
+  const usesFirebaseAuth = isFirebaseConfigured;
+
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
-  const [loginEmail, setLoginEmail] = useState('');
+  const [loginIdentity, setLoginIdentity] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [registerFirstName, setRegisterFirstName] = useState('');
   const [registerLastName, setRegisterLastName] = useState('');
-  const [registerPhone, setRegisterPhone] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [registerRole, setRegisterRole] = useState<User['role']>('general');
   const [forgotEmail, setForgotEmail] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     setAuthMode(initialMode);
@@ -50,7 +177,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     setIsLoading(true);
 
     try {
-      const result = await api.login(loginEmail, loginPassword);
+      const result = await api.login(loginIdentity, loginPassword);
       await onLogin(result.user);
       showToast('เข้าสู่ระบบสำเร็จ');
     } catch (error) {
@@ -76,7 +203,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     }
 
     if (!termsAccepted) {
-      showToast('กรุณายอมรับเงื่อนไขการใช้บริการ', 'error');
+      showToast('กรุณายอมรับเงื่อนไขการใช้งานก่อนสมัครสมาชิก', 'error');
       return;
     }
 
@@ -92,16 +219,21 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
         username: registerEmail,
         password: registerPassword,
         name: `${registerFirstName} ${registerLastName}`.trim(),
-        role: 'general',
-        phone: registerPhone,
+        role: registerRole,
         email: registerEmail,
       });
-      showToast('สมัครสมาชิกสำเร็จ กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ', 'success');
+
+      showToast(
+        usesFirebaseAuth
+          ? 'สมัครสมาชิกสำเร็จ กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ'
+          : 'สมัครสมาชิกสำเร็จ สามารถเข้าสู่ระบบได้ทันที',
+        'success',
+      );
       navigate('/login');
     } catch (error) {
       showToast(
         getErrorMessage(error, {
-          duplicateMessage: 'มีอีเมลนี้อยู่ในระบบแล้ว',
+          duplicateMessage: 'อีเมลนี้มีอยู่ในระบบแล้ว',
           fallbackMessage: 'ไม่สามารถสมัครสมาชิกได้',
         }),
         'error',
@@ -120,6 +252,11 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
 
     if (!forgotEmail.trim()) {
       showToast('กรุณากรอกอีเมลที่ใช้เข้าสู่ระบบ', 'error');
+      return;
+    }
+
+    if (!usesFirebaseAuth) {
+      showToast('โหมดทดสอบในเครื่องยังไม่รองรับการรีเซ็ตรหัสผ่านทางอีเมล', 'info');
       return;
     }
 
@@ -142,338 +279,264 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     }
   };
 
-  return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white font-sans dark:bg-[#0B1120]">
-      <div className="absolute left-[-10%] top-[-10%] h-[40%] w-[40%] rounded-full bg-blue-200/25 blur-[120px] animate-pulse dark:bg-blue-900/30"></div>
-      <div
-        className="absolute bottom-[-10%] right-[-10%] h-[40%] w-[40%] rounded-full bg-amber-200/25 blur-[120px] animate-pulse dark:bg-amber-500/20"
-        style={{ animationDelay: '2s' }}
-      ></div>
+  const passwordToggle = (
+    <button
+      className="transition-colors hover:text-slate-600"
+      onClick={() => setShowPassword((current) => !current)}
+      type="button"
+    >
+      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+    </button>
+  );
 
-      <div className="relative z-10 flex w-[90%] max-w-4xl overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-0 shadow-[0_30px_90px_rgba(15,23,42,0.12)] animate-slide-blur dark:border-white/10 dark:bg-slate-900/95">
-        {isLoading && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 backdrop-blur-sm dark:bg-slate-900/50">
-            <div className="flex flex-col items-center">
-              <Loader2 className="mb-3 h-10 w-10 animate-spin text-blue-900 dark:text-amber-500" />
-              <p className="text-sm font-bold text-slate-600 dark:text-slate-300">
-                กำลังประมวลผล...
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-[#E9EEF5] px-4 py-4 sm:px-6 sm:py-6">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.9),_transparent_20%),radial-gradient(circle_at_bottom_right,_rgba(35,59,132,0.12),_transparent_28%)]" />
+
+      <div className="relative mx-auto flex min-h-[calc(100vh-2rem)] max-w-[1320px] overflow-hidden rounded-[2.5rem] border border-white/80 bg-white/70 shadow-[0_40px_120px_rgba(15,23,42,0.14)] backdrop-blur-xl sm:min-h-[calc(100vh-3rem)]">
+        {isLoading ? (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/65 backdrop-blur-sm">
+            <div className="flex flex-col items-center rounded-[1.8rem] bg-white/90 px-8 py-7 shadow-[0_20px_50px_rgba(15,23,42,0.12)]">
+              <Loader2 className="mb-3 h-10 w-10 animate-spin text-[#233B84]" />
+              <p className="text-sm font-semibold text-slate-700">กำลังประมวลผล...</p>
+            </div>
+          </div>
+        ) : null}
+
+        <AuthBrandPanel />
+
+        <section className="flex flex-1 flex-col justify-center bg-white px-6 py-8 sm:px-10 lg:px-16 lg:py-12">
+          <div className="mb-10 flex justify-center lg:hidden">
+            <div className="rounded-[2rem] bg-[linear-gradient(180deg,#EEF4FF_0%,#E0EAFE_100%)] p-4 shadow-[0_20px_50px_rgba(35,59,132,0.12)]">
+              <img
+                alt="CCID logo"
+                className="h-28 w-28 object-contain drop-shadow-[0_14px_25px_rgba(15,23,42,0.2)]"
+                onError={(event) => {
+                  const target = event.currentTarget;
+                  target.onerror = null;
+                  target.src = APP_LOGO_FALLBACK;
+                }}
+                src={APP_LOGO_SRC}
+              />
+            </div>
+          </div>
+
+          <div className="mx-auto w-full max-w-[32rem]">
+            <div className="mb-10">
+              <h2 className="font-display text-[3.2rem] font-bold leading-none tracking-tight text-slate-800">
+                {authMode === 'login'
+                  ? 'เข้าสู่ระบบ'
+                  : authMode === 'register'
+                    ? 'สมัครสมาชิก'
+                    : 'ลืมรหัสผ่าน'}
+              </h2>
+              <p className="mt-4 text-lg leading-8 text-slate-500">
+                {authMode === 'login'
+                  ? 'กรุณากรอกข้อมูลเพื่อเข้าสู่ระบบงานเอกสาร'
+                  : authMode === 'register'
+                    ? 'สร้างบัญชีใหม่เพื่อเริ่มใช้งานระบบงานเอกสาร'
+                    : 'กรอกอีเมลเพื่อรับลิงก์รีเซ็ตรหัสผ่าน'}
               </p>
             </div>
-          </div>
-        )}
 
-        <div className="relative hidden w-1/2 flex-col items-center justify-center overflow-hidden border-r border-slate-200 bg-gradient-to-br from-white via-slate-50 to-sky-50/90 p-12 text-center text-slate-900 lg:flex">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.05]"></div>
-          <div className="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-blue-200/45 blur-3xl"></div>
-          <div className="pointer-events-none absolute left-1/2 top-24 h-64 w-64 -translate-x-1/2 rounded-full bg-amber-200/35 blur-3xl"></div>
-          <div className="pointer-events-none absolute left-1/2 top-28 h-56 w-56 -translate-x-1/2 rounded-full bg-sky-200/25 blur-2xl"></div>
+            {authMode === 'login' ? (
+              <form className="space-y-7" onSubmit={handleLogin}>
+                <AuthInput
+                  autoComplete="username"
+                  icon={<UserIcon className="h-6 w-6" />}
+                  label="อีเมล หรือ USERNAME"
+                  onChange={setLoginIdentity}
+                  placeholder="admin"
+                  type="text"
+                  value={loginIdentity}
+                />
 
-          <div className="relative z-10 flex animate-float flex-col items-center">
-            <div className="relative mb-12 flex h-72 w-72 items-center justify-center">
-              <div className="absolute inset-3 rounded-[2.75rem] bg-blue-200/40 blur-3xl"></div>
-              <div className="absolute inset-10 rounded-full bg-amber-200/30 blur-3xl"></div>
-              <img
-                alt="โลโก้ บก.สอท.1"
-                className="relative h-[14rem] w-[14rem] scale-[1.03] object-contain brightness-[1.08] contrast-[1.16] saturate-105 drop-shadow-[0_24px_40px_rgba(15,23,42,0.25)]"
-                onError={(event) => {
-                  const target = event.currentTarget;
-                  target.onerror = null;
-                  target.src = APP_LOGO_FALLBACK;
-                }}
-                src={APP_LOGO_SRC}
-              />
-            </div>
-            <h1 className="mb-4 text-4xl font-bold tracking-tight text-slate-900">
-              ระบบจัดเก็บเอกสารราชการ
-            </h1>
-            <p className="text-sm font-medium uppercase tracking-widest text-amber-700">
-              สำหรับหน่วยงานราชการและสถานศึกษา
-            </p>
-          </div>
+                <AuthInput
+                  autoComplete="current-password"
+                  icon={<Lock className="h-6 w-6" />}
+                  label="รหัสผ่าน"
+                  onChange={setLoginPassword}
+                  placeholder="••••••••"
+                  rightSlot={passwordToggle}
+                  type={showPassword ? 'text' : 'password'}
+                  value={loginPassword}
+                />
 
-          <div className="absolute bottom-8 left-0 right-0 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
-            © 2026 Gov-Doc Pro
-          </div>
-        </div>
-
-        <div className="flex w-full flex-col justify-center p-8 md:p-12 lg:w-1/2">
-          <div className="mb-8 flex justify-center lg:hidden">
-            <div className="relative rounded-[2rem] border border-slate-200/80 bg-white/95 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
-              <div className="absolute inset-2 rounded-[1.5rem] bg-blue-100/50 blur-2xl"></div>
-              <img
-                alt="logo"
-                className="relative h-28 w-28 object-contain drop-shadow-[0_18px_30px_rgba(15,23,42,0.18)]"
-                onError={(event) => {
-                  const target = event.currentTarget;
-                  target.onerror = null;
-                  target.src = APP_LOGO_FALLBACK;
-                }}
-                src={APP_LOGO_SRC}
-              />
-            </div>
-          </div>
-
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {authMode === 'login'
-                ? 'เข้าสู่ระบบ'
-                : authMode === 'register'
-                  ? 'สมัครสมาชิก'
-                  : 'ลืมรหัสผ่าน'}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {authMode === 'login'
-                ? 'เข้าสู่ระบบด้วยการเชื่อมต่อแบบเข้ารหัสที่ปลอดภัย'
-                : authMode === 'register'
-                  ? 'สร้างบัญชีเพื่อเข้าถึงข้อมูลเอกสาร'
-                  : 'กรอกอีเมลเพื่อขอรีเซ็ตรหัสผ่าน'}
-            </p>
-          </div>
-
-          {authMode === 'login' && (
-            <form className="space-y-5 animate-in zoom-in-95 fade-in duration-300" onSubmit={handleLogin}>
-              <div>
-                <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  อีเมล
-                </label>
-                <div className="group relative">
-                  <UserIcon className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 transition-colors group-focus-within:text-blue-900 dark:group-focus-within:text-amber-500" />
-                  <input
-                    autoComplete="email"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 font-mono text-sm shadow-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700/50 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
-                    onChange={(event) => setLoginEmail(event.target.value)}
-                    required
-                    type="text"
-                    value={loginEmail}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  รหัสผ่าน
-                </label>
-                <div className="group relative">
-                  <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 transition-colors group-focus-within:text-blue-900 dark:group-focus-within:text-amber-500" />
-                  <input
-                    autoComplete="current-password"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-12 pr-12 font-mono text-sm shadow-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700/50 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
-                    onChange={(event) => setLoginPassword(event.target.value)}
-                    required
-                    type={showPassword ? 'text' : 'password'}
-                    value={loginPassword}
-                  />
+                <div className="flex justify-end">
                   <button
-                    className="absolute right-4 top-3.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-200"
-                    onClick={() => setShowPassword((current) => !current)}
+                    className="text-sm font-semibold text-slate-700 transition hover:text-[#233B84]"
+                    onClick={() => navigate('/forgot-password')}
                     type="button"
                   >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    ลืมรหัสผ่าน?
                   </button>
                 </div>
-              </div>
-              <div className="flex justify-end pt-1">
-                <button
-                  className="text-xs font-bold text-blue-900 transition-colors hover:underline dark:text-amber-500 dark:hover:text-amber-400"
-                  onClick={() => navigate('/forgot-password')}
-                  type="button"
-                >
-                  ลืมรหัสผ่าน?
-                </button>
-              </div>
-              <button
-                className="mt-4 w-full rounded-xl border border-blue-800 bg-blue-900 py-3.5 font-bold text-white shadow-md transition-all hover:bg-blue-950 active:scale-95 disabled:opacity-50"
-                disabled={isLoading}
-                type="submit"
-              >
-                {isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
-              </button>
-              <p className="mt-6 border-t border-slate-200 pt-6 text-center text-xs font-medium text-slate-500 dark:border-slate-800">
-                ยังไม่มีบัญชีใช่หรือไม่?{' '}
-                <button
-                  className="ml-1 font-bold text-blue-900 hover:underline dark:text-amber-500"
-                  onClick={() => navigate('/register')}
-                  type="button"
-                >
-                  สมัครใช้งาน
-                </button>
-              </p>
-            </form>
-          )}
 
-          {authMode === 'register' && (
-            <form className="space-y-4 animate-in zoom-in-95 fade-in duration-300" onSubmit={handleRegister}>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                    ชื่อ
-                  </label>
-                  <input
+                <button
+                  className="h-16 w-full rounded-[1.2rem] bg-[#233B84] text-2xl font-bold text-white shadow-[0_18px_30px_rgba(35,59,132,0.26)] transition-all hover:bg-[#1D326F] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isLoading}
+                  type="submit"
+                >
+                  เข้าสู่ระบบ
+                </button>
+
+                <p className="pt-6 text-center text-sm font-semibold text-slate-500">
+                  ยังไม่มีบัญชีใช่หรือไม่?{' '}
+                  <button
+                    className="text-[#233B84] transition hover:text-[#1D326F]"
+                    onClick={() => navigate('/register')}
+                    type="button"
+                  >
+                    ลงทะเบียนใช้งาน
+                  </button>
+                </p>
+              </form>
+            ) : null}
+
+            {authMode === 'register' ? (
+              <form className="space-y-5" onSubmit={handleRegister}>
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <AuthInput
                     autoComplete="given-name"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
-                    onChange={(event) => setRegisterFirstName(event.target.value)}
-                    required
-                    type="text"
+                    icon={<UserIcon className="h-6 w-6" />}
+                    label="ชื่อ"
+                    onChange={setRegisterFirstName}
+                    placeholder="ชื่อ"
                     value={registerFirstName}
                   />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                    นามสกุล
-                  </label>
-                  <input
+                  <AuthInput
                     autoComplete="family-name"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
-                    onChange={(event) => setRegisterLastName(event.target.value)}
-                    required
-                    type="text"
+                    icon={<UserIcon className="h-6 w-6" />}
+                    label="นามสกุล"
+                    onChange={setRegisterLastName}
+                    placeholder="นามสกุล"
                     value={registerLastName}
                   />
                 </div>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  เบอร์มือถือ
-                </label>
-                <input
-                  autoComplete="tel"
-                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
-                  onChange={(event) => setRegisterPhone(event.target.value)}
-                  required
-                  type="tel"
-                  value={registerPhone}
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  อีเมล
-                </label>
-                <input
+
+                <AuthInput
                   autoComplete="email"
-                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
-                  onChange={(event) => setRegisterEmail(event.target.value)}
-                  required
+                  icon={<Mail className="h-6 w-6" />}
+                  label="อีเมล"
+                  onChange={setRegisterEmail}
+                  placeholder="name@agency.go.th"
                   type="email"
                   value={registerEmail}
                 />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  รหัสผ่าน (ขั้นต่ำ 6 ตัวอักษร)
-                </label>
-                <div className="relative">
-                  <input
-                    autoComplete="new-password"
-                    className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-4 pr-10 font-mono text-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
-                    minLength={6}
-                    onChange={(event) => setRegisterPassword(event.target.value)}
-                    required
-                    type={showPassword ? 'text' : 'password'}
-                    value={registerPassword}
-                  />
-                  <button
-                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                    onClick={() => setShowPassword((current) => !current)}
-                    type="button"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  ประเภทบัญชี
-                </label>
-                <div className="rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-sm text-blue-900 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-100">
-                  บัญชีที่สมัครจากหน้าเว็บไซต์จะถูกสร้างเป็นผู้ใช้งานทั่วไป และสามารถกำหนดสิทธิ์เพิ่มเติมโดยผู้ดูแลระบบภายหลัง
-                </div>
-              </div>
 
-              <div className="mb-2 mt-2 flex items-start">
-                <div className="flex h-5 items-center">
+                <AuthInput
+                  autoComplete="new-password"
+                  icon={<Lock className="h-6 w-6" />}
+                  label="รหัสผ่าน"
+                  onChange={setRegisterPassword}
+                  placeholder="อย่างน้อย 6 ตัวอักษร"
+                  rightSlot={passwordToggle}
+                  type={showPassword ? 'text' : 'password'}
+                  value={registerPassword}
+                />
+
+                <div>
+                  <label className="mb-3 block text-sm font-semibold tracking-wide text-slate-500">
+                    ประเภทบัญชี
+                  </label>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <RoleCard
+                      description="สำหรับผู้ปฏิบัติงานและผู้ดูแลในหน่วยงาน"
+                      icon={<ShieldCheck className="h-5 w-5" />}
+                      isSelected={registerRole === 'admin'}
+                      label="เจ้าหน้าที่ตำรวจ"
+                      onClick={() => setRegisterRole('admin')}
+                    />
+                    <RoleCard
+                      description="สำหรับผู้ใช้งานภายนอกหรือบุคคลทั่วไป"
+                      icon={<UserIcon className="h-5 w-5" />}
+                      isSelected={registerRole === 'general'}
+                      label="ผู้ใช้งานทั่วไป"
+                      onClick={() => setRegisterRole('general')}
+                    />
+                  </div>
+                </div>
+
+                <label className="flex items-start gap-3 rounded-[1.2rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
                   <input
                     checked={termsAccepted}
-                    className="h-4 w-4 cursor-pointer rounded border-gray-300 bg-gray-100 text-blue-900 focus:ring-blue-900"
-                    id="terms"
+                    className="mt-1 h-4 w-4 rounded border-slate-300 text-[#233B84] focus:ring-[#233B84]"
                     onChange={(event) => setTermsAccepted(event.target.checked)}
                     type="checkbox"
                   />
-                </div>
-                <label className="ml-2 text-xs text-slate-600 dark:text-slate-400" htmlFor="terms">
-                  ยอมรับ{' '}
+                  <span>
+                    ยอมรับ{' '}
+                    <button
+                      className="font-semibold text-[#233B84] hover:underline"
+                      onClick={() => navigate('/terms')}
+                      type="button"
+                    >
+                      เงื่อนไขการใช้บริการ
+                    </button>{' '}
+                    และ{' '}
+                    <button
+                      className="font-semibold text-[#233B84] hover:underline"
+                      onClick={() => navigate('/privacy')}
+                      type="button"
+                    >
+                      นโยบายความเป็นส่วนตัว
+                    </button>
+                  </span>
+                </label>
+
+                <button
+                  className="h-16 w-full rounded-[1.2rem] bg-[#233B84] text-2xl font-bold text-white shadow-[0_18px_30px_rgba(35,59,132,0.26)] transition-all hover:bg-[#1D326F] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isLoading}
+                  type="submit"
+                >
+                  ยืนยัน
+                </button>
+
+                <p className="pt-4 text-center text-sm font-semibold text-slate-500">
+                  มีบัญชีผู้ใช้อยู่แล้ว?{' '}
                   <button
-                    className="font-bold text-blue-900 hover:underline dark:text-amber-500"
-                    onClick={() => navigate('/terms')}
+                    className="text-[#233B84] transition hover:text-[#1D326F]"
+                    onClick={() => navigate('/login')}
                     type="button"
                   >
-                    เงื่อนไขการใช้บริการ
-                  </button>{' '}
-                  และ{' '}
-                  <button
-                    className="font-bold text-blue-900 hover:underline dark:text-amber-500"
-                    onClick={() => navigate('/privacy')}
-                    type="button"
-                  >
-                    นโยบายความเป็นส่วนตัว
+                    กลับไปหน้าเข้าสู่ระบบ
                   </button>
-                </label>
-              </div>
+                </p>
+              </form>
+            ) : null}
 
-              <button
-                className="mt-2 w-full rounded-lg border border-blue-800 bg-blue-900 py-3 font-bold text-white shadow-md transition-all hover:bg-blue-950 active:scale-95 disabled:opacity-50"
-                disabled={isLoading}
-                type="submit"
-              >
-                {isLoading ? 'กำลังประมวลผล...' : 'ยืนยัน'}
-              </button>
-              <p className="mt-6 border-t border-slate-200 pt-6 text-center text-xs font-medium text-slate-500 dark:border-slate-800">
-                มีบัญชีอยู่แล้ว?{' '}
-                <button
-                  className="ml-1 font-bold text-blue-900 hover:underline dark:text-amber-500"
-                  onClick={() => navigate('/login')}
-                  type="button"
-                >
-                  กลับไปหน้าเข้าสู่ระบบ
-                </button>
-              </p>
-            </form>
-          )}
+            {authMode === 'forgot' ? (
+              <form className="space-y-7" onSubmit={handleForgotPassword}>
+                <AuthInput
+                  autoComplete="email"
+                  icon={<Mail className="h-6 w-6" />}
+                  label="อีเมล"
+                  onChange={setForgotEmail}
+                  placeholder="name@agency.go.th"
+                  type="email"
+                  value={forgotEmail}
+                />
 
-          {authMode === 'forgot' && (
-            <form className="space-y-5 animate-in zoom-in-95 fade-in duration-300" onSubmit={handleForgotPassword}>
-              <div>
-                <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  อีเมล
-                </label>
-                <div className="group relative">
-                  <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 transition-colors group-focus-within:text-blue-900 dark:group-focus-within:text-amber-500" />
-                  <input
-                    autoComplete="email"
-                    className="w-full rounded-xl border border-slate-300 bg-white py-3.5 pl-12 pr-4 font-mono text-sm shadow-sm outline-none transition-colors focus:border-blue-900 dark:border-slate-700/50 dark:bg-slate-800/50 dark:text-white dark:focus:border-amber-500"
-                    onChange={(event) => setForgotEmail(event.target.value)}
-                    required
-                    type="text"
-                    value={forgotEmail}
-                  />
-                </div>
-              </div>
-              <button
-                className="mt-4 w-full rounded-xl border border-blue-800 bg-blue-900 py-3.5 font-bold text-white shadow-md transition-all hover:bg-blue-950 active:scale-95"
-                type="submit"
-              >
-                ส่งคำขอรีเซ็ตรหัสผ่าน
-              </button>
-              <p className="mt-8 border-t border-slate-200 pt-8 text-center text-xs font-medium text-slate-500 dark:border-slate-800">
                 <button
-                  className="font-bold text-blue-900 hover:underline dark:text-amber-500"
-                  onClick={() => navigate('/login')}
-                  type="button"
+                  className="h-16 w-full rounded-[1.2rem] bg-[#233B84] text-xl font-bold text-white shadow-[0_18px_30px_rgba(35,59,132,0.26)] transition-all hover:bg-[#1D326F] active:scale-[0.99]"
+                  type="submit"
                 >
-                  กลับไปหน้าเข้าสู่ระบบ
+                  ส่งคำขอรีเซ็ตรหัสผ่าน
                 </button>
-              </p>
-            </form>
-          )}
-        </div>
+
+                <p className="pt-4 text-center text-sm font-semibold text-slate-500">
+                  <button
+                    className="text-[#233B84] transition hover:text-[#1D326F]"
+                    onClick={() => navigate('/login')}
+                    type="button"
+                  >
+                    กลับไปหน้าเข้าสู่ระบบ
+                  </button>
+                </p>
+              </form>
+            ) : null}
+          </div>
+        </section>
       </div>
     </div>
   );

@@ -101,7 +101,7 @@ export default function DocTypesView({
 
   return (
     <div className="grid grid-cols-1 gap-6 animate-slide-blur lg:grid-cols-3">
-      <div className="h-fit rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+      <div className="luxury-panel h-fit rounded-3xl p-6 dark:border-slate-800 dark:bg-[rgba(15,24,42,0.92)] sm:p-8">
         <h2 className="mb-6 flex items-center text-lg font-bold text-slate-900 dark:text-white">
           <Tag className="mr-3 h-5 w-5 text-blue-900 dark:text-amber-500" />{' '}
           {editing ? 'แก้ไขประเภท' : 'เพิ่มประเภทเอกสาร'}
@@ -164,10 +164,10 @@ export default function DocTypesView({
         </form>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:col-span-2">
+      <div className="luxury-panel overflow-hidden rounded-3xl dark:border-slate-800 dark:bg-[rgba(15,24,42,0.92)] lg:col-span-2">
         <table className="w-full border-collapse text-left">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-500">
+            <tr className="border-b border-[var(--panel-border)] bg-[rgba(247,241,231,0.72)] text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-500">
               <th className="px-6 py-4">ประเภทเอกสาร</th>
               <th className="px-6 py-4 text-center">จำนวนในระบบ</th>
               <th className="px-6 py-4 text-right">จัดการ</th>

@@ -1,8 +1,8 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useEffect, useState } from 'react';
 
+import { APP_PATHS, isPublicPath } from '../constants/views';
 import { api } from '../services/api';
-import { injectGlobalAppStyles } from '../styles/globalAppStyles';
 import type { User } from '../types';
 
 interface UseAppBootstrapArgs {
@@ -11,27 +11,6 @@ interface UseAppBootstrapArgs {
   navigate: (path: string) => void;
   setCurrentUser: Dispatch<SetStateAction<User | null>>;
 }
-
-const PUBLIC_PATHS = new Set([
-  '/',
-  '/login',
-  '/register',
-  '/forgot-password',
-  '/terms',
-  '/privacy',
-  '/dashboard',
-  '/documents',
-  '/doctypes',
-  '/users',
-  '/settings',
-  '/settings/profile',
-  '/settings/general',
-  '/settings/security',
-  '/settings/support',
-]);
-
-const isPublicPath = (pathname: string) =>
-  PUBLIC_PATHS.has(pathname) || pathname === '/preview' || pathname.startsWith('/preview/');
 
 export const useAppBootstrap = ({
   initialPathname,
@@ -43,7 +22,6 @@ export const useAppBootstrap = ({
 
   useEffect(() => {
     let isMounted = true;
-    const cleanup = injectGlobalAppStyles();
 
     const bootstrap = async () => {
       try {
@@ -57,7 +35,7 @@ export const useAppBootstrap = ({
           setCurrentUser(user);
           await loadAllData(user);
         } else if (!isPublicPath(initialPathname)) {
-          navigate('/login');
+          navigate(APP_PATHS.login);
         }
       } finally {
         if (isMounted) {
@@ -70,9 +48,8 @@ export const useAppBootstrap = ({
 
     return () => {
       isMounted = false;
-      cleanup();
     };
-  }, []);
+  }, [initialPathname, loadAllData, navigate, setCurrentUser]);
 
   return isAppReady;
 };

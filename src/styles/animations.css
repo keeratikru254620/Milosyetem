@@ -1,0 +1,219 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai+Looped:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap');
+
+:root {
+  color-scheme: light;
+  --app-bg: #ece5d8;
+  --app-bg-soft: rgba(255, 251, 244, 0.9);
+  --app-surface: rgba(255, 250, 242, 0.92);
+  --app-surface-strong: #fffdf8;
+  --app-surface-muted: rgba(247, 241, 231, 0.88);
+  --app-text: #213043;
+  --app-text-soft: #5f6d7d;
+  --app-title: #1b2740;
+  --app-navy: #233b84;
+  --app-navy-deep: #182a5b;
+  --app-gold: #c08b2f;
+  --app-gold-soft: #ebc47a;
+  --panel-border: rgba(154, 137, 110, 0.18);
+  --panel-shadow: 0 24px 70px rgba(42, 51, 69, 0.11);
+  --panel-shadow-strong: 0 30px 90px rgba(32, 41, 59, 0.16);
+  --scrollbar-thumb: rgba(106, 116, 133, 0.28);
+  --scrollbar-thumb-hover: rgba(35, 59, 132, 0.5);
+}
+
+.dark:root,
+.dark {
+  color-scheme: dark;
+  --app-bg: #091120;
+  --app-bg-soft: rgba(15, 23, 42, 0.82);
+  --app-surface: rgba(15, 24, 42, 0.92);
+  --app-surface-strong: rgba(20, 30, 50, 0.96);
+  --app-surface-muted: rgba(12, 20, 37, 0.88);
+  --app-text: #e6edf7;
+  --app-text-soft: #9ba7bb;
+  --app-title: #f5f1e8;
+  --app-navy: #4966c7;
+  --app-navy-deep: #22336e;
+  --app-gold: #e0b15b;
+  --app-gold-soft: #f5d598;
+  --panel-border: rgba(120, 136, 165, 0.2);
+  --panel-shadow: 0 24px 80px rgba(2, 6, 23, 0.35);
+  --panel-shadow-strong: 0 32px 100px rgba(2, 6, 23, 0.45);
+  --scrollbar-thumb: rgba(148, 163, 184, 0.24);
+  --scrollbar-thumb-hover: rgba(224, 177, 91, 0.55);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  position: relative;
+  color: var(--app-text);
+  font-family: 'IBM Plex Sans Thai Looped', 'Sarabun', sans-serif;
+  line-height: 1.65;
+  letter-spacing: 0.01em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.72), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(192, 139, 47, 0.14), transparent 22%),
+    linear-gradient(135deg, rgba(255, 251, 244, 0.92), rgba(236, 229, 216, 0.9)),
+    var(--app-bg);
+  background-attachment: fixed;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.18) 0, rgba(255, 255, 255, 0.18) 1px, transparent 1px, transparent 100%),
+    linear-gradient(180deg, rgba(192, 139, 47, 0.03), rgba(35, 59, 132, 0.03));
+  background-size: 180px 180px, 100% 100%;
+  opacity: 0.55;
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at top left, rgba(73, 102, 199, 0.16), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(224, 177, 91, 0.08), transparent 18%),
+    linear-gradient(180deg, rgba(7, 12, 23, 0.98), rgba(9, 17, 32, 0.98)),
+    var(--app-bg);
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-display {
+  color: var(--app-title);
+  font-family: 'Sarabun', 'IBM Plex Sans Thai Looped', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+::selection {
+  background: rgba(35, 59, 132, 0.18);
+  color: var(--app-title);
+}
+
+.luxury-panel {
+  border: 1px solid var(--panel-border);
+  background: var(--app-surface);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(16px);
+}
+
+.luxury-panel-soft {
+  border: 1px solid rgba(205, 188, 161, 0.2);
+  background: var(--app-surface-muted);
+  box-shadow: 0 16px 40px rgba(42, 51, 69, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.luxury-heading {
+  color: var(--app-title);
+  font-family: 'Sarabun', 'IBM Plex Sans Thai Looped', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.luxury-kicker {
+  color: var(--app-gold);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.luxury-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(192, 139, 47, 0.34), transparent);
+}
+
+.luxury-button-primary {
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, var(--app-navy), var(--app-navy-deep));
+  color: #fff;
+  box-shadow: 0 18px 30px rgba(35, 59, 132, 0.24);
+}
+
+.luxury-button-primary:hover {
+  filter: brightness(0.96);
+}
+
+.luxury-button-secondary {
+  border: 1px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--app-title);
+}
+
+.dark .luxury-button-secondary {
+  background: rgba(18, 29, 50, 0.9);
+  color: var(--app-text);
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes slide-in-blur {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+    filter: blur(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-slide-blur {
+  animation: slide-in-blur 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--scrollbar-thumb);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}

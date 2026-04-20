@@ -59,8 +59,8 @@ export default function UsersView({
   };
 
   return (
-    <div className="flex h-[calc(100vh-140px)] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm animate-slide-blur dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50/50 p-5 dark:border-slate-800 dark:bg-slate-900/50 sm:p-6">
+    <div className="luxury-panel flex h-[calc(100vh-140px)] flex-col overflow-hidden rounded-3xl animate-slide-blur dark:border-slate-800 dark:bg-[rgba(15,24,42,0.92)]">
+      <div className="flex shrink-0 items-center justify-between border-b border-[var(--panel-border)] bg-[rgba(247,241,231,0.72)] p-5 dark:border-slate-800 dark:bg-slate-900/50 sm:p-6">
         <h2 className="flex items-center text-lg font-bold text-slate-900 dark:text-white">
           <Users className="mr-3 h-5 w-5 text-blue-900 dark:text-amber-500" /> จัดการบุคลากร
         </h2>
@@ -74,7 +74,7 @@ export default function UsersView({
 
       <div className="flex-1 overflow-auto">
         <table className="w-full min-w-[700px] border-collapse text-left">
-          <thead className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95">
+          <thead className="sticky top-0 z-10 border-b border-[var(--panel-border)] bg-[rgba(255,252,247,0.95)] shadow-sm backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95">
             <tr className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               <th className="px-6 py-4">USERNAME</th>
               <th className="px-6 py-4">ชื่อ-สกุล</th>

@@ -1,5 +1,4 @@
 import type { ReactElement } from 'react';
-import type { LucideIcon } from 'lucide-react';
 import {
   BarChart3,
   CalendarPlus,
@@ -12,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import StatCard from '../components/common/StatCard';
 import type { DocType, DocumentData, User } from '../types';
 import { formatThaiDate } from '../utils/format';
 
@@ -22,15 +22,6 @@ interface DashboardViewProps {
   routePrefix?: string;
 }
 
-interface StatCard {
-  bg: string;
-  color: string;
-  glow: string;
-  icon: LucideIcon;
-  label: string;
-  value: number;
-}
-
 export default function DashboardView({
   currentUser,
   documents,
@@ -39,7 +30,6 @@ export default function DashboardView({
 }: DashboardViewProps) {
   const navigate = useNavigate();
   const resolveRoute = (path: string) => `${routePrefix}${path}`;
-
   const currentMonth = new Date().toISOString().slice(0, 7);
   const newDocsCount = documents.filter(
     (document) => document.date && document.date.startsWith(currentMonth),
@@ -49,47 +39,43 @@ export default function DashboardView({
       document.ownerId === currentUser.username || document.ownerId === currentUser._id,
   ).length;
 
-  const stats: StatCard[] = [
+  const stats = [
     {
       label: 'เอกสารทั้งหมด',
       value: documents.length,
       icon: Files,
-      color: 'text-blue-900 dark:text-blue-400',
-      bg: 'bg-blue-50 dark:bg-blue-900/20',
-      glow: 'group-hover:shadow-blue-900/10',
+      backgroundClassName: 'bg-blue-50 dark:bg-blue-900/20',
+      iconClassName: 'text-blue-700 dark:text-blue-400',
     },
     {
       label: 'เอกสารใหม่เดือนนี้',
       value: newDocsCount,
       icon: CalendarPlus,
-      color: 'text-amber-500 dark:text-amber-400',
-      bg: 'bg-amber-50 dark:bg-amber-500/10',
-      glow: 'group-hover:shadow-amber-500/20',
+      backgroundClassName: 'bg-emerald-50 dark:bg-emerald-900/20',
+      iconClassName: 'text-emerald-700 dark:text-emerald-400',
     },
     {
-      label: 'หมวดหมู่เอกสาร',
+      label: 'ประเภทเอกสาร',
       value: docTypes.length,
       icon: Tag,
-      color: 'text-slate-700 dark:text-slate-400',
-      bg: 'bg-slate-100 dark:bg-slate-800',
-      glow: 'group-hover:shadow-slate-500/10',
+      backgroundClassName: 'bg-amber-50 dark:bg-amber-500/15',
+      iconClassName: 'text-amber-600 dark:text-amber-400',
     },
     {
       label: 'เอกสารที่รับผิดชอบ',
       value: myDocsCount,
       icon: UserCheck,
-      color: 'text-blue-800 dark:text-blue-300',
-      bg: 'bg-blue-100 dark:bg-blue-800/30',
-      glow: 'group-hover:shadow-blue-800/20',
+      backgroundClassName: 'bg-slate-100 dark:bg-slate-800',
+      iconClassName: 'text-slate-700 dark:text-slate-300',
     },
-  ];
+  ] as const;
 
   const typeCounts = docTypes
     .map((docType) => ({
       ...docType,
       count: documents.filter((document) => document.typeId === docType._id).length,
     }))
-    .sort((left, right) => left.name.localeCompare(right.name, 'th'));
+    .sort((left, right) => right.count - left.count || left.name.localeCompare(right.name, 'th'));
 
   const recentDocuments = [...documents]
     .sort(
@@ -102,36 +88,21 @@ export default function DashboardView({
   return (
     <div className="animate-slide-blur space-y-6 lg:space-y-8">
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4 lg:gap-6">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-
-          return (
-            <div
-              className={`group relative flex items-center justify-between overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900 ${stat.glow}`}
-              key={stat.label}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/5 opacity-0 transition-opacity group-hover:opacity-100" />
-              <div className="relative z-10">
-                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {stat.label}
-                </p>
-                <h3 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
-                  {stat.value}
-                </h3>
-              </div>
-              <div
-                className={`relative z-10 flex h-16 w-16 items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${stat.bg} ${stat.color}`}
-              >
-                <Icon className="h-8 w-8" />
-              </div>
-            </div>
-          );
-        })}
+        {stats.map((stat) => (
+          <StatCard
+            backgroundClassName={stat.backgroundClassName}
+            icon={stat.icon}
+            iconClassName={stat.iconClassName}
+            key={stat.label}
+            label={stat.label}
+            value={stat.value}
+          />
+        ))}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900 lg:col-span-2">
-          <h3 className="mb-6 flex items-center text-lg font-bold text-slate-900 dark:text-white">
+        <div className="luxury-panel rounded-[1.9rem] p-8 dark:border-slate-800 dark:bg-[rgba(15,24,42,0.92)] lg:col-span-2">
+          <h3 className="luxury-heading mb-6 flex items-center text-xl font-bold text-slate-900 dark:text-white">
             <PieChart className="mr-3 h-6 w-6 text-amber-500" /> สัดส่วนเอกสาร
           </h3>
           <div className="flex flex-col items-center gap-10 sm:flex-row">
@@ -166,7 +137,7 @@ export default function DashboardView({
                   },
                   { elements: [], offset: 0 },
                 ).elements}
-                {documents.length === 0 && (
+                {documents.length === 0 ? (
                   <circle
                     cx="50"
                     cy="50"
@@ -175,7 +146,7 @@ export default function DashboardView({
                     stroke="#e2e8f0"
                     strokeWidth="50"
                   />
-                )}
+                ) : null}
               </svg>
               <div className="absolute inset-0 z-10 m-10 flex flex-col items-center justify-center rounded-full border border-slate-100 bg-white shadow-inner dark:border-slate-800 dark:bg-slate-900">
                 <span className="text-4xl font-bold text-blue-900 dark:text-white">
@@ -208,7 +179,7 @@ export default function DashboardView({
                       </span>
                     </div>
                     <span className="rounded-xl border border-slate-100 bg-white px-4 py-1.5 text-base font-bold text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white">
-                      {docType.count}{' '}
+                      {docType.count}
                       <span className="ml-1 text-sm font-medium text-slate-400">
                         ({percentage}%)
                       </span>
@@ -220,8 +191,8 @@ export default function DashboardView({
           </div>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
-          <h3 className="mb-6 flex items-center text-lg font-bold text-slate-900 dark:text-white">
+        <div className="luxury-panel rounded-[1.9rem] p-8 dark:border-slate-800 dark:bg-[rgba(15,24,42,0.92)]">
+          <h3 className="luxury-heading mb-6 flex items-center text-xl font-bold text-slate-900 dark:text-white">
             <BarChart3 className="mr-3 h-6 w-6 text-blue-900 dark:text-blue-500" /> ปริมาณรายประเภท
           </h3>
           <div className="space-y-7">
@@ -249,16 +220,17 @@ export default function DashboardView({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 p-6 dark:border-slate-800 dark:bg-slate-800/20">
-          <h3 className="flex items-center text-base font-bold text-slate-900 dark:text-white">
+      <div className="luxury-panel overflow-hidden rounded-[1.9rem] dark:border-slate-800 dark:bg-[rgba(15,24,42,0.92)]">
+        <div className="flex items-center justify-between border-b border-[var(--panel-border)] bg-[rgba(247,241,231,0.72)] p-6 dark:border-slate-800 dark:bg-slate-800/20">
+          <h3 className="luxury-heading flex items-center text-lg font-bold text-slate-900 dark:text-white">
             <Clock3 className="mr-3 h-6 w-6 text-amber-500" /> เอกสารล่าสุด
           </h3>
           <button
             className="group flex items-center text-sm font-bold text-blue-900 transition hover:text-blue-700 dark:text-amber-500 dark:hover:text-amber-400"
             onClick={() => navigate(resolveRoute('/documents'))}
+            type="button"
           >
-            ดูทั้งหมด{' '}
+            ดูทั้งหมด
             <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </button>
         </div>
@@ -269,14 +241,14 @@ export default function DashboardView({
                 <th className="px-6 py-5">วันที่</th>
                 <th className="px-6 py-5">เลขที่</th>
                 <th className="px-6 py-5">เรื่อง</th>
-                <th className="px-6 py-5">หมวดหมู่</th>
+                <th className="px-6 py-5">ประเภท</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 text-sm dark:divide-slate-800/50">
               {recentDocuments.length === 0 ? (
                 <tr>
                   <td className="py-12 text-center text-base font-bold text-slate-400" colSpan={4}>
-                    ไม่พบข้อมูล
+                    ยังไม่มีข้อมูลเอกสาร
                   </td>
                 </tr>
               ) : (

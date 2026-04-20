@@ -161,8 +161,8 @@ export default function SettingsView({
   };
 
   return (
-    <div className="mx-auto flex min-h-[600px] max-w-6xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm animate-slide-blur dark:border-slate-800 dark:bg-slate-900 md:flex-row">
-      <div className="flex w-full flex-col border-r border-slate-200 bg-slate-50/80 p-6 dark:border-slate-800 dark:bg-slate-950 md:w-72 md:p-8">
+    <div className="luxury-panel mx-auto flex min-h-[600px] max-w-6xl flex-col overflow-hidden rounded-3xl animate-slide-blur dark:border-slate-800 dark:bg-[rgba(15,24,42,0.92)] md:flex-row">
+      <div className="flex w-full flex-col border-r border-[var(--panel-border)] bg-[rgba(247,241,231,0.72)] p-6 dark:border-slate-800 dark:bg-slate-950 md:w-72 md:p-8">
         <h3 className="mb-6 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
           การตั้งค่าระบบ
         </h3>

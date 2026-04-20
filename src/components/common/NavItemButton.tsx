@@ -18,7 +18,7 @@ export default function NavItemButton({
 
   return (
     <button
-      className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+      className="flex-1 rounded-xl border border-[var(--panel-border)] bg-[rgba(255,255,255,0.8)] py-2.5 text-xs font-bold text-[var(--app-title)] shadow-sm transition hover:bg-white active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
       onClick={() => {
         navigate(to);
         onClick?.();

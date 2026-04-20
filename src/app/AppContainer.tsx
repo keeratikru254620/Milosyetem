@@ -1,52 +1,65 @@
 import { ShieldCheck } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import Header from '../components/layout/Header';
+import Navbar from '../components/common/Navbar';
 import Sidebar from '../components/layout/Sidebar';
-import { useAppBootstrap } from '../hooks/useAppBootstrap';
-import { useDarkMode } from '../hooks/useDarkMode';
-import { useIdleLogout } from '../hooks/useIdleLogout';
-import { confirmDialog } from '../services/confirmService';
-import { api } from '../services/api';
-import type {
-  SaveDocTypeInput,
-  SaveDocumentInput,
-  SaveUserInput,
-  User,
-} from '../types';
-import AppRoutes from './AppRoutes';
+import { APP_PATHS, getPageTitle } from '../constants/views';
 import {
   previewCurrentUser,
   previewDocTypes,
   previewDocuments,
   previewUsers,
-} from './previewData';
+} from '../data/previewData';
+import { useAppHandlers } from '../hooks/useAppHandlers';
+import { useAppState } from '../hooks/useAppState';
+import { useAppBootstrap } from '../hooks/useAppBootstrap';
+import { useIdleLogout } from '../hooks/useIdleLogout';
+import type { SaveDocTypeInput, SaveDocumentInput, SaveUserInput } from '../types';
+import AppRoutes from './AppRoutes';
 
 export default function AppContainer() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [docTypes, setDocTypes] = useState(previewDocTypes.slice(0, 0));
-  const [documents, setDocuments] = useState(previewDocuments.slice(0, 0));
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { isDarkMode, setIsDarkMode } = useDarkMode();
+  const {
+    currentUser,
+    setCurrentUser,
+    users,
+    setUsers,
+    docTypes,
+    setDocTypes,
+    documents,
+    setDocuments,
+    isSidebarOpen,
+    setIsSidebarOpen,
+    isDarkMode,
+    setIsDarkMode,
+  } = useAppState();
   const isLegacyPreviewRoute =
-    location.pathname === '/preview' || location.pathname.startsWith('/preview/');
+    location.pathname === APP_PATHS.preview ||
+    location.pathname.startsWith(`${APP_PATHS.preview}/`);
   const isPreviewMode = !currentUser && isLegacyPreviewRoute;
-  const routePrefix = isLegacyPreviewRoute ? '/preview' : '';
-
-  const loadAllData = useCallback(async (targetUser: User | null = currentUser) => {
-    const [loadedUsers, loadedDocTypes, loadedDocuments] = await Promise.all([
-      targetUser?.role === 'admin' ? api.getUsers() : Promise.resolve([]),
-      api.getDocTypes(),
-      api.getDocuments(),
-    ]);
-    setUsers(loadedUsers);
-    setDocTypes(loadedDocTypes);
-    setDocuments(loadedDocuments);
-  }, [currentUser]);
+  const routePrefix = isLegacyPreviewRoute ? APP_PATHS.preview : '';
+  const {
+    loadAllData,
+    handleDeleteDocType,
+    handleDeleteDocument,
+    handleDeleteUser,
+    handleIdleLogout,
+    handleLogin,
+    handleLogout,
+    handleSaveDocType,
+    handleSaveDocument,
+    handleSaveUser,
+  } = useAppHandlers({
+    currentUser,
+    navigate,
+    setCurrentUser,
+    setDocTypes,
+    setDocuments,
+    setIsSidebarOpen,
+    setUsers,
+  });
 
   const isAppReady = useAppBootstrap({
     initialPathname: location.pathname,
@@ -56,119 +69,16 @@ export default function AppContainer() {
   });
 
   useEffect(() => {
-    const normalizedPath = location.pathname.startsWith('/preview')
-      ? location.pathname.replace(/^\/preview/, '') || '/'
-      : location.pathname;
-
-    const titles: Record<string, string> = {
-      '/': currentUser ? 'ภาพรวมระบบ' : 'เข้าสู่ระบบ',
-      '/login': 'เข้าสู่ระบบ',
-      '/register': 'สมัครสมาชิก',
-      '/forgot-password': 'รีเซ็ตรหัสผ่าน',
-      '/terms': 'เงื่อนไขการใช้งาน',
-      '/privacy': 'นโยบายความเป็นส่วนตัว',
-      '/dashboard': 'ภาพรวมระบบ',
-      '/documents': 'ทะเบียนเอกสาร',
-      '/doctypes': 'ประเภทเอกสาร',
-      '/users': 'จัดการผู้ใช้งาน',
-      '/settings': 'การตั้งค่า',
-      '/settings/profile': 'ข้อมูลบัญชี',
-      '/settings/general': 'การตั้งค่าทั่วไป',
-      '/settings/security': 'ความปลอดภัย',
-      '/settings/support': 'ช่วยเหลือ',
-    };
-
-    const pageTitle = titles[normalizedPath] || 'Milosystem';
+    const pageTitle = getPageTitle(location.pathname);
     document.title = pageTitle === 'Milosystem' ? pageTitle : `${pageTitle} | Milosystem`;
-  }, [currentUser, location.pathname]);
-
-  const handleLogout = useCallback(() => {
-    api.logout();
-    setCurrentUser(null);
-    setIsSidebarOpen(false);
-    navigate('/login');
-  }, [navigate]);
-
-  const handleIdleLogout = useCallback(async () => {
-    const confirmed = await confirmDialog(
-      'เซสชันหมดอายุ',
-      'ระบบจะตัดการเชื่อมต่ออัตโนมัติเนื่องจากไม่มีการใช้งานเกิน 15 นาที เพื่อความปลอดภัย',
-    );
-
-    if (confirmed || !confirmed) {
-      handleLogout();
-    }
-  }, [handleLogout]);
+  }, [location.pathname]);
 
   useIdleLogout(currentUser, handleIdleLogout);
 
-  const handleLogin = useCallback(
-    async (user: User) => {
-      setCurrentUser(user);
-      await loadAllData(user);
-      navigate('/dashboard');
-    },
-    [loadAllData, navigate],
-  );
-
-  const handleSaveUser = useCallback(
-    async (data: SaveUserInput, id?: string) => {
-      const savedUser = await api.saveUser(data, id);
-      await loadAllData();
-      setCurrentUser((previous) =>
-        previous && previous._id === savedUser._id ? { ...previous, ...savedUser } : previous,
-      );
-      return savedUser;
-    },
-    [loadAllData],
-  );
-
-  const handleDeleteUser = useCallback(
-    async (id: string) => {
-      await api.deleteUser(id);
-      await loadAllData();
-    },
-    [loadAllData],
-  );
-
-  const handleSaveDocType = useCallback(
-    async (data: SaveDocTypeInput, id?: string) => {
-      const savedDocType = await api.saveDocType(data, id);
-      await loadAllData();
-      return savedDocType;
-    },
-    [loadAllData],
-  );
-
-  const handleDeleteDocType = useCallback(
-    async (id: string) => {
-      await api.deleteDocType(id);
-      await loadAllData();
-    },
-    [loadAllData],
-  );
-
-  const handleSaveDocument = useCallback(
-    async (data: SaveDocumentInput, id?: string) => {
-      const savedDocument = await api.saveDocument(data, id);
-      await loadAllData();
-      return savedDocument;
-    },
-    [loadAllData],
-  );
-
-  const handleDeleteDocument = useCallback(
-    async (id: string) => {
-      await api.deleteDocument(id);
-      await loadAllData();
-    },
-    [loadAllData],
-  );
-
   const handlePreviewExit = useCallback(() => {
     setIsSidebarOpen(false);
-    navigate('/login');
-  }, [navigate]);
+    navigate(APP_PATHS.login);
+  }, [navigate, setIsSidebarOpen]);
 
   const handlePreviewDelete = useCallback(async (_id: string) => true, []);
 
@@ -223,11 +133,9 @@ export default function AppContainer() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#0B1120]">
         <div className="flex animate-pulse flex-col items-center">
-          <div className="relative">
-            <ShieldCheck className="mb-4 h-16 w-16 text-amber-500" />
-          </div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-            LOADING...
+          <ShieldCheck className="mb-4 h-16 w-16 text-amber-500" />
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+            Loading...
           </p>
         </div>
       </div>
@@ -255,7 +163,8 @@ export default function AppContainer() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans text-slate-800 transition-colors duration-300 dark:bg-[#0B1120] dark:text-slate-200">
+    <div className="relative flex min-h-screen bg-[var(--app-bg)] font-sans text-slate-800 transition-colors duration-300 dark:bg-[#091120] dark:text-slate-200">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.45),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(192,139,47,0.08),_transparent_20%)]" />
       <Sidebar
         currentUser={effectiveCurrentUser}
         isOpen={isSidebarOpen}
@@ -264,8 +173,8 @@ export default function AppContainer() {
         routePrefix={routePrefix}
       />
 
-      <main className="relative flex h-screen flex-1 flex-col overflow-hidden">
-        <Header onMenuClick={() => setIsSidebarOpen(true)} />
+      <main className="relative z-10 flex h-screen flex-1 flex-col overflow-hidden">
+        <Navbar onMenuClick={() => setIsSidebarOpen(true)} />
         <div className="relative flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
           <AppRoutes
             currentUser={effectiveCurrentUser}

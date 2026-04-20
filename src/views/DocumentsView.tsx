@@ -188,8 +188,8 @@ export default function DocumentsView({
 
   return (
     <div className="flex h-full flex-col animate-slide-blur">
-      <div className="flex flex-1 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="shrink-0 border-b border-slate-200 bg-slate-50/50 p-6 dark:border-slate-800 dark:bg-slate-900/50">
+      <div className="luxury-panel flex flex-1 flex-col overflow-hidden rounded-3xl dark:border-slate-800 dark:bg-[rgba(15,24,42,0.92)]">
+        <div className="shrink-0 border-b border-[var(--panel-border)] bg-[rgba(247,241,231,0.72)] p-6 dark:border-slate-800 dark:bg-slate-900/50">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div>
@@ -316,7 +316,7 @@ export default function DocumentsView({
 
         <div className="relative flex-1 overflow-auto">
           <table className="w-full min-w-[980px] border-collapse whitespace-nowrap text-left">
-            <thead className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95">
+            <thead className="sticky top-0 z-10 border-b border-[var(--panel-border)] bg-[rgba(255,252,247,0.95)] shadow-sm backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95">
               <tr className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 {[
                   ['docNo', 'เลขที่หนังสือ'],
@@ -449,7 +449,7 @@ export default function DocumentsView({
           </table>
         </div>
 
-        <div className="flex shrink-0 items-center justify-between border-t border-slate-200 bg-slate-50/50 p-5 text-sm dark:border-slate-800 dark:bg-slate-900/50">
+        <div className="flex shrink-0 items-center justify-between border-t border-[var(--panel-border)] bg-[rgba(247,241,231,0.72)] p-5 text-sm dark:border-slate-800 dark:bg-slate-900/50">
           <p className="text-xs font-bold text-slate-500">
             {(currentPage - 1) * itemsPerPage + (paginatedDocuments.length > 0 ? 1 : 0)} -{' '}
             {Math.min(currentPage * itemsPerPage, filteredDocs.length)} / {filteredDocs.length}

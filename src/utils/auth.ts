@@ -65,7 +65,7 @@ export const getErrorMessage = (
     }
 
     if (message === 'firebase_not_configured') {
-      return 'ยังไม่ได้ตั้งค่า Firebase สำหรับโปรเจคนี้';
+      return 'ยังไม่ได้ตั้งค่า Firebase สำหรับโปรเจกต์นี้';
     }
 
     if (message === 'firebase_network_failed') {
@@ -82,6 +82,10 @@ export const getErrorMessage = (
 
     if (message === 'requires_recent_login') {
       return 'เพื่อความปลอดภัย กรุณาเข้าสู่ระบบใหม่ก่อนดำเนินการต่อ';
+    }
+
+    if (message === 'local_password_reset_not_supported') {
+      return 'โหมดทดสอบในเครื่องยังไม่รองรับการส่งอีเมลรีเซ็ตรหัสผ่าน';
     }
 
     return message;

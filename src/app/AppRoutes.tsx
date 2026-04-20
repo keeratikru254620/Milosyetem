@@ -1,6 +1,17 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
+import { APP_PATHS } from '../constants/views';
+import DashboardPage from '../pages/admin/DashboardPage';
+import DocumentsPage from '../pages/admin/DocumentsPage';
+import DocTypesPage from '../pages/admin/DocTypesPage';
+import UsersPage from '../pages/admin/UsersPage';
+import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
+import LoginPage from '../pages/auth/LoginPage';
+import RegisterPage from '../pages/auth/RegisterPage';
+import LegalPage from '../pages/shared/LegalPage';
+import SettingsPage from '../pages/shared/SettingsPage';
+import NotFoundPage from '../pages/system/NotFoundPage';
 import type {
   DocType,
   DocumentData,
@@ -9,14 +20,6 @@ import type {
   SaveUserInput,
   User,
 } from '../types';
-import AuthView from '../views/AuthView';
-import DashboardView from '../views/DashboardView';
-import DocumentsView from '../views/DocumentsView';
-import DocTypesView from '../views/DocTypesView';
-import LegalView from '../views/LegalView';
-import NotFoundView from '../views/NotFoundView';
-import SettingsView from '../views/SettingsView';
-import UsersView from '../views/UsersView';
 
 interface AppRoutesProps {
   currentUser: User | null;
@@ -52,34 +55,43 @@ export default function AppRoutes({
   users,
 }: AppRoutesProps) {
   const resolveRoute = (path: string) => `${routePrefix}${path}`;
-  const settingsBasePath = resolveRoute('/settings');
+  const settingsBasePath = resolveRoute(APP_PATHS.settings);
 
   if (!currentUser) {
     return (
       <Routes>
-        <Route element={<Navigate to="/login" replace />} path="/" />
-        <Route element={<AuthView initialMode="login" onLogin={onLogin} />} path="/login" />
+        <Route element={<Navigate to={APP_PATHS.login} replace />} path={APP_PATHS.root} />
+        <Route element={<LoginPage onLogin={onLogin} />} path={APP_PATHS.login} />
+        <Route element={<RegisterPage onLogin={onLogin} />} path={APP_PATHS.register} />
         <Route
-          element={<AuthView initialMode="register" onLogin={onLogin} />}
-          path="/register"
+          element={<ForgotPasswordPage onLogin={onLogin} />}
+          path={APP_PATHS.forgotPassword}
+        />
+        <Route element={<LegalPage variant="terms" />} path={APP_PATHS.terms} />
+        <Route element={<LegalPage variant="privacy" />} path={APP_PATHS.privacy} />
+        <Route element={<Navigate to={APP_PATHS.login} replace />} path={APP_PATHS.dashboard} />
+        <Route element={<Navigate to={APP_PATHS.login} replace />} path={APP_PATHS.documents} />
+        <Route element={<Navigate to={APP_PATHS.login} replace />} path={APP_PATHS.docTypes} />
+        <Route element={<Navigate to={APP_PATHS.login} replace />} path={APP_PATHS.users} />
+        <Route element={<Navigate to={APP_PATHS.login} replace />} path={APP_PATHS.settings} />
+        <Route
+          element={<Navigate to={APP_PATHS.login} replace />}
+          path={APP_PATHS.settingsProfile}
         />
         <Route
-          element={<AuthView initialMode="forgot" onLogin={onLogin} />}
-          path="/forgot-password"
+          element={<Navigate to={APP_PATHS.login} replace />}
+          path={APP_PATHS.settingsGeneral}
         />
-        <Route element={<LegalView variant="terms" />} path="/terms" />
-        <Route element={<LegalView variant="privacy" />} path="/privacy" />
-        <Route element={<Navigate to="/login" replace />} path="/dashboard" />
-        <Route element={<Navigate to="/login" replace />} path="/documents" />
-        <Route element={<Navigate to="/login" replace />} path="/doctypes" />
-        <Route element={<Navigate to="/login" replace />} path="/users" />
-        <Route element={<Navigate to="/login" replace />} path="/settings" />
-        <Route element={<Navigate to="/login" replace />} path="/settings/profile" />
-        <Route element={<Navigate to="/login" replace />} path="/settings/general" />
-        <Route element={<Navigate to="/login" replace />} path="/settings/security" />
-        <Route element={<Navigate to="/login" replace />} path="/settings/support" />
         <Route
-          element={<NotFoundView backLabel="กลับสู่หน้าเข้าสู่ระบบ" backTo="/login" />}
+          element={<Navigate to={APP_PATHS.login} replace />}
+          path={APP_PATHS.settingsSecurity}
+        />
+        <Route
+          element={<Navigate to={APP_PATHS.login} replace />}
+          path={APP_PATHS.settingsSupport}
+        />
+        <Route
+          element={<NotFoundPage backLabel="กลับสู่หน้าเข้าสู่ระบบ" backTo={APP_PATHS.login} />}
           path="*"
         />
       </Routes>
@@ -90,29 +102,29 @@ export default function AppRoutes({
     <Routes>
       <Route
         element={
-          <DashboardView
+          <DashboardPage
             currentUser={currentUser}
             documents={documents}
             docTypes={docTypes}
             routePrefix={routePrefix}
           />
         }
-        path={routePrefix || '/'}
+        path={routePrefix || APP_PATHS.root}
       />
       <Route
         element={
-          <DashboardView
+          <DashboardPage
             currentUser={currentUser}
             documents={documents}
             docTypes={docTypes}
             routePrefix={routePrefix}
           />
         }
-        path={resolveRoute('/dashboard')}
+        path={resolveRoute(APP_PATHS.dashboard)}
       />
       <Route
         element={
-          <DocumentsView
+          <DocumentsPage
             currentUser={currentUser}
             documents={documents}
             docTypes={docTypes}
@@ -120,37 +132,37 @@ export default function AppRoutes({
             onSaveDocument={onSaveDocument}
           />
         }
-        path={resolveRoute('/documents')}
+        path={resolveRoute(APP_PATHS.documents)}
       />
       <Route
         element={
-          <DocTypesView
+          <DocTypesPage
             documents={documents}
             docTypes={docTypes}
             onDeleteDocType={onDeleteDocType}
             onSaveDocType={onSaveDocType}
           />
         }
-        path={resolveRoute('/doctypes')}
+        path={resolveRoute(APP_PATHS.docTypes)}
       />
       <Route
         element={
           currentUser.role === 'admin' ? (
-            <UsersView
+            <UsersPage
               currentUser={currentUser}
               onDeleteUser={onDeleteUser}
               onSaveUser={onSaveUser}
               users={users}
             />
           ) : (
-            <Navigate to={resolveRoute('/dashboard')} replace />
+            <Navigate to={resolveRoute(APP_PATHS.dashboard)} replace />
           )
         }
-        path={resolveRoute('/users')}
+        path={resolveRoute(APP_PATHS.users)}
       />
       <Route
         element={
-          <SettingsView
+          <SettingsPage
             basePath={settingsBasePath}
             currentUser={currentUser}
             initialTab="profile"
@@ -163,7 +175,7 @@ export default function AppRoutes({
       />
       <Route
         element={
-          <SettingsView
+          <SettingsPage
             basePath={settingsBasePath}
             currentUser={currentUser}
             initialTab="profile"
@@ -172,11 +184,11 @@ export default function AppRoutes({
             setIsDarkMode={setIsDarkMode}
           />
         }
-        path={resolveRoute('/settings/profile')}
+        path={resolveRoute(APP_PATHS.settingsProfile)}
       />
       <Route
         element={
-          <SettingsView
+          <SettingsPage
             basePath={settingsBasePath}
             currentUser={currentUser}
             initialTab="general"
@@ -185,11 +197,11 @@ export default function AppRoutes({
             setIsDarkMode={setIsDarkMode}
           />
         }
-        path={resolveRoute('/settings/general')}
+        path={resolveRoute(APP_PATHS.settingsGeneral)}
       />
       <Route
         element={
-          <SettingsView
+          <SettingsPage
             basePath={settingsBasePath}
             currentUser={currentUser}
             initialTab="security"
@@ -198,11 +210,11 @@ export default function AppRoutes({
             setIsDarkMode={setIsDarkMode}
           />
         }
-        path={resolveRoute('/settings/security')}
+        path={resolveRoute(APP_PATHS.settingsSecurity)}
       />
       <Route
         element={
-          <SettingsView
+          <SettingsPage
             basePath={settingsBasePath}
             currentUser={currentUser}
             initialTab="support"
@@ -211,13 +223,13 @@ export default function AppRoutes({
             setIsDarkMode={setIsDarkMode}
           />
         }
-        path={resolveRoute('/settings/support')}
+        path={resolveRoute(APP_PATHS.settingsSupport)}
       />
       <Route
         element={
-          <NotFoundView
+          <NotFoundPage
             backLabel="กลับสู่หน้าแดชบอร์ด"
-            backTo={resolveRoute('/dashboard')}
+            backTo={resolveRoute(APP_PATHS.dashboard)}
           />
         }
         path="*"

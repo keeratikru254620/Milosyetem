@@ -1,21 +1,17 @@
-import { deleteApp, initializeApp } from 'firebase/app';
 import {
   createUserWithEmailAndPassword,
-  getAuth,
-  inMemoryPersistence,
   onAuthStateChanged,
   sendEmailVerification,
   sendPasswordResetEmail,
-  setPersistence,
   signInWithEmailAndPassword,
   signOut,
   updatePassword,
   updateProfile,
   type User as FirebaseAuthUser,
 } from 'firebase/auth';
-import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
 
-import { previewDocTypes, previewDocuments } from '../app/previewData';
+import { localAuthSeedUsers } from '../data/localAuthUsers';
+import { previewDocTypes, previewDocuments } from '../data/previewData';
 import type {
   DocType,
   DocumentData,
@@ -24,35 +20,18 @@ import type {
   SaveUserInput,
   StoredFile,
   User,
-  UserRole,
 } from '../types';
-import { normalizeIdentity, normalizeRole } from '../utils/auth';
+import { normalizeIdentity, normalizeRole, stripPassword } from '../utils/auth';
 import { buildDocumentSearchIndex, normalizeStoredFile } from '../utils/documentSearch';
-import {
-  APP_USERS_COLLECTION,
-  auth,
-  db,
-  firebaseAppConfig,
-  isFirebaseConfigured,
-} from './firebaseConfig';
+import { auth, isFirebaseConfigured } from './firebaseConfig';
 
+const USERS_KEY = 'milosystem:users';
 const DOC_TYPES_KEY = 'milosystem:docTypes';
 const DOCUMENTS_KEY = 'milosystem:documents';
+const LOCAL_AUTH_SESSION_KEY = 'milosystem:auth-session';
 const LOCAL_DB_NAME = 'milosystem-local-db';
 const LOCAL_DB_VERSION = 1;
 const LOCAL_DB_STORE = 'app-data';
-
-interface AppUserProfile {
-  username: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  avatar?: string;
-  phone?: string;
-  disabled?: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 
@@ -191,11 +170,59 @@ const setPersistedItem = async <T>(key: string, value: T) => {
   setLocalStorageItem(key, value);
 };
 
+const getUsersStore = () => getPersistedItem<User[]>(USERS_KEY, localAuthSeedUsers);
 const getDocTypesStore = () => getPersistedItem<DocType[]>(DOC_TYPES_KEY, previewDocTypes);
 const getDocumentsStore = () => getPersistedItem<DocumentData[]>(DOCUMENTS_KEY, previewDocuments);
+const saveUsersStore = (users: User[]) => setPersistedItem(USERS_KEY, users);
 const saveDocTypesStore = (docTypes: DocType[]) => setPersistedItem(DOC_TYPES_KEY, docTypes);
 const saveDocumentsStore = (documents: DocumentData[]) =>
   setPersistedItem(DOCUMENTS_KEY, documents);
+
+const setLocalAuthSession = (userId: string | null) => {
+  if (!hasWindow()) {
+    return;
+  }
+
+  if (!userId) {
+    window.localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
+    return;
+  }
+
+  window.localStorage.setItem(LOCAL_AUTH_SESSION_KEY, userId);
+};
+
+const getLocalAuthSession = () => {
+  if (!hasWindow()) {
+    return null;
+  }
+
+  return window.localStorage.getItem(LOCAL_AUTH_SESSION_KEY);
+};
+
+const normalizeStoredUser = (user: User): User => ({
+  ...user,
+  username: normalizeIdentity(user.username || user.email),
+  email: normalizeIdentity(user.email || user.username),
+  name: user.name.trim(),
+  role: normalizeRole(user.role),
+  password: user.password?.trim() || undefined,
+  avatar: user.avatar?.trim() || undefined,
+  phone: user.phone?.trim() || undefined,
+});
+
+const sortUsersByName = (users: User[]) =>
+  [...users].sort((left, right) => left.name.localeCompare(right.name, 'th'));
+
+const mapStoredUsersToPublicUsers = (users: User[]) =>
+  sortUsersByName(users)
+    .filter((user) => user.username && user.role)
+    .map((user) => stripPassword(normalizeStoredUser(user)));
+
+const createStoredUser = (user: Omit<User, '_id'>): User =>
+  normalizeStoredUser({
+    ...user,
+    _id: createId('user'),
+  });
 
 const fileToDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -264,11 +291,11 @@ const mapLocalFiles = async (filesMeta: StoredFile[] = [], uploadedFiles: File[]
 };
 
 const ensureFirebaseReady = () => {
-  if (!isFirebaseConfigured || !auth || !db) {
+  if (!isFirebaseConfigured || !auth) {
     throw new Error('firebase_not_configured');
   }
 
-  return { auth, db };
+  return auth;
 };
 
 const getFirebaseErrorCode = (error: unknown) =>
@@ -300,8 +327,6 @@ const mapFirebaseError = (error: unknown, fallbackMessage: string) => {
       return new Error('too_many_requests');
     case 'auth/requires-recent-login':
       return new Error('requires_recent_login');
-    case 'permission-denied':
-      return new Error('firebase_profile_access_denied');
     default:
       if (error instanceof Error && error.message.trim()) {
         return error;
@@ -334,139 +359,259 @@ const resolveCurrentFirebaseUser = async () => {
   });
 };
 
-const buildFallbackProfile = (firebaseUser: FirebaseAuthUser): AppUserProfile => {
-  const email = normalizeIdentity(firebaseUser.email || '');
-  const name = firebaseUser.displayName?.trim() || email || 'User';
+const syncLocalProfileFromFirebaseAuth = async (
+  firebaseUser: FirebaseAuthUser,
+  fallbackName?: string,
+  fallbackRole?: User['role'],
+) => {
+  const users = (await getUsersStore()).map(normalizeStoredUser);
+  const existingUser = users.find((user) => user._id === firebaseUser.uid);
+  const identity = normalizeIdentity(firebaseUser.email || existingUser?.email || '');
+  const nextUser = normalizeStoredUser({
+    _id: firebaseUser.uid,
+    username: identity,
+    email: identity,
+    name:
+      firebaseUser.displayName?.trim() ||
+      fallbackName?.trim() ||
+      existingUser?.name ||
+      identity ||
+      'ผู้ใช้งาน',
+    role: existingUser?.role || normalizeRole(fallbackRole || 'general'),
+    avatar: firebaseUser.photoURL || existingUser?.avatar,
+    phone: existingUser?.phone,
+    password: existingUser?.password,
+  });
+
+  const nextUsers = existingUser
+    ? users.map((user) => (user._id === firebaseUser.uid ? nextUser : user))
+    : [nextUser, ...users];
+
+  await saveUsersStore(nextUsers);
+  return stripPassword(nextUser);
+};
+
+const loginWithLocalAuth = async (
+  username: string,
+  password: string,
+): Promise<{ user: User; token: string }> => {
+  const identity = normalizeIdentity(username);
+  const users = (await getUsersStore()).map(normalizeStoredUser);
+  const matchedUser = users.find(
+    (user) =>
+      (normalizeIdentity(user.email || user.username) === identity ||
+        normalizeIdentity(user.username || user.email) === identity) &&
+      (user.password || '') === password.trim(),
+  );
+
+  if (!matchedUser) {
+    throw new Error('invalid_credentials');
+  }
+
+  setLocalAuthSession(matchedUser._id);
 
   return {
-    username: email,
-    email,
-    name,
-    role: 'general',
-    avatar: firebaseUser.photoURL || undefined,
-    phone: undefined,
-    disabled: false,
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
+    user: stripPassword(matchedUser),
+    token: '',
   };
 };
 
-const normalizeStoredProfile = (
-  data: Partial<AppUserProfile>,
-  fallback: AppUserProfile,
-): AppUserProfile => ({
-  username: normalizeIdentity(data.username || data.email || fallback.email),
-  email: normalizeIdentity(data.email || data.username || fallback.email),
-  name: (data.name || fallback.name).trim() || fallback.name,
-  role: normalizeRole(data.role || fallback.role),
-  avatar: data.avatar?.trim() || fallback.avatar,
-  phone: data.phone?.trim() || fallback.phone,
-  disabled: Boolean(data.disabled),
-  createdAt: data.createdAt || fallback.createdAt,
-  updatedAt: data.updatedAt || fallback.updatedAt,
-});
+const verifyLocalSession = async (): Promise<User | null> => {
+  const sessionUserId = getLocalAuthSession();
 
-const mapProfileToUser = (uid: string, profile: AppUserProfile): User => ({
-  _id: uid,
-  username: profile.username || profile.email,
-  email: profile.email || profile.username,
-  name: profile.name,
-  role: normalizeRole(profile.role),
-  avatar: profile.avatar,
-  phone: profile.phone,
-});
-
-const loadUserProfile = async (firebaseUser: FirebaseAuthUser) => {
-  const { db: firestore } = ensureFirebaseReady();
-  const profileRef = doc(firestore, APP_USERS_COLLECTION, firebaseUser.uid);
-  const fallbackProfile = buildFallbackProfile(firebaseUser);
-  const profileSnapshot = await getDoc(profileRef);
-
-  if (!profileSnapshot.exists()) {
-    await setDoc(profileRef, fallbackProfile, { merge: true });
-    return fallbackProfile;
+  if (!sessionUserId) {
+    return null;
   }
 
-  const profile = normalizeStoredProfile(
-    profileSnapshot.data() as Partial<AppUserProfile>,
-    fallbackProfile,
+  const users = (await getUsersStore()).map(normalizeStoredUser);
+  const matchedUser = users.find((user) => user._id === sessionUserId);
+
+  if (!matchedUser) {
+    setLocalAuthSession(null);
+    return null;
+  }
+
+  return stripPassword(matchedUser);
+};
+
+const registerWithLocalAuth = async (
+  userData: Omit<User, '_id'>,
+): Promise<{ user: User; token: string }> => {
+  const email = normalizeIdentity(userData.email || userData.username);
+  const password = (userData.password || '').trim();
+  const name = (userData.name || '').trim();
+  const users = (await getUsersStore()).map(normalizeStoredUser);
+
+  if (!email) {
+    throw new Error('กรุณากรอกอีเมล');
+  }
+
+  if (!password) {
+    throw new Error('กรุณากรอกรหัสผ่าน');
+  }
+
+  if (password.length < 6) {
+    throw new Error('password_too_short');
+  }
+
+  if (!name) {
+    throw new Error('กรุณากรอกชื่อผู้ใช้งาน');
+  }
+
+  const duplicate = users.some(
+    (user) =>
+      normalizeIdentity(user.email || user.username) === email ||
+      normalizeIdentity(user.username || user.email) === email,
   );
 
+  if (duplicate) {
+    throw new Error('duplicate_record');
+  }
+
+  const nextUser = createStoredUser({
+    username: email,
+    email,
+    password,
+    name,
+    role: normalizeRole(userData.role || 'general'),
+    avatar: userData.avatar,
+    phone: userData.phone,
+  });
+
+  await saveUsersStore([nextUser, ...users]);
+
+  return {
+    user: stripPassword(nextUser),
+    token: '',
+  };
+};
+
+const saveLocalUser = async (payload: SaveUserInput, id?: string) => {
+  const users = (await getUsersStore()).map(normalizeStoredUser);
+
+  if (!id) {
+    const email = normalizeIdentity(payload.email || payload.username);
+    const password = (payload.password || '').trim();
+    const name = (payload.name || '').trim();
+
+    if (!email || !password || !name) {
+      throw new Error('กรุณากรอกชื่อผู้ใช้ ชื่อ และรหัสผ่านให้ครบ');
+    }
+
+    if (password.length < 6) {
+      throw new Error('password_too_short');
+    }
+
+    if (
+      users.some(
+        (user) =>
+          normalizeIdentity(user.email || user.username) === email ||
+          normalizeIdentity(user.username || user.email) === email,
+      )
+    ) {
+      throw new Error('duplicate_record');
+    }
+
+    const nextUser = createStoredUser({
+      username: email,
+      email,
+      password,
+      name,
+      role: normalizeRole(payload.role || 'officer'),
+      avatar: payload.avatar,
+      phone: payload.phone,
+    });
+
+    await saveUsersStore([nextUser, ...users]);
+    return stripPassword(nextUser);
+  }
+
+  const existingUser = users.find((user) => user._id === id);
+
+  if (!existingUser) {
+    throw new Error('ไม่พบข้อมูลผู้ใช้');
+  }
+
+  const nextIdentity = payload.username || payload.email;
+  const normalizedNextIdentity =
+    nextIdentity !== undefined
+      ? normalizeIdentity(nextIdentity)
+      : normalizeIdentity(existingUser.email || existingUser.username);
+
   if (
-    profile.username !== fallbackProfile.username ||
-    profile.email !== fallbackProfile.email ||
-    (!profile.avatar && fallbackProfile.avatar)
+    users.some(
+      (user) =>
+        user._id !== id &&
+        (normalizeIdentity(user.email || user.username) === normalizedNextIdentity ||
+          normalizeIdentity(user.username || user.email) === normalizedNextIdentity),
+    )
   ) {
-    await setDoc(
-      profileRef,
-      {
-        username: fallbackProfile.username,
-        email: fallbackProfile.email,
-        avatar: profile.avatar || fallbackProfile.avatar,
-        updatedAt: nowIso(),
-      },
-      { merge: true },
-    );
+    throw new Error('duplicate_record');
   }
 
-  if (profile.disabled) {
-    throw new Error('account_disabled');
-  }
+  const nextUser = normalizeStoredUser({
+    ...existingUser,
+    username: normalizedNextIdentity,
+    email: normalizedNextIdentity,
+    name: payload.name !== undefined ? payload.name : existingUser.name,
+    role: payload.role !== undefined ? payload.role : existingUser.role,
+    password: payload.password?.trim() || existingUser.password,
+    avatar: payload.avatar !== undefined ? payload.avatar : existingUser.avatar,
+    phone: payload.phone !== undefined ? payload.phone : existingUser.phone,
+  });
 
-  return profile;
+  await saveUsersStore(users.map((user) => (user._id === id ? nextUser : user)));
+  return stripPassword(nextUser);
 };
 
-const buildSecondaryAuthContext = async () => {
-  if (!firebaseAppConfig.apiKey) {
-    throw new Error('firebase_not_configured');
+const updateFirebaseCurrentUserProfile = async (id: string, payload: SaveUserInput, nextUser: User) => {
+  if (!isFirebaseConfigured || !auth || auth.currentUser?.uid !== id) {
+    return;
   }
 
-  const secondaryApp = initializeApp(firebaseAppConfig, `secondary-${Date.now()}`);
-  const secondaryAuth = getAuth(secondaryApp);
-  await setPersistence(secondaryAuth, inMemoryPersistence);
+  try {
+    if (payload.password?.trim()) {
+      await updatePassword(auth.currentUser, payload.password.trim());
+    }
 
-  return { secondaryApp, secondaryAuth };
+    if (
+      nextUser.name !== (auth.currentUser.displayName || '').trim() ||
+      nextUser.avatar !== (auth.currentUser.photoURL || undefined)
+    ) {
+      await updateProfile(auth.currentUser, {
+        displayName: nextUser.name,
+        photoURL: nextUser.avatar || null,
+      });
+    }
+  } catch (error) {
+    throw mapFirebaseError(error, 'ไม่สามารถบันทึกข้อมูลผู้ใช้ได้');
+  }
 };
 
-const getExistingProfile = async (id: string, currentFirebaseUser: FirebaseAuthUser | null) => {
-  const { db: firestore } = ensureFirebaseReady();
-  const profileRef = doc(firestore, APP_USERS_COLLECTION, id);
-  const profileSnapshot = await getDoc(profileRef);
+const deleteLocalUser = async (id: string) => {
+  const sessionUserId = getLocalAuthSession();
 
-  if (profileSnapshot.exists()) {
-    const rawProfile = profileSnapshot.data() as Partial<AppUserProfile>;
-    const fallbackProfile =
-      currentFirebaseUser?.uid === id
-        ? buildFallbackProfile(currentFirebaseUser)
-        : {
-            username: normalizeIdentity(rawProfile.username || rawProfile.email || ''),
-            email: normalizeIdentity(rawProfile.email || rawProfile.username || ''),
-            name:
-              rawProfile.name?.trim() ||
-              rawProfile.username?.trim() ||
-              rawProfile.email?.trim() ||
-              'User',
-            role: normalizeRole(rawProfile.role),
-            avatar: rawProfile.avatar?.trim() || undefined,
-            phone: rawProfile.phone?.trim() || undefined,
-            disabled: Boolean(rawProfile.disabled),
-            createdAt: rawProfile.createdAt || nowIso(),
-            updatedAt: rawProfile.updatedAt || nowIso(),
-          };
-
-    return normalizeStoredProfile(rawProfile, fallbackProfile);
+  if (sessionUserId === id) {
+    throw new Error('ไม่สามารถลบบัญชีที่กำลังใช้งานอยู่ได้');
   }
 
-  if (currentFirebaseUser?.uid === id) {
-    return buildFallbackProfile(currentFirebaseUser);
+  const users = await getUsersStore();
+
+  if (!users.some((user) => user._id === id)) {
+    throw new Error('ไม่พบข้อมูลผู้ใช้');
   }
 
-  return null;
+  await saveUsersStore(users.filter((user) => user._id !== id));
+  return true;
 };
 
 export const api = {
   login: async (username: string, password: string): Promise<{ user: User; token: string }> => {
-    const { auth: firebaseAuth } = ensureFirebaseReady();
+    if (!isFirebaseConfigured) {
+      return loginWithLocalAuth(username, password);
+    }
+
+    const firebaseAuth = ensureFirebaseReady();
     const email = normalizeIdentity(username);
 
     try {
@@ -477,10 +622,8 @@ export const api = {
         throw new Error('email_not_verified');
       }
 
-      const profile = await loadUserProfile(credential.user);
-
       return {
-        user: mapProfileToUser(credential.user.uid, profile),
+        user: await syncLocalProfileFromFirebaseAuth(credential.user),
         token: '',
       };
     } catch (error) {
@@ -490,7 +633,7 @@ export const api = {
 
   verifySession: async (): Promise<User | null> => {
     if (!isFirebaseConfigured || !auth) {
-      return null;
+      return verifyLocalSession();
     }
 
     const firebaseUser = await resolveCurrentFirebaseUser();
@@ -508,29 +651,26 @@ export const api = {
         return null;
       }
 
-      const profile = await loadUserProfile(currentFirebaseUser);
-      return mapProfileToUser(currentFirebaseUser.uid, profile);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'account_disabled') {
-        await signOut(auth);
-        return null;
-      }
-
-      const fallbackProfile = buildFallbackProfile(firebaseUser);
-      return mapProfileToUser(firebaseUser.uid, fallbackProfile);
+      return syncLocalProfileFromFirebaseAuth(currentFirebaseUser);
+    } catch {
+      return null;
     }
   },
 
   logout: () => {
-    if (!auth) {
-      return;
-    }
+    setLocalAuthSession(null);
 
-    void signOut(auth);
+    if (auth) {
+      void signOut(auth);
+    }
   },
 
   requestPasswordReset: async (email: string) => {
-    const { auth: firebaseAuth } = ensureFirebaseReady();
+    if (!isFirebaseConfigured) {
+      throw new Error('local_password_reset_not_supported');
+    }
+
+    const firebaseAuth = ensureFirebaseReady();
 
     try {
       await sendPasswordResetEmail(firebaseAuth, normalizeIdentity(email));
@@ -541,11 +681,14 @@ export const api = {
   },
 
   register: async (userData: Omit<User, '_id'>): Promise<{ user: User; token: string }> => {
-    const { auth: firebaseAuth, db: firestore } = ensureFirebaseReady();
+    if (!isFirebaseConfigured) {
+      return registerWithLocalAuth(userData);
+    }
+
+    const firebaseAuth = ensureFirebaseReady();
     const email = normalizeIdentity(userData.email || userData.username);
     const password = (userData.password || '').trim();
     const name = (userData.name || '').trim();
-    const phone = userData.phone?.trim() || undefined;
     const avatar = userData.avatar?.trim() || undefined;
 
     if (!email) {
@@ -572,27 +715,17 @@ export const api = {
         photoURL: avatar || null,
       });
 
-      const profile: AppUserProfile = {
-        username: email,
-        email,
+      const user = await syncLocalProfileFromFirebaseAuth(
+        credential.user,
         name,
-        role: 'general',
-        avatar,
-        phone,
-        disabled: false,
-        createdAt: nowIso(),
-        updatedAt: nowIso(),
-      };
-
-      await setDoc(doc(firestore, APP_USERS_COLLECTION, credential.user.uid), profile, {
-        merge: true,
-      });
+        normalizeRole(userData.role || 'general'),
+      );
 
       await sendEmailVerification(credential.user);
       await signOut(firebaseAuth);
 
       return {
-        user: mapProfileToUser(credential.user.uid, profile),
+        user,
         token: '',
       };
     } catch (error) {
@@ -604,167 +737,19 @@ export const api = {
     }
   },
 
-  getUsers: async () => {
-    if (!isFirebaseConfigured || !db) {
-      return [];
-    }
-
-    try {
-      const snapshot = await getDocs(collection(db, APP_USERS_COLLECTION));
-
-      return snapshot.docs
-        .map((profileDocument) => {
-          const rawProfile = profileDocument.data() as Partial<AppUserProfile>;
-          const normalizedProfile = normalizeStoredProfile(rawProfile, {
-            username: normalizeIdentity(rawProfile.username || rawProfile.email || ''),
-            email: normalizeIdentity(rawProfile.email || rawProfile.username || ''),
-            name:
-              rawProfile.name?.trim() ||
-              rawProfile.username?.trim() ||
-              rawProfile.email?.trim() ||
-              'User',
-            role: normalizeRole(rawProfile.role),
-            avatar: rawProfile.avatar?.trim() || undefined,
-            phone: rawProfile.phone?.trim() || undefined,
-            disabled: Boolean(rawProfile.disabled),
-            createdAt: rawProfile.createdAt || nowIso(),
-            updatedAt: rawProfile.updatedAt || nowIso(),
-          });
-
-          return {
-            disabled: Boolean(rawProfile.disabled),
-            user: mapProfileToUser(profileDocument.id, normalizedProfile),
-          };
-        })
-        .filter((entry) => entry.user.role && entry.user.username && !entry.disabled)
-        .map((entry) => entry.user)
-        .sort((left, right) => left.name.localeCompare(right.name, 'th'));
-    } catch {
-      return [];
-    }
-  },
+  getUsers: async () => mapStoredUsersToPublicUsers(await getUsersStore()),
 
   saveUser: async (payload: SaveUserInput, id?: string) => {
-    const { db: firestore } = ensureFirebaseReady();
-    const currentFirebaseUser = await resolveCurrentFirebaseUser();
+    const savedUser = await saveLocalUser(payload, id);
 
-    if (!id) {
-      const email = normalizeIdentity(payload.email || payload.username);
-      const password = (payload.password || '').trim();
-      const name = (payload.name || '').trim();
-
-      if (!email || !password || !name) {
-        throw new Error('กรุณากรอกชื่อผู้ใช้ ชื่อ และรหัสผ่านให้ครบ');
-      }
-
-      if (password.length < 6) {
-        throw new Error('password_too_short');
-      }
-
-      const { secondaryApp, secondaryAuth } = await buildSecondaryAuthContext();
-
-      try {
-        const credential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
-        const nextProfile: AppUserProfile = {
-          username: email,
-          email,
-          name,
-          role: normalizeRole(payload.role || 'officer'),
-          avatar: payload.avatar?.trim() || undefined,
-          phone: payload.phone?.trim() || undefined,
-          disabled: false,
-          createdAt: nowIso(),
-          updatedAt: nowIso(),
-        };
-
-        await updateProfile(credential.user, {
-          displayName: nextProfile.name,
-          photoURL: nextProfile.avatar || null,
-        });
-        await setDoc(doc(firestore, APP_USERS_COLLECTION, credential.user.uid), nextProfile, {
-          merge: true,
-        });
-        await sendEmailVerification(credential.user);
-        await signOut(secondaryAuth).catch(() => undefined);
-
-        return mapProfileToUser(credential.user.uid, nextProfile);
-      } catch (error) {
-        throw mapFirebaseError(error, 'ไม่สามารถเพิ่มผู้ใช้งานได้');
-      } finally {
-        await deleteApp(secondaryApp).catch(() => undefined);
-      }
+    if (id) {
+      await updateFirebaseCurrentUserProfile(id, payload, savedUser);
     }
 
-    const existingProfile = await getExistingProfile(id, currentFirebaseUser);
-
-    if (!existingProfile) {
-      throw new Error('ไม่พบข้อมูลผู้ใช้');
-    }
-
-    if (payload.password?.trim() && currentFirebaseUser?.uid !== id) {
-      throw new Error('ยังไม่รองรับการเปลี่ยนรหัสผ่านของผู้ใช้อื่นจากหน้านี้');
-    }
-
-    const nextProfile: AppUserProfile = {
-      ...existingProfile,
-      name: payload.name !== undefined ? payload.name.trim() || existingProfile.name : existingProfile.name,
-      role: payload.role !== undefined ? normalizeRole(payload.role) : existingProfile.role,
-      avatar:
-        payload.avatar !== undefined ? payload.avatar.trim() || undefined : existingProfile.avatar,
-      phone: payload.phone !== undefined ? payload.phone.trim() || undefined : existingProfile.phone,
-      updatedAt: nowIso(),
-    };
-
-    try {
-      if (currentFirebaseUser?.uid === id) {
-        if (payload.password?.trim()) {
-          await updatePassword(currentFirebaseUser, payload.password.trim());
-        }
-
-        if (
-          nextProfile.name !== (currentFirebaseUser.displayName || '').trim() ||
-          nextProfile.avatar !== (currentFirebaseUser.photoURL || undefined)
-        ) {
-          await updateProfile(currentFirebaseUser, {
-            displayName: nextProfile.name,
-            photoURL: nextProfile.avatar || null,
-          });
-        }
-      }
-
-      await setDoc(doc(firestore, APP_USERS_COLLECTION, id), nextProfile, { merge: true });
-      return mapProfileToUser(id, nextProfile);
-    } catch (error) {
-      throw mapFirebaseError(error, 'ไม่สามารถบันทึกข้อมูลผู้ใช้ได้');
-    }
+    return savedUser;
   },
 
-  deleteUser: async (id: string) => {
-    const { db: firestore } = ensureFirebaseReady();
-    const currentFirebaseUser = await resolveCurrentFirebaseUser();
-
-    if (currentFirebaseUser?.uid === id) {
-      throw new Error('ไม่สามารถลบบัญชีที่กำลังใช้งานอยู่ได้');
-    }
-
-    const existingProfile = await getExistingProfile(id, currentFirebaseUser);
-
-    if (!existingProfile) {
-      throw new Error('ไม่พบข้อมูลผู้ใช้');
-    }
-
-    await setDoc(
-      doc(firestore, APP_USERS_COLLECTION, id),
-      {
-        ...existingProfile,
-        disabled: true,
-        updatedAt: nowIso(),
-      },
-      { merge: true },
-    );
-
-    return true;
-  },
+  deleteUser: async (id: string) => deleteLocalUser(id),
 
   getDocTypes: async () =>
     [...(await getDocTypesStore())].sort((left, right) => left.name.localeCompare(right.name, 'th')),
