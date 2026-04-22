@@ -44,29 +44,33 @@ export default function DashboardView({
       label: 'เอกสารทั้งหมด',
       value: documents.length,
       icon: Files,
-      backgroundClassName: 'bg-blue-50 dark:bg-blue-900/20',
-      iconClassName: 'text-blue-700 dark:text-blue-400',
+      backgroundClassName:
+        'bg-[linear-gradient(180deg,rgba(255,255,255,0.2),rgba(255,255,255,0.04)_28%),linear-gradient(135deg,rgba(120,128,140,0.76),rgba(78,86,97,0.96))]',
+      iconClassName: 'text-[var(--app-gold-soft)]',
     },
     {
       label: 'เอกสารใหม่เดือนนี้',
       value: newDocsCount,
       icon: CalendarPlus,
-      backgroundClassName: 'bg-emerald-50 dark:bg-emerald-900/20',
-      iconClassName: 'text-emerald-700 dark:text-emerald-400',
+      backgroundClassName:
+        'bg-[linear-gradient(180deg,rgba(255,235,217,0.22),rgba(255,255,255,0.03)_28%),linear-gradient(135deg,rgba(143,96,56,0.9),rgba(97,67,44,0.98))]',
+      iconClassName: 'text-[#fff2e6]',
     },
     {
       label: 'ประเภทเอกสาร',
       value: docTypes.length,
       icon: Tag,
-      backgroundClassName: 'bg-amber-50 dark:bg-amber-500/15',
-      iconClassName: 'text-amber-600 dark:text-amber-400',
+      backgroundClassName:
+        'bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.03)_28%),linear-gradient(135deg,rgba(153,121,82,0.84),rgba(94,74,51,0.96))]',
+      iconClassName: 'text-[var(--app-gold-soft)]',
     },
     {
       label: 'เอกสารที่รับผิดชอบ',
       value: myDocsCount,
       icon: UserCheck,
-      backgroundClassName: 'bg-slate-100 dark:bg-slate-800',
-      iconClassName: 'text-slate-700 dark:text-slate-300',
+      backgroundClassName:
+        'bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.04)_28%),linear-gradient(135deg,rgba(132,140,152,0.72),rgba(86,94,106,0.96))]',
+      iconClassName: 'text-white',
     },
   ] as const;
 
@@ -101,58 +105,61 @@ export default function DashboardView({
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="luxury-panel rounded-[1.9rem] p-8 dark:border-slate-800 dark:bg-[rgba(15,24,42,0.92)] lg:col-span-2">
+        <div className="luxury-panel rounded-[1.9rem] p-8 lg:col-span-2">
           <h3 className="luxury-heading mb-6 flex items-center text-xl font-bold text-slate-900 dark:text-white">
-            <PieChart className="mr-3 h-6 w-6 text-amber-500" /> สัดส่วนเอกสาร
+            <PieChart className="mr-3 h-6 w-6 text-[var(--app-gold)]" /> สัดส่วนเอกสาร
           </h3>
           <div className="flex flex-col items-center gap-10 sm:flex-row">
-            <div className="group relative h-56 w-56 shrink-0">
-              <svg
-                className="h-full w-full -rotate-90 rounded-full drop-shadow-md transition-transform duration-500 group-hover:scale-105"
-                viewBox="0 0 100 100"
-              >
-                {typeCounts.reduce<{ elements: ReactElement[]; offset: number }>(
-                  (accumulator, docType, index) => {
-                    if (docType.count === 0 || documents.length === 0) {
-                      return accumulator;
-                    }
+            <div className="flex w-full max-w-[14rem] shrink-0 flex-col items-center justify-center gap-5 sm:w-56">
+              <div className="group relative h-44 w-44 sm:h-48 sm:w-48">
+                <svg
+                  className="h-full w-full -rotate-90 rounded-full drop-shadow-md transition-transform duration-500 group-hover:scale-105"
+                  viewBox="0 0 100 100"
+                >
+                  {typeCounts.reduce<{ elements: ReactElement[]; offset: number }>(
+                    (accumulator, docType, index) => {
+                      if (docType.count === 0 || documents.length === 0) {
+                        return accumulator;
+                      }
 
-                    const percentage = (docType.count / documents.length) * 100;
-                    accumulator.elements.push(
-                      <circle
-                        className="cursor-pointer transition-all duration-1000 ease-out hover:opacity-80"
-                        cx="50"
-                        cy="50"
-                        fill="transparent"
-                        key={`${docType._id}-${index}`}
-                        r="25"
-                        stroke={docType.color}
-                        strokeDasharray={`${percentage} 100`}
-                        strokeDashoffset={-accumulator.offset}
-                        strokeWidth="50"
-                      />,
-                    );
-                    accumulator.offset += percentage;
-                    return accumulator;
-                  },
-                  { elements: [], offset: 0 },
-                ).elements}
-                {documents.length === 0 ? (
-                  <circle
-                    cx="50"
-                    cy="50"
-                    fill="transparent"
-                    r="25"
-                    stroke="#e2e8f0"
-                    strokeWidth="50"
-                  />
-                ) : null}
-              </svg>
-              <div className="absolute inset-0 z-10 m-10 flex flex-col items-center justify-center rounded-full border border-slate-100 bg-white shadow-inner dark:border-slate-800 dark:bg-slate-900">
-                <span className="text-4xl font-bold text-blue-900 dark:text-white">
+                      const percentage = (docType.count / documents.length) * 100;
+                      accumulator.elements.push(
+                        <circle
+                          className="cursor-pointer transition-all duration-1000 ease-out hover:opacity-80"
+                          cx="50"
+                          cy="50"
+                          fill="transparent"
+                          key={`${docType._id}-${index}`}
+                          r="25"
+                          stroke={docType.color}
+                          strokeDasharray={`${percentage} 100`}
+                          strokeDashoffset={-accumulator.offset}
+                          strokeWidth="50"
+                        />,
+                      );
+                      accumulator.offset += percentage;
+                      return accumulator;
+                    },
+                    { elements: [], offset: 0 },
+                  ).elements}
+                  {documents.length === 0 ? (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      fill="transparent"
+                      r="25"
+                      stroke="#e2e8f0"
+                      strokeWidth="50"
+                    />
+                  ) : null}
+                </svg>
+              </div>
+
+              <div className="luxury-panel-soft flex min-w-[7.5rem] flex-col items-center justify-center rounded-[1.75rem] px-5 py-3 text-center">
+                <span className="leading-none text-[1.9rem] font-bold text-[var(--app-title)] dark:text-white sm:text-[2.05rem]">
                   {documents.length}
                 </span>
-                <span className="mt-1 text-xs font-bold uppercase text-amber-600 dark:text-amber-500">
+                <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--app-text-soft)] dark:text-slate-300">
                   Total
                 </span>
               </div>
@@ -166,7 +173,7 @@ export default function DashboardView({
 
                 return (
                   <div
-                    className="flex items-center justify-between rounded-2xl border border-transparent bg-slate-50 p-4 transition-colors hover:border-slate-200 dark:bg-slate-800/50 dark:hover:border-slate-700"
+                    className="luxury-panel-soft flex items-center justify-between rounded-2xl p-4 transition-colors hover:border-white/18"
                     key={docType._id}
                   >
                     <div className="flex items-center gap-4">
@@ -178,7 +185,7 @@ export default function DashboardView({
                         {docType.name}
                       </span>
                     </div>
-                    <span className="rounded-xl border border-slate-100 bg-white px-4 py-1.5 text-base font-bold text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+                    <span className="metal-badge rounded-xl px-4 py-1.5 text-base font-bold text-slate-900 dark:text-white">
                       {docType.count}
                       <span className="ml-1 text-sm font-medium text-slate-400">
                         ({percentage}%)
@@ -191,9 +198,9 @@ export default function DashboardView({
           </div>
         </div>
 
-        <div className="luxury-panel rounded-[1.9rem] p-8 dark:border-slate-800 dark:bg-[rgba(15,24,42,0.92)]">
+        <div className="luxury-panel rounded-[1.9rem] p-8">
           <h3 className="luxury-heading mb-6 flex items-center text-xl font-bold text-slate-900 dark:text-white">
-            <BarChart3 className="mr-3 h-6 w-6 text-blue-900 dark:text-blue-500" /> ปริมาณรายประเภท
+            <BarChart3 className="mr-3 h-6 w-6 text-[var(--app-gold)]" /> ปริมาณรายประเภท
           </h3>
           <div className="space-y-7">
             {typeCounts.map((docType) => {
@@ -207,7 +214,7 @@ export default function DashboardView({
                     <span className="text-slate-700 dark:text-slate-300">{docType.name}</span>
                     <span className="text-slate-500">{percentage}%</span>
                   </div>
-                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 shadow-inner dark:bg-slate-800">
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/12 shadow-inner">
                     <div
                       className="h-full rounded-full transition-all duration-1000 ease-out group-hover:brightness-110"
                       style={{ width: `${percentage}%`, backgroundColor: docType.color }}
@@ -220,13 +227,13 @@ export default function DashboardView({
         </div>
       </div>
 
-      <div className="luxury-panel overflow-hidden rounded-[1.9rem] dark:border-slate-800 dark:bg-[rgba(15,24,42,0.92)]">
-        <div className="flex items-center justify-between border-b border-[var(--panel-border)] bg-[rgba(247,241,231,0.72)] p-6 dark:border-slate-800 dark:bg-slate-800/20">
+      <div className="luxury-panel overflow-hidden rounded-[1.9rem]">
+        <div className="metal-section-band flex items-center justify-between border-b border-white/10 p-6">
           <h3 className="luxury-heading flex items-center text-lg font-bold text-slate-900 dark:text-white">
-            <Clock3 className="mr-3 h-6 w-6 text-amber-500" /> เอกสารล่าสุด
+            <Clock3 className="mr-3 h-6 w-6 text-[var(--app-gold)]" /> เอกสารล่าสุด
           </h3>
           <button
-            className="group flex items-center text-sm font-bold text-blue-900 transition hover:text-blue-700 dark:text-amber-500 dark:hover:text-amber-400"
+            className="metal-link group flex items-center text-sm font-bold transition"
             onClick={() => navigate(resolveRoute('/documents'))}
             type="button"
           >
@@ -237,7 +244,7 @@ export default function DashboardView({
         <div className="overflow-x-auto">
           <table className="w-full min-w-[600px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-slate-100 bg-white text-xs font-bold uppercase tracking-wider text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-500">
+              <tr className="border-b border-white/8 bg-white/6 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <th className="px-6 py-5">วันที่</th>
                 <th className="px-6 py-5">เลขที่</th>
                 <th className="px-6 py-5">เรื่อง</th>
@@ -257,7 +264,7 @@ export default function DashboardView({
 
                   return (
                     <tr
-                      className="group cursor-pointer transition-colors hover:bg-amber-50/30 dark:hover:bg-slate-800/50"
+                      className="group cursor-pointer transition-colors hover:bg-white/6"
                       key={document._id}
                       onClick={() => navigate(resolveRoute('/documents'))}
                     >
@@ -267,7 +274,7 @@ export default function DashboardView({
                       <td className="px-6 py-4 font-mono text-sm font-bold text-slate-700 dark:text-slate-300">
                         {document.docNo || '-'}
                       </td>
-                      <td className="max-w-[250px] truncate px-6 py-4 text-base font-bold text-slate-900 transition-colors group-hover:text-blue-900 dark:text-white dark:group-hover:text-amber-500">
+                      <td className="max-w-[250px] truncate px-6 py-4 text-base font-bold text-slate-900 transition-colors group-hover:text-[var(--app-gold)] dark:text-white">
                         {document.subject || '-'}
                       </td>
                       <td className="px-6 py-4">

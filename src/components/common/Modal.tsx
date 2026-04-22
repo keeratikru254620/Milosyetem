@@ -22,15 +22,15 @@ export default function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-md animate-in fade-in duration-200">
       <div
-        className={`w-full overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_100px_rgba(15,23,42,0.25)] dark:border-slate-800 dark:bg-slate-900 ${maxWidthClassName} transform animate-in zoom-in-95`}
+        className={`luxury-panel w-full overflow-hidden rounded-[2rem] ${maxWidthClassName} transform animate-in zoom-in-95`}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-6 py-5 dark:border-slate-800 dark:bg-slate-800/30">
+        <div className="metal-section-band flex items-center justify-between border-b border-white/10 px-6 py-5">
           <h3 className="flex items-center text-lg font-bold text-slate-900 dark:text-white">
-            {Icon ? <Icon className="mr-2.5 h-5 w-5 text-blue-900 dark:text-amber-500" /> : null}
+            {Icon ? <Icon className="mr-2.5 h-5 w-5 text-[var(--app-gold)]" /> : null}
             {title}
           </h3>
           <button
-            className="rounded-xl p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-500 active:scale-95 dark:hover:bg-red-500/10"
+            className="metal-icon-shell rounded-xl p-2 text-slate-400 transition hover:text-red-400 active:scale-95"
             onClick={onClose}
             type="button"
           >
@@ -39,7 +39,7 @@ export default function Modal({
         </div>
         <div>{children}</div>
         {footer ? (
-          <div className="border-t border-slate-100 bg-slate-50/80 px-6 py-5 dark:border-slate-800 dark:bg-slate-800/30">
+          <div className="metal-section-band border-t border-white/10 px-6 py-5">
             {footer}
           </div>
         ) : null}

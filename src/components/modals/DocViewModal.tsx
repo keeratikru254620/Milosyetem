@@ -79,9 +79,9 @@ export default function DocViewModal({
     doc.ownerId === currentUser._id;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 transform animate-in zoom-in-95">
-        <div className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white p-8 dark:border-slate-800 dark:from-slate-800 dark:to-slate-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#05030a]/68 p-4 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="luxury-panel flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl transform animate-in zoom-in-95">
+        <div className="relative overflow-hidden border-b border-white/10 bg-[linear-gradient(160deg,rgba(255,255,255,0.1),rgba(255,255,255,0.03)),linear-gradient(135deg,rgba(103,74,147,0.72),rgba(18,12,29,0.92))] p-8">
           <div
             className="absolute left-0 top-0 h-2 w-full"
             style={{ backgroundColor: docType?.color || '#1e3a8a' }}
@@ -107,14 +107,14 @@ export default function DocViewModal({
             <div className="flex items-center gap-2">
               {canEdit && (
                 <button
-                  className="rounded-xl border border-slate-200 bg-white p-3 text-slate-400 shadow-sm transition hover:text-blue-900 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:hover:text-amber-500"
+                  className="metal-icon-shell rounded-xl p-3 text-slate-400 shadow-sm transition hover:text-[var(--app-gold)] active:scale-95"
                   onClick={onEdit}
                 >
                   <Edit2 className="h-5 w-5" />
                 </button>
               )}
               <button
-                className="rounded-xl border border-slate-200 bg-white p-3 text-slate-400 shadow-sm transition hover:text-red-500 active:scale-95 dark:border-slate-700 dark:bg-slate-800"
+                className="metal-icon-shell rounded-xl p-3 text-slate-400 shadow-sm transition hover:text-red-400 active:scale-95"
                 onClick={onClose}
               >
                 <X className="h-5 w-5" />
@@ -125,7 +125,7 @@ export default function DocViewModal({
 
         <div className="overflow-y-auto p-8">
           <div className="mb-10 grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-800/50">
+            <div className="luxury-panel-soft rounded-2xl p-6">
               <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
                 หน่วยงานต้นเรื่อง
               </p>
@@ -133,7 +133,7 @@ export default function DocViewModal({
                 {doc.origin || '-'}
               </p>
             </div>
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-800/50">
+            <div className="luxury-panel-soft rounded-2xl p-6">
               <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
                 วันที่ออกเอกสาร
               </p>
@@ -141,7 +141,7 @@ export default function DocViewModal({
                 {formatThaiDate(doc.date)}
               </p>
             </div>
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-800/50">
+            <div className="luxury-panel-soft rounded-2xl p-6">
               <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
                 ปีงบประมาณ
               </p>
@@ -149,7 +149,7 @@ export default function DocViewModal({
                 {doc.fiscalYear || '-'}
               </p>
             </div>
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-800/50">
+            <div className="luxury-panel-soft rounded-2xl p-6">
               <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
                 ผู้รับผิดชอบ
               </p>
@@ -161,12 +161,12 @@ export default function DocViewModal({
 
           <div>
             <h4 className="mb-5 flex items-center text-sm font-bold uppercase tracking-wider text-slate-500">
-              <Paperclip className="mr-2 h-5 w-5 text-blue-900 dark:text-amber-500" />
+              <Paperclip className="mr-2 h-5 w-5 text-[var(--app-gold)]" />
               ไฟล์แนบ ({doc.files.length})
             </h4>
             <div className="flex flex-col gap-4">
               {doc.files.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm font-medium italic text-slate-400 dark:border-slate-700 dark:bg-slate-800/50">
+                <div className="luxury-panel-soft rounded-2xl border-dashed p-8 text-center text-sm font-medium italic text-slate-400">
                   ไม่มีไฟล์แนบ
                 </div>
               ) : (
@@ -178,10 +178,7 @@ export default function DocViewModal({
                   const fileDownloadUrl = getFileDownloadUrl(file);
 
                   return (
-                    <div
-                      className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-blue-400 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-blue-600"
-                      key={`${fileName}-${index}`}
-                    >
+                    <div className="luxury-panel-soft group rounded-2xl p-5 shadow-sm transition-colors hover:border-white/18" key={`${fileName}-${index}`}>
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0 flex-1">
                           <div className="flex overflow-hidden">
@@ -192,7 +189,7 @@ export default function DocViewModal({
                               </span>
                               <div className="mt-2 flex flex-wrap gap-2">
                                 {file.mimeType && (
-                                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                  <span className="metal-badge rounded-full px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:text-slate-300">
                                     {file.mimeType}
                                   </span>
                                 )}
@@ -212,7 +209,7 @@ export default function DocViewModal({
                         </div>
                         <div className="ml-4 flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
                           <button
-                            className="inline-flex min-w-[108px] items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-900 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-amber-500"
+                            className="metal-button-secondary inline-flex min-w-[108px] items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold transition active:scale-95"
                             onClick={() => {
                               if (fileUrl) {
                                 window.open(fileUrl, '_blank', 'noopener,noreferrer');
@@ -226,7 +223,7 @@ export default function DocViewModal({
                             เปิดดู
                           </button>
                           <button
-                            className="inline-flex min-w-[128px] items-center justify-center rounded-xl border border-blue-900 bg-blue-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-950 active:scale-95 dark:border-amber-500 dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"
+                            className="metal-button-primary inline-flex min-w-[128px] items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold transition hover:brightness-105 active:scale-95"
                             onClick={() => {
                               if (fileDownloadUrl) {
                                 const anchor = document.createElement('a');

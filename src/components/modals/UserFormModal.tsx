@@ -96,7 +96,7 @@ export default function UserFormModal({
               USERNAME
             </label>
             <input
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-sm outline-none transition-all focus:border-blue-900 focus:bg-white read-only:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:bg-slate-900 dark:read-only:bg-slate-800"
+              className="metal-control w-full rounded-xl px-4 py-3 font-mono text-sm outline-none transition-all read-only:opacity-80 dark:text-white"
               onChange={(event) =>
                 setForm((current) => ({ ...current, username: event.target.value }))
               }
@@ -112,7 +112,7 @@ export default function UserFormModal({
               PASSWORD
             </label>
             <input
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-sm outline-none transition-all focus:border-blue-900 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:bg-slate-900"
+              className="metal-control w-full rounded-xl px-4 py-3 font-mono text-sm outline-none transition-all dark:text-white"
               onChange={(event) =>
                 setForm((current) => ({ ...current, password: event.target.value }))
               }
@@ -128,7 +128,7 @@ export default function UserFormModal({
               ชื่อ-นามสกุล
             </label>
             <input
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition-all focus:border-blue-900 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:bg-slate-900"
+              className="metal-control w-full rounded-xl px-4 py-3 text-sm outline-none transition-all dark:text-white"
               onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
               required
               type="text"
@@ -141,7 +141,7 @@ export default function UserFormModal({
               สิทธิ์การใช้งาน
             </label>
             <select
-              className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition-all focus:border-blue-900 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:bg-slate-900"
+              className="metal-control w-full appearance-none rounded-xl px-4 py-3 text-sm outline-none transition-all dark:text-white"
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
@@ -150,8 +150,8 @@ export default function UserFormModal({
               }
               value={form.role}
             >
-              <option value="general">ผู้ใช้งานทั่วไป</option>
-              <option value="admin">เจ้าหน้าที่ตำรวจ</option>
+              <option value="general">เจ้าหน้าที่ตำรวจ</option>
+              <option value="admin">ผู้ดูแลระบบ</option>
               <option value="officer">เจ้าหน้าที่</option>
             </select>
           </div>
@@ -159,14 +159,14 @@ export default function UserFormModal({
 
         <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
           <button
-            className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            className="metal-button-secondary rounded-xl px-6 py-3 text-sm font-bold transition active:scale-95"
             onClick={onClose}
             type="button"
           >
             ยกเลิก
           </button>
           <button
-            className="rounded-xl border border-blue-800 bg-blue-900 px-8 py-3 text-sm font-bold text-white shadow-md shadow-blue-900/20 transition hover:bg-blue-950 active:scale-95 disabled:opacity-50"
+            className="metal-button-primary rounded-xl px-8 py-3 text-sm font-bold transition hover:brightness-105 active:scale-95 disabled:opacity-50"
             disabled={isLoading}
             type="submit"
           >

@@ -58,15 +58,15 @@ export default function Sidebar({
       ) : null}
 
       <aside
-        className={`luxury-panel fixed z-30 flex h-screen w-[20rem] flex-col border-r border-[var(--panel-border)] bg-[rgba(255,250,242,0.92)] shadow-[12px_0_45px_rgba(32,41,59,0.12)] backdrop-blur-2xl transition-transform duration-300 ease-out lg:relative lg:translate-x-0 lg:shadow-none dark:border-slate-800 dark:bg-[rgba(10,18,33,0.94)] ${
+        className={`luxury-panel fixed z-30 flex h-screen w-[20rem] flex-col border-r border-white/14 bg-[rgba(90,66,128,0.22)] shadow-[18px_0_55px_rgba(12,6,22,0.32)] backdrop-blur-2xl transition-transform duration-300 ease-out lg:relative lg:translate-x-0 lg:shadow-none ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex items-center gap-3 border-b border-[var(--panel-border)] bg-[rgba(255,255,255,0.28)] px-4 py-4 dark:border-slate-800/50 dark:bg-transparent">
-          <div className="flex h-[4.6rem] w-[4.6rem] shrink-0 items-center justify-center overflow-hidden rounded-[1.45rem] border border-white/75 bg-[rgba(255,255,255,0.9)] p-2.5 shadow-[0_18px_40px_rgba(32,41,59,0.12)]">
+        <div className="metal-section-band flex items-center gap-3 border-b border-white/12 px-4 py-4">
+          <div className="metal-icon-shell flex h-[4.6rem] w-[4.6rem] shrink-0 items-center justify-center overflow-hidden rounded-[1.45rem] p-2.5">
             <img
               alt="โลโก้ระบบ"
-              className="h-full w-full scale-[1.08] object-contain contrast-[1.14] saturate-125 drop-shadow-[0_12px_24px_rgba(15,23,42,0.22)]"
+              className="h-full w-full scale-[1.08] object-contain contrast-[1.14] saturate-125 drop-shadow-[0_14px_26px_rgba(23,12,38,0.28)]"
               onError={(event) => {
                 const target = event.currentTarget;
                 target.onerror = null;
@@ -86,7 +86,7 @@ export default function Sidebar({
         </div>
 
         <nav className="flex-1 space-y-1.5 overflow-y-auto py-2">
-          <div className="mt-2 px-6 py-3 text-xs font-bold uppercase tracking-widest text-[var(--app-gold)] dark:text-[var(--app-gold-soft)]">
+          <div className="luxury-kicker mt-2 px-6 py-3 text-xs">
             เมนูหลัก
           </div>
           <NavItem
@@ -104,7 +104,7 @@ export default function Sidebar({
             to={resolveRoute(APP_PATHS.documents)}
           />
 
-          <div className="mt-4 px-6 py-3 text-xs font-bold uppercase tracking-widest text-[var(--app-gold)] dark:text-[var(--app-gold-soft)]">
+          <div className="luxury-kicker mt-4 px-6 py-3 text-xs">
             จัดการข้อมูล
           </div>
           <NavItem
@@ -125,10 +125,10 @@ export default function Sidebar({
           ) : null}
         </nav>
 
-        <div className="flex flex-col gap-5 border-t border-[var(--panel-border)] bg-[rgba(255,255,255,0.35)] p-5 dark:border-slate-800 dark:bg-slate-900/90">
+        <div className="metal-section-band flex flex-col gap-5 border-t border-white/10 p-5">
           <div className="flex items-center space-x-3 overflow-hidden px-1">
             <AvatarCircle
-              className="h-11 w-11 shrink-0 border-2 border-white dark:border-slate-800"
+              className="h-11 w-11 shrink-0 border-2 border-white/30 dark:border-white/10"
               name={currentUser.name}
               src={currentUser.avatar}
               textClassName="text-lg"
@@ -137,7 +137,7 @@ export default function Sidebar({
               <p className="truncate text-base font-bold text-slate-900 dark:text-white">
                 {currentUser.name}
               </p>
-              <p className="mt-0.5 truncate text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--app-gold)] dark:text-[var(--app-gold-soft)]">
+              <p className="luxury-kicker mt-0.5 truncate text-[10px]">
                 {getRoleText(currentUser.role)}
               </p>
             </div>
@@ -150,7 +150,7 @@ export default function Sidebar({
               to={resolveRoute(APP_PATHS.settingsProfile)}
             />
             <button
-              className="flex-1 rounded-xl border border-red-100 bg-red-50 py-2.5 text-xs font-bold text-red-600 shadow-sm transition hover:bg-red-100 active:scale-95 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
+              className="metal-button-danger flex-1 rounded-xl py-2.5 text-xs font-bold transition active:scale-95"
               onClick={() => void handleLogoutClick()}
               type="button"
             >

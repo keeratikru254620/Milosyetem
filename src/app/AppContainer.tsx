@@ -131,10 +131,13 @@ export default function AppContainer() {
 
   if (!isAppReady) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#0B1120]">
-        <div className="flex animate-pulse flex-col items-center">
-          <ShieldCheck className="mb-4 h-16 w-16 text-amber-500" />
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--app-bg)] px-4">
+        <div className="luxury-panel flex animate-pulse flex-col items-center rounded-[2rem] px-10 py-8 text-center">
+          <div className="metal-icon-shell mb-5 flex h-20 w-20 items-center justify-center rounded-[1.75rem]">
+            <ShieldCheck className="h-10 w-10 text-[var(--app-navy)]" />
+          </div>
+          <p className="luxury-kicker mb-2 text-[11px]">System Core</p>
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--app-text-soft)]">
             Loading...
           </p>
         </div>
@@ -163,8 +166,9 @@ export default function AppContainer() {
   }
 
   return (
-    <div className="relative flex min-h-screen bg-[var(--app-bg)] font-sans text-slate-800 transition-colors duration-300 dark:bg-[#091120] dark:text-slate-200">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.45),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(192,139,47,0.08),_transparent_20%)]" />
+    <div className="relative flex min-h-screen bg-[var(--app-bg)] text-[var(--app-text)] transition-colors duration-300">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.22),_transparent_18%),radial-gradient(circle_at_82%_22%,_rgba(171,134,219,0.16),_transparent_14%),linear-gradient(180deg,_rgba(255,255,255,0.05),_transparent_24%)]" />
+      <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.45),transparent)] opacity-50" />
       <Sidebar
         currentUser={effectiveCurrentUser}
         isOpen={isSidebarOpen}
@@ -176,6 +180,7 @@ export default function AppContainer() {
       <main className="relative z-10 flex h-screen flex-1 flex-col overflow-hidden">
         <Navbar onMenuClick={() => setIsSidebarOpen(true)} />
         <div className="relative flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(171,134,219,0.28),transparent)] opacity-50" />
           <AppRoutes
             currentUser={effectiveCurrentUser}
             docTypes={effectiveDocTypes}

@@ -16,8 +16,8 @@ export default function NavItem({ to, icon: Icon, label, isActive, onClick }: Na
     <button
       className={`group relative mx-4 mb-1 flex w-full items-center overflow-hidden rounded-2xl border px-5 py-3.5 text-sm transition-all ${
         isActive
-          ? 'border-[rgba(192,139,47,0.24)] bg-[linear-gradient(135deg,var(--app-navy),var(--app-navy-deep))] font-bold text-white shadow-[0_16px_26px_rgba(35,59,132,0.24)] dark:border-[rgba(224,177,91,0.24)] dark:text-[var(--app-gold-soft)]'
-          : 'border-transparent font-semibold text-slate-600 hover:border-[rgba(192,139,47,0.14)] hover:bg-white/75 hover:text-[var(--app-title)] dark:text-slate-300 dark:hover:bg-slate-800/60 dark:hover:text-white'
+          ? 'border-[rgba(231,220,252,0.18)] bg-[linear-gradient(180deg,rgba(255,255,255,0.16),rgba(255,255,255,0.02)_28%),linear-gradient(135deg,#7c58ad_0%,#462a68_56%,#170f22_100%)] font-bold text-white shadow-[0_16px_28px_rgba(29,18,44,0.28)]'
+          : 'border-transparent bg-transparent font-semibold text-slate-700 hover:border-white/12 hover:bg-white/6 hover:text-[var(--app-title)] dark:text-slate-200 dark:hover:bg-white/6 dark:hover:text-white'
       }`}
       onClick={() => {
         navigate(to);
@@ -29,7 +29,7 @@ export default function NavItem({ to, icon: Icon, label, isActive, onClick }: Na
         className={`z-10 mr-3 h-5 w-5 transition-colors ${
           isActive
             ? 'text-[var(--app-gold-soft)] dark:text-[var(--app-gold-soft)]'
-            : 'text-slate-400 group-hover:text-[var(--app-gold)] dark:group-hover:text-[var(--app-gold-soft)]'
+            : 'text-slate-400 group-hover:text-[var(--app-navy)] dark:text-slate-400 dark:group-hover:text-[var(--app-gold-soft)]'
         }`}
       />
       <span className="z-10">{label}</span>

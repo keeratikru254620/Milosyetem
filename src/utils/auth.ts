@@ -65,7 +65,7 @@ export const getErrorMessage = (
     }
 
     if (message === 'firebase_not_configured') {
-      return 'ยังไม่ได้ตั้งค่า Firebase สำหรับโปรเจกต์นี้';
+      return 'ยังไม่ได้ตั้งค่า Firebase สำหรับโปรเจ็กต์นี้';
     }
 
     if (message === 'firebase_network_failed') {
@@ -74,6 +74,26 @@ export const getErrorMessage = (
 
     if (message === 'firebase_profile_access_denied') {
       return 'Firestore ยังไม่อนุญาตให้เข้าถึงข้อมูลผู้ใช้';
+    }
+
+    if (message === 'firebase_data_access_denied') {
+      return 'บัญชีนี้ยังไม่มีสิทธิ์อ่านหรือเขียนข้อมูลใน Firestore หรือ Storage';
+    }
+
+    if (message === 'firebase_quota_exceeded') {
+      return 'พื้นที่หรือโควต้าของ Firebase ไม่เพียงพอสำหรับการดำเนินการนี้';
+    }
+
+    if (message === 'record_not_found') {
+      return 'ไม่พบข้อมูลที่ต้องการ';
+    }
+
+    if (message === 'firebase_user_creation_requires_backend') {
+      return 'โหมด Firebase ยังไม่รองรับการสร้างผู้ใช้ใหม่จากหน้าแอดมินโดยตรง ต้องให้ผู้ใช้สมัครเองหรือมี backend/admin SDK';
+    }
+
+    if (message === 'firebase_user_deletion_requires_backend') {
+      return 'โหมด Firebase ยังไม่รองรับการลบผู้ใช้จากหน้าแอดมินโดยตรง ต้องมี backend/admin SDK';
     }
 
     if (message === 'too_many_requests') {

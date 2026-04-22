@@ -101,9 +101,9 @@ export default function DocTypesView({
 
   return (
     <div className="grid grid-cols-1 gap-6 animate-slide-blur lg:grid-cols-3">
-      <div className="luxury-panel h-fit rounded-3xl p-6 dark:border-slate-800 dark:bg-[rgba(15,24,42,0.92)] sm:p-8">
+      <div className="luxury-panel h-fit rounded-3xl p-6 sm:p-8">
         <h2 className="mb-6 flex items-center text-lg font-bold text-slate-900 dark:text-white">
-          <Tag className="mr-3 h-5 w-5 text-blue-900 dark:text-amber-500" />{' '}
+          <Tag className="mr-3 h-5 w-5 text-[var(--app-gold)]" />{' '}
           {editing ? 'แก้ไขประเภท' : 'เพิ่มประเภทเอกสาร'}
         </h2>
         <form onSubmit={handleSubmit}>
@@ -112,7 +112,7 @@ export default function DocTypesView({
               ชื่อประเภท
             </label>
             <input
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition-all focus:border-blue-900 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:bg-slate-900"
+              className="metal-control w-full rounded-xl px-4 py-3 text-sm outline-none transition-all dark:text-white"
               onChange={(event) =>
                 setForm((current) => ({ ...current, name: event.target.value }))
               }
@@ -127,7 +127,7 @@ export default function DocTypesView({
             </label>
             <div className="flex items-center gap-3">
               <input
-                className="h-12 w-16 cursor-pointer rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-950"
+                className="metal-control h-12 w-16 cursor-pointer rounded-xl p-1"
                 onChange={(event) =>
                   setForm((current) => ({ ...current, color: event.target.value }))
                 }
@@ -135,7 +135,7 @@ export default function DocTypesView({
                 value={form.color}
               />
               <input
-                className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-sm outline-none transition-all focus:border-blue-900 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:bg-slate-900"
+                className="metal-control flex-1 rounded-xl px-4 py-3 font-mono text-sm outline-none transition-all dark:text-white"
                 onChange={(event) =>
                   setForm((current) => ({ ...current, color: event.target.value }))
                 }
@@ -146,14 +146,14 @@ export default function DocTypesView({
           </div>
           <div className="flex gap-3">
             <button
-              className="flex-1 rounded-xl border border-blue-800 bg-blue-900 py-3 text-sm font-bold text-white shadow-md shadow-blue-900/20 transition hover:bg-blue-950 active:scale-95"
+              className="metal-button-primary flex-1 rounded-xl py-3 text-sm font-bold transition hover:brightness-105 active:scale-95"
               type="submit"
             >
               บันทึก
             </button>
             {editing && (
               <button
-                className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                className="metal-button-secondary rounded-xl px-5 py-3 text-sm font-bold transition active:scale-95"
                 onClick={resetForm}
                 type="button"
               >
@@ -164,10 +164,10 @@ export default function DocTypesView({
         </form>
       </div>
 
-      <div className="luxury-panel overflow-hidden rounded-3xl dark:border-slate-800 dark:bg-[rgba(15,24,42,0.92)] lg:col-span-2">
+      <div className="luxury-panel overflow-hidden rounded-3xl lg:col-span-2">
         <table className="w-full border-collapse text-left">
           <thead>
-            <tr className="border-b border-[var(--panel-border)] bg-[rgba(247,241,231,0.72)] text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-500">
+            <tr className="border-b border-white/10 bg-[rgba(78,86,96,0.76)] text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               <th className="px-6 py-4">ประเภทเอกสาร</th>
               <th className="px-6 py-4 text-center">จำนวนในระบบ</th>
               <th className="px-6 py-4 text-right">จัดการ</th>
@@ -180,10 +180,7 @@ export default function DocTypesView({
                 const count = documents.filter((document) => document.typeId === docType._id).length;
 
                 return (
-                  <tr
-                    className="group transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                    key={docType._id}
-                  >
+                  <tr className="group transition-colors hover:bg-white/6" key={docType._id}>
                     <td className="flex items-center gap-4 px-6 py-4">
                       <span
                         className="h-4 w-4 rounded-full shadow-sm"
@@ -194,14 +191,14 @@ export default function DocTypesView({
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      <span className="metal-badge rounded-lg px-3 py-1 text-xs font-bold text-slate-700 dark:text-slate-200">
                         {count}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right">
                       <div className="opacity-70 transition-opacity group-hover:opacity-100">
                         <button
-                          className="mx-1 rounded-lg border border-transparent bg-white p-2 text-slate-400 transition hover:border-slate-200 hover:text-amber-600 dark:bg-slate-800 dark:hover:border-slate-700"
+                          className="metal-icon-shell mx-1 rounded-lg p-2 text-slate-400 transition hover:text-[var(--app-gold)]"
                           onClick={() => {
                             setEditing(docType);
                             setForm({
@@ -213,7 +210,7 @@ export default function DocTypesView({
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
-                          className="ml-1 rounded-lg border border-transparent bg-white p-2 text-slate-400 transition hover:border-slate-200 hover:text-red-600 dark:bg-slate-800 dark:hover:border-slate-700"
+                          className="metal-icon-shell ml-1 rounded-lg p-2 text-slate-400 transition hover:text-red-400"
                           onClick={() => handleDelete(docType, count)}
                         >
                           <Trash2 className="h-4 w-4" />

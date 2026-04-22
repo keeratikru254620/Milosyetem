@@ -48,24 +48,24 @@ export default function UsersView({
 
   const getRoleBadgeStyles = (role: User['role']) => {
     if (role === 'admin') {
-      return 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800';
+      return 'metal-badge text-[var(--app-gold-soft)] border-white/10';
     }
 
     if (role === 'general') {
-      return 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800';
+      return 'metal-badge text-[#d9efe2] border-white/10';
     }
 
-    return 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700';
+    return 'metal-badge text-slate-200 border-white/10';
   };
 
   return (
-    <div className="luxury-panel flex h-[calc(100vh-140px)] flex-col overflow-hidden rounded-3xl animate-slide-blur dark:border-slate-800 dark:bg-[rgba(15,24,42,0.92)]">
-      <div className="flex shrink-0 items-center justify-between border-b border-[var(--panel-border)] bg-[rgba(247,241,231,0.72)] p-5 dark:border-slate-800 dark:bg-slate-900/50 sm:p-6">
+    <div className="luxury-panel flex h-[calc(100vh-140px)] flex-col overflow-hidden rounded-3xl animate-slide-blur">
+      <div className="metal-section-band flex shrink-0 items-center justify-between border-b border-white/10 p-5 sm:p-6">
         <h2 className="flex items-center text-lg font-bold text-slate-900 dark:text-white">
-          <Users className="mr-3 h-5 w-5 text-blue-900 dark:text-amber-500" /> จัดการบุคลากร
+          <Users className="mr-3 h-5 w-5 text-[var(--app-gold)]" /> จัดการบุคลากร
         </h2>
         <button
-          className="flex items-center rounded-xl border border-blue-800 bg-blue-900 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-900/20 transition-all hover:bg-blue-950 active:scale-95"
+          className="metal-button-primary flex items-center rounded-xl px-6 py-2.5 text-sm font-bold transition-all hover:brightness-105 active:scale-95"
           onClick={() => setEditingUser({})}
         >
           <UserPlus className="mr-2 h-4 w-4" /> เพิ่มบุคลากร
@@ -74,7 +74,7 @@ export default function UsersView({
 
       <div className="flex-1 overflow-auto">
         <table className="w-full min-w-[700px] border-collapse text-left">
-          <thead className="sticky top-0 z-10 border-b border-[var(--panel-border)] bg-[rgba(255,252,247,0.95)] shadow-sm backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95">
+          <thead className="sticky top-0 z-10 border-b border-white/10 bg-[rgba(78,86,96,0.76)] shadow-sm backdrop-blur-md">
             <tr className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               <th className="px-6 py-4">USERNAME</th>
               <th className="px-6 py-4">ชื่อ-สกุล</th>
@@ -89,10 +89,7 @@ export default function UsersView({
                 const isMe = user._id === currentUser._id;
 
                 return (
-                  <tr
-                    className="group transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                    key={user._id}
-                  >
+                  <tr className="group transition-colors hover:bg-white/6" key={user._id}>
                     <td className="px-6 py-4 font-mono text-[11px] font-medium text-slate-500 dark:text-slate-400">
                       {user.username}
                     </td>
@@ -111,13 +108,13 @@ export default function UsersView({
                     <td className="whitespace-nowrap px-6 py-4 text-right">
                       <div className="opacity-70 transition-opacity group-hover:opacity-100">
                         <button
-                          className="mx-1 rounded-lg border border-transparent bg-white p-2 text-slate-400 transition hover:border-slate-200 hover:text-amber-600 dark:bg-slate-800 dark:hover:border-slate-700"
+                          className="metal-icon-shell mx-1 rounded-lg p-2 text-slate-400 transition hover:text-[var(--app-gold)]"
                           onClick={() => setEditingUser(user)}
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
-                          className="ml-1 rounded-lg border border-transparent bg-white p-2 text-slate-400 transition hover:border-slate-200 hover:text-red-600 disabled:opacity-30 disabled:hover:border-transparent disabled:hover:text-slate-400 dark:bg-slate-800 dark:hover:border-slate-700"
+                          className="metal-icon-shell ml-1 rounded-lg p-2 text-slate-400 transition hover:text-red-400 disabled:opacity-30 disabled:hover:text-slate-400"
                           disabled={isMe}
                           onClick={() => handleDelete(user._id)}
                         >

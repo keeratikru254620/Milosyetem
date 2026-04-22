@@ -35,20 +35,20 @@ export default function ToastContainer() {
 
   const styles =
     toast.type === 'error'
-      ? 'bg-[rgba(255,245,245,0.96)] border-red-200 text-red-800 dark:bg-red-950 dark:border-red-900/50 dark:text-red-200'
+      ? 'bg-[linear-gradient(180deg,rgba(255,240,238,0.18),rgba(255,255,255,0.02)_28%),linear-gradient(135deg,rgba(126,62,72,0.86),rgba(86,41,47,0.92))] border-[rgba(255,200,188,0.18)] text-[#fff1ed]'
       : toast.type === 'info'
-        ? 'bg-[rgba(242,247,255,0.96)] border-blue-200 text-[var(--app-navy)] dark:bg-blue-950 dark:border-blue-900/50 dark:text-blue-200'
-        : 'bg-[rgba(255,250,242,0.98)] border-[rgba(192,139,47,0.2)] text-[var(--app-title)] dark:bg-[rgba(20,30,50,0.96)] dark:border-[rgba(224,177,91,0.22)] dark:text-[var(--app-gold-soft)]';
+        ? 'bg-[linear-gradient(180deg,rgba(255,255,255,0.16),rgba(255,255,255,0.02)_28%),linear-gradient(135deg,rgba(117,126,138,0.88),rgba(75,84,96,0.94))] border-white/14 text-[var(--app-title)] dark:text-white'
+        : 'bg-[linear-gradient(180deg,rgba(255,238,219,0.18),rgba(255,255,255,0.02)_28%),linear-gradient(135deg,rgba(136,92,53,0.88),rgba(93,63,42,0.94))] border-[rgba(255,212,163,0.18)] text-[#fff7ef]';
 
   return (
     <div className="fixed bottom-6 right-6 z-[100] animate-slide-blur">
       <div className={`flex items-center rounded-[1.5rem] border px-6 py-5 shadow-[var(--panel-shadow-strong)] backdrop-blur-xl ${styles}`}>
         {toast.type === 'error' ? (
-          <XCircle className="mr-3 h-6 w-6 text-red-500" />
+          <XCircle className="mr-3 h-6 w-6 text-[#ffc1b3]" />
         ) : toast.type === 'info' ? (
-          <Info className="mr-3 h-6 w-6 text-blue-600" />
+          <Info className="mr-3 h-6 w-6 text-[var(--app-gold-soft)]" />
         ) : (
-          <CheckCircle2 className="mr-3 h-6 w-6 text-amber-500" />
+          <CheckCircle2 className="mr-3 h-6 w-6 text-[var(--app-gold-soft)]" />
         )}
         <p className="text-base font-semibold">{toast.message}</p>
       </div>

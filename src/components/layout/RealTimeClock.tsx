@@ -9,8 +9,8 @@ export default function RealTimeClock() {
   }, []);
 
   return (
-    <div className="mr-1 hidden flex-col items-end border-r border-[rgba(192,139,47,0.18)] pr-5 md:flex dark:border-slate-700">
-      <span className="text-sm font-semibold tracking-[0.08em] text-slate-800 dark:text-white">
+    <div className="mr-1 hidden flex-col items-end border-r border-white/12 pr-5 md:flex">
+      <span className="font-display text-sm font-semibold tracking-[0.12em] text-slate-800 dark:text-white">
         {time.toLocaleTimeString('th-TH', {
           hour12: false,
           hour: '2-digit',
@@ -18,7 +18,7 @@ export default function RealTimeClock() {
           second: '2-digit',
         })}
       </span>
-      <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--app-gold)] dark:text-[var(--app-gold-soft)]">
+      <span className="luxury-kicker text-[10px]">
         {time.toLocaleDateString('th-TH', {
           day: '2-digit',
           month: 'short',

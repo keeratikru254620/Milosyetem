@@ -82,11 +82,11 @@ export default function LegalView({ variant }: LegalViewProps) {
   const content = useMemo(() => LEGAL_CONTENT[variant], [variant]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-50 px-4 py-10 dark:bg-[#0B1120] sm:px-6 lg:px-8">
-      <div className="absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top,rgba(30,58,138,0.16),transparent_60%)]" />
+    <div className="relative min-h-screen overflow-hidden bg-[var(--app-bg)] px-4 py-10 sm:px-6 lg:px-8">
+      <div className="absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top,rgba(171,134,219,0.18),transparent_60%)]" />
       <div className="relative mx-auto max-w-4xl">
         <button
-          className="mb-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          className="metal-button-secondary mb-6 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition"
           onClick={() => navigate('/login')}
           type="button"
         >
@@ -94,12 +94,12 @@ export default function LegalView({ variant }: LegalViewProps) {
           กลับสู่หน้าเข้าสู่ระบบ
         </button>
 
-        <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900">
-          <div className="border-b border-slate-100 bg-slate-50/70 px-6 py-8 dark:border-slate-800 dark:bg-slate-950/40 sm:px-10">
-            <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-900 dark:bg-blue-950/40 dark:text-amber-400">
+        <div className="luxury-panel overflow-hidden rounded-[2rem] shadow-[var(--panel-shadow-strong)]">
+          <div className="metal-section-band border-b border-white/10 px-6 py-8 sm:px-10">
+            <div className="metal-icon-shell mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl text-[var(--app-gold)]">
               {variant === 'terms' ? <FileText className="h-7 w-7" /> : <Shield className="h-7 w-7" />}
             </div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">
+            <p className="luxury-kicker text-xs text-slate-400">
               {content.eyebrow}
             </p>
             <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">

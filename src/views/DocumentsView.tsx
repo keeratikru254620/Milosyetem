@@ -188,17 +188,17 @@ export default function DocumentsView({
 
   return (
     <div className="flex h-full flex-col animate-slide-blur">
-      <div className="luxury-panel flex flex-1 flex-col overflow-hidden rounded-3xl dark:border-slate-800 dark:bg-[rgba(15,24,42,0.92)]">
-        <div className="shrink-0 border-b border-[var(--panel-border)] bg-[rgba(247,241,231,0.72)] p-6 dark:border-slate-800 dark:bg-slate-900/50">
+      <div className="luxury-panel flex flex-1 flex-col overflow-hidden rounded-3xl">
+        <div className="metal-section-band shrink-0 border-b border-white/10 p-6">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div>
-                <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-700 dark:bg-slate-950">
+                <div className="luxury-panel-soft inline-flex rounded-2xl p-1 shadow-sm">
                   <button
-                    className={`inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
+                    className={`metal-segment inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
                       searchMode === 'normal'
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                        : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
+                        ? 'metal-segment-active'
+                        : 'hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'
                     }`}
                     onClick={() => {
                       setSearchMode('normal');
@@ -210,10 +210,10 @@ export default function DocumentsView({
                     ค้นหาปกติ
                   </button>
                   <button
-                    className={`inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
+                    className={`metal-segment inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
                       searchMode === 'semantic'
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                        : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
+                        ? 'metal-segment-active'
+                        : 'hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'
                     }`}
                     onClick={() => {
                       setSearchMode('semantic');
@@ -233,25 +233,25 @@ export default function DocumentsView({
               </div>
 
               <button
-                className="flex w-full shrink-0 items-center justify-center rounded-2xl border border-blue-800 bg-blue-900 px-8 py-3 text-base font-bold text-white shadow-md shadow-blue-900/20 transition-all hover:bg-blue-950 active:scale-95 xl:w-auto"
+                className="metal-button-primary flex w-full shrink-0 items-center justify-center rounded-2xl px-8 py-3 text-base font-bold transition-all hover:brightness-105 active:scale-95 xl:w-auto"
                 onClick={() => setEditingDoc({})}
               >
-                <Plus className="mr-2 h-5 w-5 text-amber-400" /> เพิ่มเอกสารใหม่
+                <Plus className="mr-2 h-5 w-5 text-[var(--app-gold-soft)]" /> เพิ่มเอกสารใหม่
               </button>
             </div>
 
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_220px_160px]">
               <div className="group relative">
                 {isSemanticMode ? (
-                  <FileText className="absolute left-5 top-3.5 h-5 w-5 text-slate-400 transition-colors group-focus-within:text-blue-900 dark:group-focus-within:text-amber-500" />
+                  <FileText className="absolute left-5 top-3.5 h-5 w-5 text-slate-400 transition-colors group-focus-within:text-[var(--app-gold)]" />
                 ) : (
-                  <Search className="absolute left-5 top-3.5 h-5 w-5 text-slate-400 transition-colors group-focus-within:text-blue-900 dark:group-focus-within:text-amber-500" />
+                  <Search className="absolute left-5 top-3.5 h-5 w-5 text-slate-400 transition-colors group-focus-within:text-[var(--app-gold)]" />
                 )}
                 <input
-                  className={`w-full rounded-2xl py-3 pl-12 pr-4 text-base font-bold shadow-sm outline-none transition-all ${
+                  className={`metal-control w-full rounded-2xl py-3 pl-12 pr-4 text-base font-bold outline-none transition-all ${
                     isSemanticMode
-                      ? 'border border-blue-200 bg-blue-50/70 focus:border-blue-900 focus:ring-2 focus:ring-blue-900/20 dark:border-blue-900/40 dark:bg-slate-950 dark:text-white dark:focus:border-amber-500 dark:focus:ring-amber-500/20'
-                      : 'border border-slate-200 bg-white focus:border-blue-900 focus:ring-2 focus:ring-blue-900/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-amber-500 dark:focus:ring-amber-500/20'
+                      ? 'shadow-[0_0_0_1px_rgba(255,164,92,0.12)]'
+                      : ''
                   }`}
                   onChange={(event) => {
                     if (isSemanticMode) {
@@ -272,7 +272,7 @@ export default function DocumentsView({
               </div>
 
               <select
-                className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:hover:border-slate-600 dark:focus:border-amber-500"
+                className="metal-control w-full appearance-none rounded-2xl px-5 py-3 text-sm font-bold outline-none transition"
                 onChange={(event) => {
                   setFilterType(event.target.value);
                   setCurrentPage(1);
@@ -288,7 +288,7 @@ export default function DocumentsView({
               </select>
 
               <select
-                className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:hover:border-slate-600 dark:focus:border-amber-500"
+                className="metal-control w-full appearance-none rounded-2xl px-5 py-3 text-sm font-bold outline-none transition"
                 onChange={(event) => {
                   setFilterYear(event.target.value);
                   setCurrentPage(1);
@@ -306,7 +306,7 @@ export default function DocumentsView({
 
             {hasSemanticQuery && (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
+                <span className="metal-badge inline-flex items-center rounded-full px-3 py-1 text-xs font-bold text-[var(--app-gold-soft)]">
                   พบ {filteredDocs.length} เอกสารจากการค้นหาในเนื้อหาไฟล์
                 </span>
               </div>
@@ -316,7 +316,7 @@ export default function DocumentsView({
 
         <div className="relative flex-1 overflow-auto">
           <table className="w-full min-w-[980px] border-collapse whitespace-nowrap text-left">
-            <thead className="sticky top-0 z-10 border-b border-[var(--panel-border)] bg-[rgba(255,252,247,0.95)] shadow-sm backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95">
+            <thead className="sticky top-0 z-10 border-b border-white/10 bg-[rgba(78,86,96,0.76)] shadow-sm backdrop-blur-md">
               <tr className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 {[
                   ['docNo', 'เลขที่หนังสือ'],
@@ -326,7 +326,7 @@ export default function DocumentsView({
                   ['date', 'วันที่'],
                 ].map(([column, label]) => (
                   <th
-                    className="group cursor-pointer px-6 py-5 transition hover:text-blue-900 dark:hover:text-amber-500"
+                    className="group cursor-pointer px-6 py-5 transition hover:text-[var(--app-gold)]"
                     key={column}
                     onClick={() => handleSort(column as SortColumn)}
                   >
@@ -361,10 +361,7 @@ export default function DocumentsView({
                   const semanticScore = semanticScores.get(document._id) ?? 0;
 
                   return (
-                    <tr
-                      className="group transition-colors hover:bg-amber-50/50 dark:hover:bg-slate-800/50"
-                      key={document._id}
-                    >
+                    <tr className="group transition-colors hover:bg-white/6" key={document._id}>
                       <td className="px-6 py-4">
                         <span className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5 font-mono text-sm font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                           {document.docNo || '-'}
@@ -372,7 +369,7 @@ export default function DocumentsView({
                       </td>
                       <td className="px-6 py-4">
                         <div
-                          className="max-w-md truncate font-bold text-slate-900 transition-colors group-hover:text-blue-900 dark:text-white dark:group-hover:text-amber-500"
+                          className="max-w-md truncate font-bold text-slate-900 transition-colors group-hover:text-[var(--app-gold)] dark:text-white"
                           onClick={() => setViewingDoc(document)}
                         >
                           {document.subject || '-'}
@@ -385,7 +382,7 @@ export default function DocumentsView({
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {(document.semanticKeywords ?? []).slice(0, 4).map((keyword) => (
                               <span
-                                className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-200"
+                                className="metal-badge rounded-full px-2.5 py-1 text-[11px] font-bold text-[var(--app-gold-soft)]"
                                 key={`${document._id}-${keyword}`}
                               >
                                 {keyword}
@@ -415,7 +412,7 @@ export default function DocumentsView({
                       <td className="whitespace-nowrap px-6 py-4 text-right">
                         <div className="flex items-center justify-end opacity-70 transition-opacity group-hover:opacity-100">
                           <button
-                            className="mx-1 rounded-xl border border-transparent p-2.5 text-slate-400 shadow-sm transition-all hover:border-slate-200 hover:bg-white hover:text-blue-900 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                            className="metal-icon-shell mx-1 rounded-xl p-2.5 text-slate-400 shadow-sm transition-all hover:text-[var(--app-gold)]"
                             onClick={() => setViewingDoc(document)}
                             title="ดูรายละเอียด"
                           >
@@ -424,14 +421,14 @@ export default function DocumentsView({
                           {canEdit && (
                             <>
                               <button
-                                className="mx-1 rounded-xl border border-transparent p-2.5 text-slate-400 shadow-sm transition-all hover:border-slate-200 hover:bg-white hover:text-amber-600 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                                className="metal-icon-shell mx-1 rounded-xl p-2.5 text-slate-400 shadow-sm transition-all hover:text-[var(--app-gold)]"
                                 onClick={() => setEditingDoc(document)}
                                 title="แก้ไข"
                               >
                                 <Edit2 className="h-5 w-5" />
                               </button>
                               <button
-                                className="ml-1 rounded-xl border border-transparent p-2.5 text-slate-400 shadow-sm transition-all hover:border-slate-200 hover:bg-white hover:text-red-600 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                                className="metal-icon-shell ml-1 rounded-xl p-2.5 text-slate-400 shadow-sm transition-all hover:text-red-400"
                                 onClick={() => handleDelete(document._id)}
                                 title="ลบ"
                               >
@@ -449,24 +446,24 @@ export default function DocumentsView({
           </table>
         </div>
 
-        <div className="flex shrink-0 items-center justify-between border-t border-[var(--panel-border)] bg-[rgba(247,241,231,0.72)] p-5 text-sm dark:border-slate-800 dark:bg-slate-900/50">
+        <div className="metal-section-band flex shrink-0 items-center justify-between border-t border-white/10 p-5 text-sm">
           <p className="text-xs font-bold text-slate-500">
             {(currentPage - 1) * itemsPerPage + (paginatedDocuments.length > 0 ? 1 : 0)} -{' '}
             {Math.min(currentPage * itemsPerPage, filteredDocs.length)} / {filteredDocs.length}
           </p>
           <div className="flex space-x-1.5">
             <button
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-transparent shadow-sm transition hover:border-slate-200 hover:bg-white disabled:opacity-50 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+              className="metal-button-secondary flex h-9 w-9 items-center justify-center rounded-xl transition disabled:opacity-50"
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-900 text-sm font-bold text-white shadow-md">
+            <span className="metal-button-primary flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold">
               {currentPage}
             </span>
             <button
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-transparent shadow-sm transition hover:border-slate-200 hover:bg-white disabled:opacity-50 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+              className="metal-button-secondary flex h-9 w-9 items-center justify-center rounded-xl transition disabled:opacity-50"
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
             >

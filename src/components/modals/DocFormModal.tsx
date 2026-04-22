@@ -170,18 +170,18 @@ export default function DocFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 transform animate-in zoom-in-95">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-8 py-6 dark:border-slate-800 dark:bg-slate-800/30">
+      <div className="luxury-panel flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] transform animate-in zoom-in-95">
+        <div className="metal-section-band flex items-center justify-between border-b border-white/10 px-8 py-6">
           <h3 className="flex items-center text-xl font-bold text-slate-900 dark:text-white">
             {isEdit ? (
-              <Edit2 className="mr-3 h-6 w-6 text-blue-900 dark:text-amber-500" />
+              <Edit2 className="mr-3 h-6 w-6 text-[var(--app-gold)]" />
             ) : (
-              <FilePlus className="mr-3 h-6 w-6 text-blue-900 dark:text-amber-500" />
+              <FilePlus className="mr-3 h-6 w-6 text-[var(--app-gold)]" />
             )}
             {isEdit ? 'แก้ไขข้อมูลเอกสาร' : 'เพิ่มเอกสารใหม่'}
           </h3>
           <button
-            className="rounded-xl p-2.5 text-slate-400 transition hover:bg-red-50 hover:text-red-500 active:scale-95 dark:hover:bg-red-500/10"
+            className="metal-icon-shell rounded-xl p-2.5 text-slate-400 transition hover:text-red-400 active:scale-95"
             onClick={onClose}
           >
             <X className="h-6 w-6" />
@@ -190,7 +190,7 @@ export default function DocFormModal({
 
         <div className="overflow-y-auto p-8">
           <form className="space-y-8" id="doc-form" onSubmit={handleSubmit}>
-            <h4 className="border-b border-slate-100 pb-3 text-base font-bold text-slate-800 dark:border-slate-800 dark:text-white">
+            <h4 className="border-b border-white/10 pb-3 text-base font-bold text-slate-800 dark:text-white">
               ข้อมูลเอกสาร
             </h4>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -199,7 +199,7 @@ export default function DocFormModal({
                   เลขที่หนังสือ
                 </label>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3.5 font-mono text-base outline-none transition-all focus:border-blue-900 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-amber-500 dark:focus:bg-slate-900"
+                  className="metal-control w-full rounded-2xl px-5 py-3.5 font-mono text-base outline-none transition-all dark:text-white"
                   onChange={(event) =>
                     setFormData((current) => ({ ...current, docNo: event.target.value }))
                   }
@@ -212,7 +212,7 @@ export default function DocFormModal({
                   วันที่ออกเอกสาร
                 </label>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3.5 text-base outline-none transition-all focus:border-blue-900 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-amber-500 dark:focus:bg-slate-900"
+                  className="metal-control w-full rounded-2xl px-5 py-3.5 text-base outline-none transition-all dark:text-white"
                   onChange={(event) =>
                     setFormData((current) => ({ ...current, date: event.target.value }))
                   }
@@ -225,7 +225,7 @@ export default function DocFormModal({
                   เรื่อง
                 </label>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3.5 text-base outline-none transition-all focus:border-blue-900 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-amber-500 dark:focus:bg-slate-900"
+                  className="metal-control w-full rounded-2xl px-5 py-3.5 text-base outline-none transition-all dark:text-white"
                   onChange={(event) =>
                     setFormData((current) => ({ ...current, subject: event.target.value }))
                   }
@@ -239,7 +239,7 @@ export default function DocFormModal({
                   ประเภทเอกสาร
                 </label>
                 <select
-                  className="w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3.5 text-base outline-none transition-all focus:border-blue-900 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-amber-500 dark:focus:bg-slate-900"
+                  className="metal-control w-full appearance-none rounded-2xl px-5 py-3.5 text-base outline-none transition-all dark:text-white"
                   onChange={(event) =>
                     setFormData((current) => ({ ...current, typeId: event.target.value }))
                   }
@@ -259,7 +259,7 @@ export default function DocFormModal({
                   ปีงบประมาณ
                 </label>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3.5 text-base outline-none transition-all focus:border-blue-900 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-amber-500 dark:focus:bg-slate-900"
+                  className="metal-control w-full rounded-2xl px-5 py-3.5 text-base outline-none transition-all dark:text-white"
                   onChange={(event) =>
                     setFormData((current) => ({
                       ...current,
@@ -275,7 +275,7 @@ export default function DocFormModal({
                   หน่วยงานต้นเรื่อง
                 </label>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3.5 text-base outline-none transition-all focus:border-blue-900 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-amber-500 dark:focus:bg-slate-900"
+                  className="metal-control w-full rounded-2xl px-5 py-3.5 text-base outline-none transition-all dark:text-white"
                   onChange={(event) =>
                     setFormData((current) => ({ ...current, origin: event.target.value }))
                   }
@@ -288,7 +288,7 @@ export default function DocFormModal({
                   ผู้รับผิดชอบ
                 </label>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3.5 text-base outline-none transition-all focus:border-blue-900 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-amber-500 dark:focus:bg-slate-900"
+                  className="metal-control w-full rounded-2xl px-5 py-3.5 text-base outline-none transition-all dark:text-white"
                   onChange={(event) =>
                     setFormData((current) => ({ ...current, resp: event.target.value }))
                   }
@@ -299,7 +299,7 @@ export default function DocFormModal({
             </div>
 
             <div className="pt-4">
-              <div className="mb-5 border-b border-slate-100 pb-3 dark:border-slate-800">
+              <div className="mb-5 border-b border-white/10 pb-3">
                 <h4 className="text-sm font-bold text-slate-800 dark:text-white">
                   ไฟล์แนบและ AI Semantic Index
                 </h4>
@@ -309,11 +309,11 @@ export default function DocFormModal({
               </div>
 
               <div
-                className="group cursor-pointer rounded-[2rem] border-2 border-dashed border-slate-300 p-12 text-center transition-all hover:border-blue-900 hover:bg-blue-50/50 dark:border-slate-700 dark:hover:border-amber-500 dark:hover:bg-blue-900/10"
+                className="luxury-panel-soft group cursor-pointer rounded-[2rem] border-2 border-dashed border-white/14 p-12 text-center transition-all hover:border-[var(--app-ember-ring)] hover:bg-white/6"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-slate-100 bg-white shadow-sm transition-transform group-hover:scale-110 dark:border-slate-700 dark:bg-slate-800">
-                  <CloudUpload className="h-10 w-10 text-slate-400 transition-colors group-hover:text-blue-900 dark:group-hover:text-amber-500" />
+                <div className="metal-icon-shell mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full transition-transform group-hover:scale-110">
+                  <CloudUpload className="h-10 w-10 text-slate-400 transition-colors group-hover:text-[var(--app-gold)]" />
                 </div>
                 <p className="mb-1 text-base font-bold text-slate-700 dark:text-slate-300">
                   คลิกเพื่อเลือกไฟล์แนบ
@@ -332,7 +332,7 @@ export default function DocFormModal({
               </div>
 
               {isExtractingFiles && (
-                <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-200">
+                <div className="metal-badge mt-4 rounded-2xl px-4 py-3 text-sm font-semibold text-[var(--app-gold-soft)]">
                   ระบบกำลังสกัดข้อความจากไฟล์ PDF เพื่อสร้าง Semantic Search...
                 </div>
               )}
@@ -345,10 +345,7 @@ export default function DocFormModal({
                     const isIndexedPdf = hasSearchablePdfContent(file);
 
                     return (
-                      <div
-                        className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/50"
-                        key={`${fileName}-${index}`}
-                      >
+                      <div className="luxury-panel-soft rounded-2xl p-4 shadow-sm" key={`${fileName}-${index}`}>
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center overflow-hidden">
@@ -358,7 +355,7 @@ export default function DocFormModal({
                               </span>
                             </div>
                             <div className="mt-2 flex flex-wrap gap-2">
-                              <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-slate-500 shadow-sm dark:bg-slate-900 dark:text-slate-300">
+                              <span className="metal-badge rounded-full px-2.5 py-1 text-[11px] font-bold text-slate-500 dark:text-slate-300">
                                 {file.mimeType || 'ไฟล์แนบ'}
                               </span>
                               {isIndexedPdf && (
@@ -374,7 +371,7 @@ export default function DocFormModal({
                             )}
                           </div>
                           <button
-                            className="rounded-lg border border-slate-100 bg-white p-1.5 text-slate-400 shadow-sm transition hover:text-red-500 active:scale-95 dark:border-slate-700 dark:bg-slate-800"
+                            className="metal-icon-shell rounded-lg p-1.5 text-slate-400 shadow-sm transition hover:text-red-400 active:scale-95"
                             onClick={() => {
                               const removedFile = files[index];
                               setFiles((current) =>
@@ -403,16 +400,16 @@ export default function DocFormModal({
           </form>
         </div>
 
-        <div className="flex justify-end gap-4 border-t border-slate-100 bg-slate-50/80 px-8 py-6 dark:border-slate-800 dark:bg-slate-800/30">
+        <div className="metal-section-band flex justify-end gap-4 border-t border-white/10 px-8 py-6">
           <button
-            className="rounded-2xl border border-slate-200 bg-white px-8 py-3.5 text-base font-bold text-slate-600 shadow-sm transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            className="metal-button-secondary rounded-2xl px-8 py-3.5 text-base font-bold transition active:scale-95"
             onClick={onClose}
             type="button"
           >
             ยกเลิก
           </button>
           <button
-            className="rounded-2xl border border-blue-800 bg-blue-900 px-10 py-3.5 text-base font-bold text-white shadow-md shadow-blue-900/20 transition hover:bg-blue-950 active:scale-95 disabled:opacity-50"
+            className="metal-button-primary rounded-2xl px-10 py-3.5 text-base font-bold transition hover:brightness-105 active:scale-95 disabled:opacity-50"
             disabled={isSaving || isExtractingFiles}
             form="doc-form"
             type="submit"

@@ -1,6 +1,13 @@
 import { getApp, getApps, initializeApp, type FirebaseOptions } from 'firebase/app';
 import { getAnalytics, isSupported, type Analytics } from 'firebase/analytics';
-import { browserLocalPersistence, getAuth, setPersistence } from 'firebase/auth';
+import {
+  browserLocalPersistence,
+  browserSessionPersistence,
+  getAuth,
+  setPersistence,
+} from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const authBackendMode = (import.meta.env.VITE_AUTH_BACKEND ?? 'local').toLowerCase();
 
@@ -30,6 +37,8 @@ export const firebaseApp = isFirebaseConfigured
     : initializeApp(firebaseOptions)
   : null;
 export const auth = firebaseApp ? getAuth(firebaseApp) : null;
+export const db = firebaseApp ? getFirestore(firebaseApp) : null;
+export const storage = firebaseApp ? getStorage(firebaseApp) : null;
 export const analyticsPromise: Promise<Analytics | null> =
   firebaseApp && typeof window !== 'undefined'
     ? isSupported()
@@ -37,6 +46,13 @@ export const analyticsPromise: Promise<Analytics | null> =
         .catch(() => null)
     : Promise.resolve(null);
 
-if (auth && typeof window !== 'undefined') {
-  void setPersistence(auth, browserLocalPersistence).catch(() => undefined);
-}
+export const configureFirebasePersistence = async (rememberMe: boolean) => {
+  if (!auth || typeof window === 'undefined') {
+    return;
+  }
+
+  await setPersistence(
+    auth,
+    rememberMe ? browserLocalPersistence : browserSessionPersistence,
+  );
+};
