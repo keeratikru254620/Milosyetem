@@ -11,30 +11,14 @@ import { getStorage } from 'firebase/storage';
 
 const authBackendMode = (import.meta.env.VITE_AUTH_BACKEND ?? 'firebase').toLowerCase();
 
-const defaultFirebaseOptions: FirebaseOptions = {
-  apiKey: 'AIzaSyBFCcOdy9yvvjmbw-fDP3IBz2mhzJp5JeA',
-  authDomain: 'signinandsignupweb.firebaseapp.com',
-  projectId: 'signinandsignupweb',
-  storageBucket: 'signinandsignupweb.firebasestorage.app',
-  messagingSenderId: '568031792138',
-  appId: '1:568031792138:web:7174732247f81d92d4e3f3',
-  measurementId: 'G-LG3C5VMZHQ',
-};
-
 const firebaseOptions: FirebaseOptions = {
-  apiKey: import.meta.env.VITE_ADMIN_FIREBASE_API_KEY || defaultFirebaseOptions.apiKey,
-  authDomain:
-    import.meta.env.VITE_ADMIN_FIREBASE_AUTH_DOMAIN || defaultFirebaseOptions.authDomain,
-  projectId: import.meta.env.VITE_ADMIN_FIREBASE_PROJECT_ID || defaultFirebaseOptions.projectId,
-  storageBucket:
-    import.meta.env.VITE_ADMIN_FIREBASE_STORAGE_BUCKET || defaultFirebaseOptions.storageBucket,
-  messagingSenderId:
-    import.meta.env.VITE_ADMIN_FIREBASE_MESSAGING_SENDER_ID ||
-    defaultFirebaseOptions.messagingSenderId,
-  appId: import.meta.env.VITE_ADMIN_FIREBASE_APP_ID || defaultFirebaseOptions.appId,
-  measurementId:
-    import.meta.env.VITE_ADMIN_FIREBASE_MEASUREMENT_ID ||
-    defaultFirebaseOptions.measurementId,
+  apiKey: import.meta.env.VITE_ADMIN_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_ADMIN_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_ADMIN_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_ADMIN_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_ADMIN_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_ADMIN_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_ADMIN_FIREBASE_MEASUREMENT_ID,
 };
 
 const requiredKeys: Array<keyof FirebaseOptions> = [

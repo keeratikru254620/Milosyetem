@@ -13,8 +13,8 @@ service cloud.firestore {
     function isConfiguredAdmin() {
       return signedIn()
         && (
-          request.auth.uid == 'j5SOae8A7vYFPZXGlymLOoTuQS93'
-          || request.auth.token.email == 'teeraphon.sud@gmail.com'
+          request.auth.uid == 'CMfAk2XtYCNTafxbw7CaHtSumls1'
+          || request.auth.token.email == 'adminlocal@gmail.com'
         );
     }
 
