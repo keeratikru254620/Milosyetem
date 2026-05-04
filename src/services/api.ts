@@ -887,6 +887,26 @@ const syncCloudProfileFromFirebaseAuth = async (
   return stripPassword(nextUser);
 };
 
+const createFallbackProfileFromFirebaseAuth = (
+  firebaseUser: FirebaseAuthUser,
+  fallbackName?: string,
+  fallbackRole?: User['role'],
+) =>
+  stripPassword(
+    normalizeStoredUser({
+      _id: firebaseUser.uid,
+      username: normalizeIdentity(firebaseUser.email || ''),
+      email: normalizeIdentity(firebaseUser.email || ''),
+      name:
+        firebaseUser.displayName?.trim() ||
+        fallbackName?.trim() ||
+        firebaseUser.email?.trim() ||
+        DEFAULT_USER_LABEL,
+      role: resolveSyncedProfileRole(firebaseUser, null, fallbackRole),
+      avatar: firebaseUser.photoURL || undefined,
+    }),
+  );
+
 const syncProfileFromFirebaseAuth = async (
   firebaseUser: FirebaseAuthUser,
   fallbackName?: string,
@@ -899,7 +919,17 @@ const syncProfileFromFirebaseAuth = async (
   try {
     return await syncCloudProfileFromFirebaseAuth(firebaseUser, fallbackName, fallbackRole);
   } catch (error) {
-    throw mapFirebaseError(error, 'firebase_profile_access_denied');
+    const mappedError = mapFirebaseError(error, 'firebase_profile_access_denied');
+
+    if (
+      mappedError.message === 'firebase_data_access_denied' ||
+      mappedError.message === 'firebase_profile_access_denied'
+    ) {
+      console.warn('Using Firebase auth profile without Firestore profile sync:', error);
+      return createFallbackProfileFromFirebaseAuth(firebaseUser, fallbackName, fallbackRole);
+    }
+
+    throw mappedError;
   }
 };
 
