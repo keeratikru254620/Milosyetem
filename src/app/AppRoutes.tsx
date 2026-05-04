@@ -112,100 +112,95 @@ export default function AppRoutes({
     );
   }
 
+  const dashboardElement = (
+    <DashboardPage
+      currentUser={currentUser}
+      documents={documents}
+      docTypes={docTypes}
+      routePrefix={routePrefix}
+    />
+  );
+  const documentsElement = (
+    <DocumentsPage
+      currentUser={currentUser}
+      documents={documents}
+      docTypes={docTypes}
+      onDeleteDocument={onDeleteDocument}
+      onSaveDocument={onSaveDocument}
+    />
+  );
+  const docTypesElement = (
+    <DocTypesPage
+      documents={documents}
+      docTypes={docTypes}
+      onDeleteDocType={onDeleteDocType}
+      onSaveDocType={onSaveDocType}
+    />
+  );
+  const usersElement =
+    currentUser.role === 'admin' ? (
+      <UsersPage
+        currentUser={currentUser}
+        onDeleteUser={onDeleteUser}
+        onSaveUser={onSaveUser}
+        users={users}
+      />
+    ) : (
+      <Navigate to={resolveRoute(APP_PATHS.dashboard)} replace />
+    );
+  const adminOnlyDocumentsElement =
+    currentUser.role === 'admin' ? (
+      documentsElement
+    ) : (
+      <Navigate to={resolveRoute(APP_PATHS.dashboard)} replace />
+    );
+  const adminOnlyDocTypesElement =
+    currentUser.role === 'admin' ? (
+      docTypesElement
+    ) : (
+      <Navigate to={resolveRoute(APP_PATHS.dashboard)} replace />
+    );
+  const adminHomeRoute =
+    currentUser.role === 'admin'
+      ? resolveRoute(APP_PATHS.adminUsers)
+      : resolveRoute(APP_PATHS.dashboard);
+
   return (
     <Routes>
       <Route
-        element={
-          <Navigate
-            to={
-              currentUser.role === 'admin'
-                ? resolveRoute(APP_PATHS.users)
-                : resolveRoute(APP_PATHS.dashboard)
-            }
-            replace
-          />
-        }
+        element={<Navigate to={adminHomeRoute} replace />}
         path={resolveRoute(APP_PATHS.admin)}
       />
       <Route
-        element={<Navigate to={resolveRoute(APP_PATHS.documents)} replace />}
+        element={adminOnlyDocumentsElement}
         path={resolveRoute(APP_PATHS.adminDocuments)}
       />
       <Route
-        element={<Navigate to={resolveRoute(APP_PATHS.docTypes)} replace />}
+        element={adminOnlyDocTypesElement}
         path={resolveRoute(APP_PATHS.adminDocTypes)}
       />
       <Route
-        element={
-          <Navigate
-            to={
-              currentUser.role === 'admin'
-                ? resolveRoute(APP_PATHS.users)
-                : resolveRoute(APP_PATHS.dashboard)
-            }
-            replace
-          />
-        }
+        element={usersElement}
         path={resolveRoute(APP_PATHS.adminUsers)}
       />
       <Route
-        element={
-          <DashboardPage
-            currentUser={currentUser}
-            documents={documents}
-            docTypes={docTypes}
-            routePrefix={routePrefix}
-          />
-        }
+        element={dashboardElement}
         path={routePrefix || APP_PATHS.root}
       />
       <Route
-        element={
-          <DashboardPage
-            currentUser={currentUser}
-            documents={documents}
-            docTypes={docTypes}
-            routePrefix={routePrefix}
-          />
-        }
+        element={dashboardElement}
         path={resolveRoute(APP_PATHS.dashboard)}
       />
       <Route
-        element={
-          <DocumentsPage
-            currentUser={currentUser}
-            documents={documents}
-            docTypes={docTypes}
-            onDeleteDocument={onDeleteDocument}
-            onSaveDocument={onSaveDocument}
-          />
-        }
+        element={documentsElement}
         path={resolveRoute(APP_PATHS.documents)}
       />
       <Route
-        element={
-          <DocTypesPage
-            documents={documents}
-            docTypes={docTypes}
-            onDeleteDocType={onDeleteDocType}
-            onSaveDocType={onSaveDocType}
-          />
-        }
+        element={docTypesElement}
         path={resolveRoute(APP_PATHS.docTypes)}
       />
       <Route
-        element={
-          currentUser.role === 'admin' ? (
-            <UsersPage
-              currentUser={currentUser}
-              onDeleteUser={onDeleteUser}
-              onSaveUser={onSaveUser}
-              users={users}
-            />
-          ) : (
-            <Navigate to={resolveRoute(APP_PATHS.dashboard)} replace />
-          )
-        }
+        element={usersElement}
         path={resolveRoute(APP_PATHS.users)}
       />
       <Route

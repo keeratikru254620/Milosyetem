@@ -1,4 +1,4 @@
-import { Edit2, Trash2, UserPlus, Users } from 'lucide-react';
+import { Edit2, Search, ShieldCheck, Trash2, UserPlus, Users } from 'lucide-react';
 import { useState } from 'react';
 
 import UserFormModal from '../components/modals/UserFormModal';
@@ -22,6 +22,25 @@ export default function UsersView({
   users,
 }: UsersViewProps) {
   const [editingUser, setEditingUser] = useState<Partial<User> | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const roster = users.some((user) => user._id === currentUser._id)
+    ? users
+    : [currentUser, ...users];
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const sortedUsers = [...roster].sort((left, right) =>
+    left.name.localeCompare(right.name, 'th'),
+  );
+  const filteredUsers = sortedUsers.filter((user) => {
+    if (!normalizedSearchTerm) {
+      return true;
+    }
+
+    return [user.name, user.username, user.email, getRoleText(user.role)]
+      .filter(Boolean)
+      .some((value) => value?.toLowerCase().includes(normalizedSearchTerm));
+  });
+  const adminCount = roster.filter((user) => user.role === 'admin').length;
+  const officerCount = roster.length - adminCount;
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirmDialog(
@@ -48,14 +67,14 @@ export default function UsersView({
 
   const getRoleBadgeStyles = (role: User['role']) => {
     if (role === 'admin') {
-      return 'metal-badge text-[var(--app-gold-soft)] border-white/10';
+      return 'metal-badge border-white/10 text-[#4c2a70] dark:text-[var(--app-gold-soft)]';
     }
 
     if (role === 'general') {
-      return 'metal-badge text-[#d9efe2] border-white/10';
+      return 'metal-badge border-white/10 text-[#17643f] dark:text-[#d9efe2]';
     }
 
-    return 'metal-badge text-slate-200 border-white/10';
+    return 'metal-badge border-white/10 text-[#1e4f7a] dark:text-[#dbeafe]';
   };
 
   return (
@@ -67,9 +86,37 @@ export default function UsersView({
         <button
           className="metal-button-primary flex items-center rounded-xl px-6 py-2.5 text-sm font-bold transition-all hover:brightness-105 active:scale-95"
           onClick={() => setEditingUser({})}
+          type="button"
         >
           <UserPlus className="mr-2 h-4 w-4" /> เพิ่มบุคลากร
         </button>
+      </div>
+
+      <div className="grid shrink-0 gap-4 border-b border-white/10 p-5 sm:grid-cols-3 sm:p-6">
+        <div className="luxury-panel-soft rounded-2xl px-5 py-4">
+          <p className="luxury-kicker mb-1 text-[10px]">Total Users</p>
+          <p className="font-display text-3xl font-bold leading-none text-slate-900 dark:text-white">
+            {roster.length}
+          </p>
+        </div>
+        <div className="luxury-panel-soft rounded-2xl px-5 py-4">
+          <p className="luxury-kicker mb-1 text-[10px]">Admin / Staff</p>
+          <p className="flex items-center gap-2 font-display text-3xl font-bold leading-none text-slate-900 dark:text-white">
+            <ShieldCheck className="h-6 w-6 text-[var(--app-gold)]" />
+            {adminCount}
+            <span className="text-lg text-[var(--app-text-soft)]">/ {officerCount}</span>
+          </p>
+        </div>
+        <div className="group relative">
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[var(--app-gold)]" />
+          <input
+            className="metal-control h-full min-h-[4.7rem] w-full rounded-2xl pl-12 pr-4 text-sm font-semibold outline-none transition-all dark:text-white"
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="ค้นหาชื่อ อีเมล หรือสิทธิ์"
+            type="search"
+            value={searchTerm}
+          />
+        </div>
       </div>
 
       <div className="flex-1 overflow-auto">
@@ -83,9 +130,8 @@ export default function UsersView({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm dark:divide-slate-800">
-            {[...users]
-              .sort((left, right) => left.name.localeCompare(right.name, 'th'))
-              .map((user) => {
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => {
                 const isMe = user._id === currentUser._id;
 
                 return (
@@ -109,14 +155,20 @@ export default function UsersView({
                       <div className="opacity-70 transition-opacity group-hover:opacity-100">
                         <button
                           className="metal-icon-shell mx-1 rounded-lg p-2 text-slate-400 transition hover:text-[var(--app-gold)]"
+                          aria-label={`แก้ไข ${user.name}`}
                           onClick={() => setEditingUser(user)}
+                          title="แก้ไข"
+                          type="button"
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
                           className="metal-icon-shell ml-1 rounded-lg p-2 text-slate-400 transition hover:text-red-400 disabled:opacity-30 disabled:hover:text-slate-400"
+                          aria-label={`ลบ ${user.name}`}
                           disabled={isMe}
                           onClick={() => handleDelete(user._id)}
+                          title={isMe ? 'ไม่สามารถลบบัญชีที่กำลังใช้งานอยู่ได้' : 'ลบ'}
+                          type="button"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -124,14 +176,21 @@ export default function UsersView({
                     </td>
                   </tr>
                 );
-              })}
+              })
+            ) : (
+              <tr>
+                <td className="px-6 py-12 text-center text-sm font-semibold text-slate-500 dark:text-slate-300" colSpan={4}>
+                  ไม่พบข้อมูลบุคลากรที่ตรงกับคำค้นหา
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
       {editingUser && (
         <UserFormModal
-          allUsers={users}
+          allUsers={roster}
           onClose={() => setEditingUser(null)}
           onSave={onSaveUser}
           user={editingUser}

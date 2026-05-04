@@ -1004,6 +1004,7 @@ const registerWithLocalAuth = async (
   const email = normalizeIdentity(userData.email || userData.username);
   const password = (userData.password || '').trim();
   const name = (userData.name || '').trim();
+  const role = normalizeRole(userData.role || 'general');
   const users = (await getUsersStore()).map(normalizeStoredUser);
 
   if (!email) {
@@ -1042,7 +1043,7 @@ const registerWithLocalAuth = async (
     email,
     password: hashedPassword,
     name,
-    role: 'general',
+    role,
     avatar: userData.avatar,
     phone: userData.phone,
   });
@@ -1527,7 +1528,12 @@ export const api = {
     const password = (userData.password || '').trim();
     const name = (userData.name || '').trim();
     const avatar = userData.avatar?.trim() || undefined;
-    const role: User['role'] = isConfiguredAdminUser(undefined, email) ? 'admin' : 'general';
+    const requestedRole = normalizeRole(userData.role || 'general');
+    const role: User['role'] = isConfiguredAdminUser(undefined, email)
+      ? 'admin'
+      : requestedRole === 'admin'
+        ? 'general'
+        : requestedRole;
 
     if (!email) {
       throw new Error('กรุณากรอกอีเมล');

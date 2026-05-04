@@ -91,7 +91,7 @@ export const useAppHandlers = ({
     async (user: User) => {
       setCurrentUser(user);
       await loadAllData(user);
-      navigate(APP_PATHS.dashboard);
+      navigate(user.role === 'admin' ? APP_PATHS.adminUsers : APP_PATHS.dashboard);
     },
     [loadAllData, navigate, setCurrentUser],
   );

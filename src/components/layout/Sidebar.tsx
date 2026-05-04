@@ -117,10 +117,10 @@ export default function Sidebar({
           {currentUser.role === 'admin' ? (
             <NavItem
               icon={UsersRound}
-              isActive={isActiveRoute(APP_PATHS.users)}
+              isActive={isActiveRoute(APP_PATHS.adminUsers) || isActiveRoute(APP_PATHS.users)}
               label="จัดการบุคลากร"
               onClick={onClose}
-              to={resolveRoute(APP_PATHS.users)}
+              to={resolveRoute(APP_PATHS.adminUsers)}
             />
           ) : null}
         </nav>

@@ -1,10 +1,12 @@
 import type { FormEvent, ReactNode } from 'react';
 import {
+  CheckCircle2,
   Eye,
   EyeOff,
   Loader2,
   Lock,
   Mail,
+  ShieldCheck,
   User as UserIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -49,6 +51,39 @@ interface AuthInputProps {
   value: string;
 }
 
+const DEFAULT_ADMIN_ALLOWED_EMAILS = ['teeraphon.sud@gmail.com'];
+
+const getAllowedAdminEmails = () =>
+  new Set(
+    (import.meta.env.VITE_ADMIN_ALLOWED_EMAILS || DEFAULT_ADMIN_ALLOWED_EMAILS.join(','))
+      .split(',')
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  );
+
+const canRegisterAdminEmail = (email: string) =>
+  getAllowedAdminEmails().has(email.trim().toLowerCase());
+
+const accountTypeOptions: Array<{
+  description: string;
+  icon: ReactNode;
+  role: User['role'];
+  title: string;
+}> = [
+  {
+    role: 'admin',
+    title: 'ผู้ดูแลระบบ',
+    description: 'สำหรับผู้ดูแลและกำหนดค่าระบบภายในหน่วยงาน',
+    icon: <ShieldCheck className="h-5 w-5" />,
+  },
+  {
+    role: 'general',
+    title: 'เจ้าหน้าที่ตำรวจ',
+    description: 'สำหรับเจ้าหน้าที่ตำรวจผู้ปฏิบัติงานในระบบ',
+    icon: <UserIcon className="h-5 w-5" />,
+  },
+];
+
 function AuthInput({
   autoComplete,
   icon,
@@ -83,6 +118,71 @@ function AuthInput({
         ) : null}
       </div>
     </div>
+  );
+}
+
+interface AccountTypeSelectorProps {
+  onChange: (role: User['role']) => void;
+  selectedRole: User['role'];
+  showAdminRestriction: boolean;
+}
+
+function AccountTypeSelector({
+  onChange,
+  selectedRole,
+  showAdminRestriction,
+}: AccountTypeSelectorProps) {
+  return (
+    <fieldset>
+      <legend className="luxury-kicker mb-3 block text-[12px] text-slate-600 dark:text-slate-300">
+        ประเภทบัญชี
+      </legend>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {accountTypeOptions.map((option) => {
+          const isSelected = option.role === selectedRole;
+
+          return (
+            <button
+              aria-pressed={isSelected}
+              className={`group relative min-h-[8.6rem] overflow-hidden rounded-[1.35rem] border p-4 text-left transition-all duration-300 active:scale-[0.99] ${
+                isSelected
+                  ? 'border-white/22 bg-[linear-gradient(135deg,#9c73cb_0%,#704997_52%,#2d1a46_100%)] text-white shadow-[0_20px_40px_rgba(47,26,74,0.34),inset_1px_1px_0_rgba(255,255,255,0.24)]'
+                  : 'luxury-panel-soft border-white/60 text-slate-900 hover:-translate-y-0.5 hover:border-[var(--app-ember-ring)] dark:text-white'
+              }`}
+              key={option.role}
+              onClick={() => onChange(option.role)}
+              type="button"
+            >
+              <span
+                className={`mb-4 flex h-11 w-11 items-center justify-center rounded-[1rem] border transition-colors ${
+                  isSelected
+                    ? 'border-white/18 bg-white/12 text-white'
+                    : 'metal-icon-shell text-slate-600 group-hover:text-[var(--app-navy)] dark:text-slate-100'
+                }`}
+              >
+                {option.icon}
+              </span>
+              <span className="block text-sm font-bold leading-6">{option.title}</span>
+              <span
+                className={`mt-1 block text-xs leading-5 ${
+                  isSelected ? 'text-white/78' : 'text-slate-600 dark:text-slate-200'
+                }`}
+              >
+                {option.description}
+              </span>
+              {isSelected ? (
+                <CheckCircle2 className="absolute right-4 top-4 h-5 w-5 text-white/90" />
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+      {showAdminRestriction ? (
+        <p className="mt-3 text-xs font-medium leading-5 text-amber-700 dark:text-amber-200">
+          บัญชีผู้ดูแลระบบต้องใช้อีเมลที่ได้รับอนุญาตไว้ในระบบเท่านั้น
+        </p>
+      ) : null}
+    </fieldset>
   );
 }
 
@@ -141,6 +241,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState('');
+  const [registerRole, setRegisterRole] = useState<User['role']>('general');
   const [forgotEmail, setForgotEmail] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -215,6 +316,11 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
       return;
     }
 
+    if (usesFirebaseAuth && registerRole === 'admin' && !canRegisterAdminEmail(registerEmail)) {
+      showToast('บัญชีผู้ดูแลระบบต้องใช้อีเมลที่ได้รับอนุญาตไว้ในระบบเท่านั้น', 'error');
+      return;
+    }
+
     if (!registerPassword) {
       showToast('กรุณากรอกรหัสผ่าน', 'error');
       return;
@@ -240,7 +346,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
         username: registerEmail,
         password: registerPassword,
         name: `${registerFirstName} ${registerLastName}`.trim(),
-        role: 'general',
+        role: registerRole,
         email: registerEmail,
       });
 
@@ -485,26 +591,16 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                   value={registerConfirmPassword}
                 />
 
-                <div>
-                  <label className="luxury-kicker mb-3 block text-[12px] text-slate-600 dark:text-slate-300">
-                    ประเภทบัญชี
-                  </label>
-                  <div className="luxury-panel-soft rounded-[1.25rem] border border-white/70 p-4 shadow-[0_14px_26px_rgba(51,65,85,0.12)]">
-                    <div className="flex items-start gap-3">
-                      <div className="metal-icon-shell flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-slate-700 dark:text-slate-100">
-                        <UserIcon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">
-                          เจ้าหน้าที่ตำรวจ
-                        </p>
-                        <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-200">
-                          สำหรับผู้ปฏิบัติงานในระบบเอกสารของหน่วยงาน
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <AccountTypeSelector
+                  onChange={setRegisterRole}
+                  selectedRole={registerRole}
+                  showAdminRestriction={
+                    usesFirebaseAuth &&
+                    registerRole === 'admin' &&
+                    registerEmail.trim().length > 0 &&
+                    !canRegisterAdminEmail(registerEmail)
+                  }
+                />
 
                 <label className="luxury-panel-soft flex items-start gap-3 rounded-[1.2rem] px-4 py-4 text-sm leading-6 text-slate-700 dark:text-slate-200">
                   <input
