@@ -57,14 +57,16 @@ const FIRESTORE_DOCUMENTS_COLLECTION = 'documents';
 const DOCUMENT_STORAGE_PREFIX = 'documents';
 const DEFAULT_USER_LABEL = 'ผู้ใช้งาน';
 const DEFAULT_DOC_TYPE_COLOR = '#1e3a8a';
+const DEFAULT_ADMIN_ALLOWED_EMAILS = ['teeraphon.sud@gmail.com'];
+const DEFAULT_ADMIN_ALLOWED_UIDS = ['j5SOae8A7vYFPZXGlymLOoTuQS93'];
 const ADMIN_ALLOWED_EMAILS = new Set(
-  (import.meta.env.VITE_ADMIN_ALLOWED_EMAILS || '')
+  (import.meta.env.VITE_ADMIN_ALLOWED_EMAILS || DEFAULT_ADMIN_ALLOWED_EMAILS.join(','))
     .split(',')
     .map((email) => normalizeIdentity(email))
     .filter(Boolean),
 );
 const ADMIN_ALLOWED_UIDS = new Set(
-  (import.meta.env.VITE_ADMIN_ALLOWED_UIDS || '')
+  (import.meta.env.VITE_ADMIN_ALLOWED_UIDS || DEFAULT_ADMIN_ALLOWED_UIDS.join(','))
     .split(',')
     .map((uid) => uid.trim())
     .filter(Boolean),
@@ -1104,6 +1106,14 @@ const saveLocalUser = async (payload: SaveUserInput, id?: string) => {
     throw new Error('ไม่พบข้อมูลผู้ใช้');
   }
 
+  const requestedRole =
+    payload.role !== undefined ? normalizeRole(payload.role) : existingUser.role;
+  const sessionUserId = getLocalAuthSession();
+
+  if (sessionUserId === id && requestedRole !== existingUser.role) {
+    throw new Error('role_change_requires_admin');
+  }
+
   const nextIdentity = payload.username || payload.email;
   const normalizedNextIdentity =
     nextIdentity !== undefined
@@ -1126,7 +1136,7 @@ const saveLocalUser = async (payload: SaveUserInput, id?: string) => {
     username: normalizedNextIdentity,
     email: normalizedNextIdentity,
     name: payload.name !== undefined ? payload.name : existingUser.name,
-    role: payload.role !== undefined ? payload.role : existingUser.role,
+    role: requestedRole,
     password: payload.password ? await hashPassword(payload.password.trim()) : existingUser.password,
     avatar: payload.avatar !== undefined ? payload.avatar : existingUser.avatar,
     phone: payload.phone !== undefined ? payload.phone : existingUser.phone,
@@ -1231,12 +1241,24 @@ const saveCloudUser = async (payload: SaveUserInput, id?: string) => {
     }
   }
 
+  const requestedRole =
+    payload.role !== undefined ? normalizeRole(payload.role) : existingUser.role;
+  const isSelfRoleChange =
+    auth?.currentUser?.uid === id && requestedRole !== existingUser.role;
+
+  if (
+    isSelfRoleChange &&
+    !isConfiguredAdminUser(auth?.currentUser?.uid, auth?.currentUser?.email || undefined)
+  ) {
+    throw new Error('role_change_requires_admin');
+  }
+
   const nextUser = normalizeStoredUser({
     ...existingUser,
     username: normalizedNextIdentity || existingUser.username,
     email: normalizedNextIdentity || existingUser.email,
     name: payload.name !== undefined ? payload.name : existingUser.name,
-    role: payload.role !== undefined ? payload.role : existingUser.role,
+    role: requestedRole,
     avatar: payload.avatar !== undefined ? payload.avatar : existingUser.avatar,
     phone: payload.phone !== undefined ? payload.phone : existingUser.phone,
   });
@@ -1501,7 +1523,7 @@ export const api = {
     const password = (userData.password || '').trim();
     const name = (userData.name || '').trim();
     const avatar = userData.avatar?.trim() || undefined;
-    const role = normalizeRole(userData.role || 'general');
+    const role: User['role'] = isConfiguredAdminUser(undefined, email) ? 'admin' : 'general';
 
     if (!email) {
       throw new Error('กรุณากรอกอีเมล');
@@ -1536,7 +1558,7 @@ export const api = {
       const user = await syncProfileFromFirebaseAuth(
         credential.user,
         name,
-        normalizeRole(role),
+        role,
       );
 
       await signOut(firebaseAuth);

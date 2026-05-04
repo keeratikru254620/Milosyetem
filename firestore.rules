@@ -27,9 +27,35 @@ service cloud.firestore {
         || (signedIn() && currentUserDoc().data.role == 'admin');
     }
 
+    function hasValidUserShape(data) {
+      return data.keys().hasAll(['username', 'email', 'name', 'role'])
+        && data.keys().hasOnly(['username', 'email', 'name', 'role', 'avatar', 'phone'])
+        && data.username is string
+        && data.email is string
+        && data.name is string
+        && data.role in ['admin', 'officer', 'general']
+        && (!('avatar' in data) || data.avatar is string)
+        && (!('phone' in data) || data.phone is string);
+    }
+
+    function safeSelfCreate(userId) {
+      return isSelf(userId)
+        && hasValidUserShape(request.resource.data)
+        && (request.resource.data.role != 'admin' || isConfiguredAdmin());
+    }
+
+    function safeSelfUpdate(userId) {
+      return isSelf(userId)
+        && hasValidUserShape(request.resource.data)
+        && request.resource.data.username == resource.data.username
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.role == resource.data.role;
+    }
+
     match /users/{userId} {
-      allow create: if isSelf(userId);
-      allow read, update: if isSelf(userId) || isAdmin();
+      allow create: if safeSelfCreate(userId) || isAdmin();
+      allow read: if isSelf(userId) || isAdmin();
+      allow update: if safeSelfUpdate(userId) || isAdmin();
       allow delete: if isAdmin();
     }
 

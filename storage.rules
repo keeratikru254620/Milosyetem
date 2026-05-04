@@ -6,16 +6,8 @@ service firebase.storage {
       return request.auth != null;
     }
 
-    function isConfiguredAdmin() {
-      return signedIn()
-        && (
-          request.auth.uid == 'j5SOae8A7vYFPZXGlymLOoTuQS93'
-          || request.auth.token.email == 'teeraphon.sud@gmail.com'
-        );
-    }
-
     match /documents/{documentId}/{fileName} {
-      allow read, write: if signedIn() || isConfiguredAdmin();
+      allow read, write: if signedIn();
     }
   }
 }

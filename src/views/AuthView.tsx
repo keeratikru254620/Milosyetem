@@ -5,7 +5,6 @@ import {
   Loader2,
   Lock,
   Mail,
-  ShieldCheck,
   User as UserIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -87,57 +86,6 @@ function AuthInput({
   );
 }
 
-interface RoleCardProps {
-  description: string;
-  icon: ReactNode;
-  isSelected: boolean;
-  label: string;
-  onClick: () => void;
-}
-
-function RoleCard({ description, icon, isSelected, label, onClick }: RoleCardProps) {
-  return (
-    <button
-      aria-pressed={isSelected}
-      className={`rounded-[1.25rem] border p-4 text-left transition-all ${
-        isSelected
-          ? 'metal-button-primary border-white/20 shadow-[0_18px_28px_rgba(29,18,44,0.24)]'
-          : 'luxury-panel-soft border-white/70 shadow-[0_14px_26px_rgba(51,65,85,0.12)] hover:border-[rgba(115,132,154,0.42)] hover:shadow-[0_18px_32px_rgba(51,65,85,0.16)]'
-      }`}
-      onClick={onClick}
-      type="button"
-    >
-      <div className="flex items-start gap-3">
-        <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
-            isSelected
-              ? 'bg-white/12 text-[var(--app-gold-soft)]'
-              : 'metal-icon-shell text-slate-700 dark:text-slate-100'
-          }`}
-        >
-          {icon}
-        </div>
-        <div>
-          <p
-            className={`text-sm font-bold ${
-              isSelected ? 'text-white' : 'text-slate-900 dark:text-white'
-            }`}
-          >
-            {label}
-          </p>
-          <p
-            className={`mt-1 text-xs leading-5 ${
-              isSelected ? 'text-white/80' : 'text-slate-600 dark:text-slate-200'
-            }`}
-          >
-            {description}
-          </p>
-        </div>
-      </div>
-    </button>
-  );
-}
-
 function AuthBrandPanel() {
   return (
     <section className="relative hidden w-[50%] shrink-0 flex-col justify-between overflow-hidden bg-[linear-gradient(160deg,#342348_0%,#1b1328_56%,#08070d_100%)] px-12 py-10 lg:flex">
@@ -193,7 +141,6 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState('');
-  const [registerRole, setRegisterRole] = useState<User['role']>('general');
   const [forgotEmail, setForgotEmail] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -293,7 +240,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
         username: registerEmail,
         password: registerPassword,
         name: `${registerFirstName} ${registerLastName}`.trim(),
-        role: registerRole,
+        role: 'general',
         email: registerEmail,
       });
 
@@ -542,21 +489,20 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                   <label className="luxury-kicker mb-3 block text-[12px] text-slate-600 dark:text-slate-300">
                     ประเภทบัญชี
                   </label>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <RoleCard
-                      description="สำหรับผู้ดูแลและกำหนดค่าระบบในหน่วยงาน"
-                      icon={<ShieldCheck className="h-5 w-5" />}
-                      isSelected={registerRole === 'admin'}
-                      label="ผู้ดูแลระบบ"
-                      onClick={() => setRegisterRole('admin')}
-                    />
-                    <RoleCard
-                      description="สำหรับเจ้าหน้าที่ตำรวจผู้ปฏิบัติงานในระบบ"
-                      icon={<UserIcon className="h-5 w-5" />}
-                      isSelected={registerRole === 'general'}
-                      label="เจ้าหน้าที่ตำรวจ"
-                      onClick={() => setRegisterRole('general')}
-                    />
+                  <div className="luxury-panel-soft rounded-[1.25rem] border border-white/70 p-4 shadow-[0_14px_26px_rgba(51,65,85,0.12)]">
+                    <div className="flex items-start gap-3">
+                      <div className="metal-icon-shell flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-slate-700 dark:text-slate-100">
+                        <UserIcon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">
+                          เจ้าหน้าที่ตำรวจ
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-200">
+                          สำหรับผู้ปฏิบัติงานในระบบเอกสารของหน่วยงาน
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

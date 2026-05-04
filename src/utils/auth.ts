@@ -110,6 +110,10 @@ export const getErrorMessage = (
       return 'ไม่พบข้อมูลที่ต้องการ';
     }
 
+    if (message === 'role_change_requires_admin') {
+      return 'การเปลี่ยนสิทธิ์ผู้ใช้งานต้องดำเนินการโดยผู้ดูแลระบบ';
+    }
+
     if (message === 'firebase_user_creation_requires_backend') {
       return 'โหมด Firebase ยังไม่รองรับการสร้างผู้ใช้ใหม่จากหน้าแอดมินโดยตรง ต้องให้ผู้ใช้สมัครเองหรือมี backend/admin SDK';
     }

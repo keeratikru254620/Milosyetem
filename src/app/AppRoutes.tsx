@@ -74,6 +74,19 @@ export default function AppRoutes({
         <Route element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />} path={resolveRoute(APP_PATHS.documents)} />
         <Route element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />} path={resolveRoute(APP_PATHS.docTypes)} />
         <Route element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />} path={resolveRoute(APP_PATHS.users)} />
+        <Route element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />} path={resolveRoute(APP_PATHS.admin)} />
+        <Route
+          element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />}
+          path={resolveRoute(APP_PATHS.adminDocuments)}
+        />
+        <Route
+          element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />}
+          path={resolveRoute(APP_PATHS.adminDocTypes)}
+        />
+        <Route
+          element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />}
+          path={resolveRoute(APP_PATHS.adminUsers)}
+        />
         <Route element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />} path={resolveRoute(APP_PATHS.settings)} />
         <Route
           element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />}
@@ -101,6 +114,40 @@ export default function AppRoutes({
 
   return (
     <Routes>
+      <Route
+        element={
+          <Navigate
+            to={
+              currentUser.role === 'admin'
+                ? resolveRoute(APP_PATHS.users)
+                : resolveRoute(APP_PATHS.dashboard)
+            }
+            replace
+          />
+        }
+        path={resolveRoute(APP_PATHS.admin)}
+      />
+      <Route
+        element={<Navigate to={resolveRoute(APP_PATHS.documents)} replace />}
+        path={resolveRoute(APP_PATHS.adminDocuments)}
+      />
+      <Route
+        element={<Navigate to={resolveRoute(APP_PATHS.docTypes)} replace />}
+        path={resolveRoute(APP_PATHS.adminDocTypes)}
+      />
+      <Route
+        element={
+          <Navigate
+            to={
+              currentUser.role === 'admin'
+                ? resolveRoute(APP_PATHS.users)
+                : resolveRoute(APP_PATHS.dashboard)
+            }
+            replace
+          />
+        }
+        path={resolveRoute(APP_PATHS.adminUsers)}
+      />
       <Route
         element={
           <DashboardPage
