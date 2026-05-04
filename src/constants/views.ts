@@ -42,6 +42,7 @@ export const PUBLIC_PATHS = new Set<string>([
   APP_PATHS.forgotPassword,
   APP_PATHS.terms,
   APP_PATHS.privacy,
+  APP_PATHS.preview,
   APP_PATHS.dashboard,
   APP_PATHS.documents,
   APP_PATHS.docTypes,

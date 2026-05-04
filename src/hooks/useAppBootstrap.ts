@@ -12,13 +12,19 @@ interface UseAppBootstrapArgs {
   setCurrentUser: Dispatch<SetStateAction<User | null>>;
 }
 
+interface UseAppBootstrapResult {
+  isAppReady: boolean;
+  bootstrapError: Error | null;
+}
+
 export const useAppBootstrap = ({
   initialPathname,
   loadAllData,
   navigate,
   setCurrentUser,
-}: UseAppBootstrapArgs) => {
+}: UseAppBootstrapArgs): UseAppBootstrapResult => {
   const [isAppReady, setIsAppReady] = useState(false);
+  const [bootstrapError, setBootstrapError] = useState<Error | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -37,6 +43,13 @@ export const useAppBootstrap = ({
         } else if (!isPublicPath(initialPathname)) {
           navigate(APP_PATHS.login);
         }
+      } catch (error) {
+        if (isMounted) {
+          const resolvedError =
+            error instanceof Error ? error : new Error(String(error ?? 'Unknown bootstrap error'));
+          console.error('App bootstrap failed:', resolvedError);
+          setBootstrapError(resolvedError);
+        }
       } finally {
         if (isMounted) {
           setIsAppReady(true);
@@ -51,5 +64,5 @@ export const useAppBootstrap = ({
     };
   }, [initialPathname, loadAllData, navigate, setCurrentUser]);
 
-  return isAppReady;
+  return { isAppReady, bootstrapError };
 };

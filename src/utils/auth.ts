@@ -15,6 +15,20 @@ export const normalizeRole = (role?: string): UserRole =>
 
 export const normalizeIdentity = (value?: string) => (value || '').trim().toLowerCase();
 
+export const isValidEmail = (value: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((value || '').trim());
+
+export const isStrongPassword = (password: string) => {
+  const trimmed = (password || '').trim();
+  return (
+    trimmed.length >= 8 &&
+    /[a-z]/.test(trimmed) &&
+    /[A-Z]/.test(trimmed) &&
+    /[0-9]/.test(trimmed) &&
+    /[^A-Za-z0-9]/.test(trimmed)
+  );
+};
+
 export const stripPassword = (user: User): User => {
   const { password, ...safeUser } = user;
   return safeUser;
@@ -57,7 +71,11 @@ export const getErrorMessage = (
     }
 
     if (message === 'password_too_short') {
-      return 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+      return 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร ประกอบด้วยตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ ตัวเลข และอักขระพิเศษ';
+    }
+
+    if (message === 'password_too_weak') {
+      return 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร ประกอบด้วยตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ ตัวเลข และอักขระพิเศษ';
     }
 
     if (message === 'email_password_not_enabled') {

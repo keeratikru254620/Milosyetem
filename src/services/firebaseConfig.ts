@@ -9,7 +9,7 @@ import {
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-const authBackendMode = (import.meta.env.VITE_AUTH_BACKEND ?? 'local').toLowerCase();
+const authBackendMode = (import.meta.env.VITE_AUTH_BACKEND ?? 'firebase').toLowerCase();
 
 const firebaseOptions: FirebaseOptions = {
   apiKey: 'AIzaSyAr-x-YKv6GD4cbFDJ7c6UF_5QsLzK8FgA',

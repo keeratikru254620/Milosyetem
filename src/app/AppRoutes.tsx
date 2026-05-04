@@ -54,44 +54,45 @@ export default function AppRoutes({
   setIsDarkMode,
   users,
 }: AppRoutesProps) {
-  const resolveRoute = (path: string) => `${routePrefix}${path}`;
+  const resolveRoute = (path: string) =>
+    path === APP_PATHS.root ? routePrefix || APP_PATHS.root : `${routePrefix}${path}`;
   const settingsBasePath = resolveRoute(APP_PATHS.settings);
 
   if (!currentUser) {
     return (
       <Routes>
-        <Route element={<Navigate to={APP_PATHS.login} replace />} path={APP_PATHS.root} />
-        <Route element={<LoginPage onLogin={onLogin} />} path={APP_PATHS.login} />
-        <Route element={<RegisterPage onLogin={onLogin} />} path={APP_PATHS.register} />
+        <Route element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />} path={resolveRoute(APP_PATHS.root)} />
+        <Route element={<LoginPage onLogin={onLogin} />} path={resolveRoute(APP_PATHS.login)} />
+        <Route element={<RegisterPage onLogin={onLogin} />} path={resolveRoute(APP_PATHS.register)} />
         <Route
           element={<ForgotPasswordPage onLogin={onLogin} />}
-          path={APP_PATHS.forgotPassword}
+          path={resolveRoute(APP_PATHS.forgotPassword)}
         />
-        <Route element={<LegalPage variant="terms" />} path={APP_PATHS.terms} />
-        <Route element={<LegalPage variant="privacy" />} path={APP_PATHS.privacy} />
-        <Route element={<Navigate to={APP_PATHS.login} replace />} path={APP_PATHS.dashboard} />
-        <Route element={<Navigate to={APP_PATHS.login} replace />} path={APP_PATHS.documents} />
-        <Route element={<Navigate to={APP_PATHS.login} replace />} path={APP_PATHS.docTypes} />
-        <Route element={<Navigate to={APP_PATHS.login} replace />} path={APP_PATHS.users} />
-        <Route element={<Navigate to={APP_PATHS.login} replace />} path={APP_PATHS.settings} />
+        <Route element={<LegalPage variant="terms" />} path={resolveRoute(APP_PATHS.terms)} />
+        <Route element={<LegalPage variant="privacy" />} path={resolveRoute(APP_PATHS.privacy)} />
+        <Route element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />} path={resolveRoute(APP_PATHS.dashboard)} />
+        <Route element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />} path={resolveRoute(APP_PATHS.documents)} />
+        <Route element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />} path={resolveRoute(APP_PATHS.docTypes)} />
+        <Route element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />} path={resolveRoute(APP_PATHS.users)} />
+        <Route element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />} path={resolveRoute(APP_PATHS.settings)} />
         <Route
-          element={<Navigate to={APP_PATHS.login} replace />}
-          path={APP_PATHS.settingsProfile}
-        />
-        <Route
-          element={<Navigate to={APP_PATHS.login} replace />}
-          path={APP_PATHS.settingsGeneral}
+          element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />}
+          path={resolveRoute(APP_PATHS.settingsProfile)}
         />
         <Route
-          element={<Navigate to={APP_PATHS.login} replace />}
-          path={APP_PATHS.settingsSecurity}
+          element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />}
+          path={resolveRoute(APP_PATHS.settingsGeneral)}
         />
         <Route
-          element={<Navigate to={APP_PATHS.login} replace />}
-          path={APP_PATHS.settingsSupport}
+          element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />}
+          path={resolveRoute(APP_PATHS.settingsSecurity)}
         />
         <Route
-          element={<NotFoundPage backLabel="กลับสู่หน้าเข้าสู่ระบบ" backTo={APP_PATHS.login} />}
+          element={<Navigate to={resolveRoute(APP_PATHS.login)} replace />}
+          path={resolveRoute(APP_PATHS.settingsSupport)}
+        />
+        <Route
+          element={<NotFoundPage backLabel="กลับสู่หน้าเข้าสู่ระบบ" backTo={resolveRoute(APP_PATHS.login)} />}
           path="*"
         />
       </Routes>

@@ -61,7 +61,7 @@ export default function AppContainer() {
     setUsers,
   });
 
-  const isAppReady = useAppBootstrap({
+  const { isAppReady, bootstrapError } = useAppBootstrap({
     initialPathname: location.pathname,
     loadAllData,
     navigate,
@@ -128,6 +128,29 @@ export default function AppContainer() {
   const effectiveDocTypes = isPreviewMode && docTypes.length === 0 ? previewDocTypes : docTypes;
   const effectiveDocuments =
     isPreviewMode && documents.length === 0 ? previewDocuments : documents;
+
+  if (bootstrapError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--app-bg)] px-4">
+        <div className="luxury-panel flex flex-col items-center rounded-[2rem] px-10 py-8 text-center">
+          <div className="metal-icon-shell mb-5 flex h-20 w-20 items-center justify-center rounded-[1.75rem]">
+            <ShieldCheck className="h-10 w-10 text-[var(--app-navy)]" />
+          </div>
+          <p className="luxury-kicker mb-4 text-[11px]">System Error</p>
+          <p className="mb-6 text-sm leading-6 text-[var(--app-text-soft)]">
+            {bootstrapError.message || 'เกิดข้อผิดพลาดขณะเริ่มต้นระบบ'}
+          </p>
+          <button
+            className="metal-button-primary rounded-xl px-8 py-3 text-sm font-bold transition hover:brightness-105 active:scale-95"
+            onClick={() => window.location.reload()}
+            type="button"
+          >
+            โหลดอีกครั้ง
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAppReady) {
     return (

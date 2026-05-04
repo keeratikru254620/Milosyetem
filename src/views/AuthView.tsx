@@ -5,7 +5,6 @@ import {
   Loader2,
   Lock,
   Mail,
-  ShieldCheck,
   User as UserIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -15,7 +14,7 @@ import { api } from '../services/api';
 import { isFirebaseConfigured } from '../services/firebaseConfig';
 import { showToast } from '../services/toastService';
 import type { AuthMode, User } from '../types';
-import { getErrorMessage } from '../utils/auth';
+import { getErrorMessage, isStrongPassword, isValidEmail } from '../utils/auth';
 import { APP_LOGO_FALLBACK, APP_LOGO_SRC } from '../utils/assets';
 
 interface AuthViewProps {
@@ -80,49 +79,6 @@ interface RoleCardProps {
   onClick: () => void;
 }
 
-function RoleCard({ description, icon, isSelected, label, onClick }: RoleCardProps) {
-  return (
-    <button
-      aria-pressed={isSelected}
-      className={`rounded-[1.25rem] border p-4 text-left transition-all ${
-        isSelected
-          ? 'metal-button-primary border-white/20 shadow-[0_18px_28px_rgba(29,18,44,0.24)]'
-          : 'luxury-panel-soft border-white/70 shadow-[0_14px_26px_rgba(51,65,85,0.12)] hover:border-[rgba(115,132,154,0.42)] hover:shadow-[0_18px_32px_rgba(51,65,85,0.16)]'
-      }`}
-      onClick={onClick}
-      type="button"
-    >
-      <div className="flex items-start gap-3">
-        <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
-            isSelected
-              ? 'bg-white/12 text-[var(--app-gold-soft)]'
-              : 'metal-icon-shell text-slate-700 dark:text-slate-100'
-          }`}
-        >
-          {icon}
-        </div>
-        <div>
-          <p
-            className={`text-sm font-bold ${
-              isSelected ? 'text-white' : 'text-slate-900 dark:text-white'
-            }`}
-          >
-            {label}
-          </p>
-          <p
-            className={`mt-1 text-xs leading-5 ${
-              isSelected ? 'text-white/80' : 'text-slate-600 dark:text-slate-200'
-            }`}
-          >
-            {description}
-          </p>
-        </div>
-      </div>
-    </button>
-  );
-}
-
 function AuthBrandPanel() {
   return (
     <section className="relative hidden w-[50%] shrink-0 flex-col justify-between overflow-hidden bg-[linear-gradient(160deg,#342348_0%,#1b1328_56%,#08070d_100%)] px-12 py-10 lg:flex">
@@ -170,14 +126,14 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
   const usesFirebaseAuth = isFirebaseConfigured;
 
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
-  const [loginIdentity, setLoginIdentity] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [loginIdentity, setLoginIdentity] = useState('admin@milosystem.local');
+  const [loginPassword, setLoginPassword] = useState('123456');
+  const [rememberMe, setRememberMe] = useState(true);
   const [registerFirstName, setRegisterFirstName] = useState('');
   const [registerLastName, setRegisterLastName] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
-  const [registerRole, setRegisterRole] = useState<User['role']>('general');
+  const [registerConfirmPassword, setRegisterConfirmPassword] = useState('');
   const [forgotEmail, setForgotEmail] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -191,6 +147,21 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     event.preventDefault();
 
     if (isLoading) {
+      return;
+    }
+
+    if (!loginIdentity.trim()) {
+      showToast('กรุณากรอกอีเมลหรือชื่อผู้ใช้งาน', 'error');
+      return;
+    }
+
+    if (!loginPassword) {
+      showToast('กรุณากรอกรหัสผ่าน', 'error');
+      return;
+    }
+
+    if (usesFirebaseAuth && !isValidEmail(loginIdentity)) {
+      showToast('กรุณากรอกอีเมลที่ถูกต้องสำหรับการเข้าสู่ระบบ', 'error');
       return;
     }
 
@@ -227,8 +198,31 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
       return;
     }
 
-    if (registerPassword.length < 6) {
-      showToast('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร', 'error');
+    if (!registerFirstName.trim() || !registerLastName.trim()) {
+      showToast('กรุณากรอกชื่อและนามสกุลให้ครบถ้วน', 'error');
+      return;
+    }
+
+    if (!registerEmail.trim() || !isValidEmail(registerEmail)) {
+      showToast('กรุณากรอกอีเมลที่ถูกต้อง', 'error');
+      return;
+    }
+
+    if (!registerPassword) {
+      showToast('กรุณากรอกรหัสผ่าน', 'error');
+      return;
+    }
+
+    if (registerPassword !== registerConfirmPassword) {
+      showToast('รหัสผ่านทั้งสองช่องไม่ตรงกัน', 'error');
+      return;
+    }
+
+    if (!isStrongPassword(registerPassword)) {
+      showToast(
+        'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร ประกอบด้วยตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ และตัวเลข',
+        'error',
+      );
       return;
     }
 
@@ -239,7 +233,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
         username: registerEmail,
         password: registerPassword,
         name: `${registerFirstName} ${registerLastName}`.trim(),
-        role: registerRole,
+        role: 'general',
         email: registerEmail,
       });
 
@@ -467,33 +461,22 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                   icon={<Lock className="h-6 w-6" />}
                   label="รหัสผ่าน"
                   onChange={setRegisterPassword}
-                  placeholder="อย่างน้อย 6 ตัวอักษร"
+                  placeholder="อย่างน้อย 8 ตัวอักษร ตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ ตัวเลข และอักขระพิเศษ"
                   rightSlot={passwordToggle}
                   type={showPassword ? 'text' : 'password'}
                   value={registerPassword}
                 />
 
-                <div>
-                  <label className="luxury-kicker mb-3 block text-[12px] text-slate-600 dark:text-slate-300">
-                    ประเภทบัญชี
-                  </label>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <RoleCard
-                      description="สำหรับผู้ดูแลและกำหนดค่าระบบในหน่วยงาน"
-                      icon={<ShieldCheck className="h-5 w-5" />}
-                      isSelected={registerRole === 'admin'}
-                      label="ผู้ดูแลระบบ"
-                      onClick={() => setRegisterRole('admin')}
-                    />
-                    <RoleCard
-                      description="สำหรับเจ้าหน้าที่ตำรวจผู้ปฏิบัติงานในระบบ"
-                      icon={<UserIcon className="h-5 w-5" />}
-                      isSelected={registerRole === 'general'}
-                      label="เจ้าหน้าที่ตำรวจ"
-                      onClick={() => setRegisterRole('general')}
-                    />
-                  </div>
-                </div>
+                <AuthInput
+                  autoComplete="new-password"
+                  icon={<Lock className="h-6 w-6" />}
+                  label="ยืนยันรหัสผ่าน"
+                  onChange={setRegisterConfirmPassword}
+                  placeholder="กรอกอีกครั้งเพื่อยืนยัน"
+                  rightSlot={passwordToggle}
+                  type={showPassword ? 'text' : 'password'}
+                  value={registerConfirmPassword}
+                />
 
                 <label className="luxury-panel-soft flex items-start gap-3 rounded-[1.2rem] px-4 py-4 text-sm leading-6 text-slate-700 dark:text-slate-200">
                   <input

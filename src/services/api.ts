@@ -33,7 +33,7 @@ import type {
   StoredFile,
   User,
 } from '../types';
-import { normalizeIdentity, normalizeRole, stripPassword } from '../utils/auth';
+import { isValidEmail, isStrongPassword, normalizeIdentity, normalizeRole, stripPassword } from '../utils/auth';
 import { buildDocumentSearchIndex, normalizeStoredFile } from '../utils/documentSearch';
 import {
   auth,
@@ -70,6 +70,26 @@ const createId = (prefix: string) =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? `${prefix}-${crypto.randomUUID()}`
     : `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+const toHexString = (buffer: ArrayBuffer) =>
+  Array.from(new Uint8Array(buffer))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+
+const hashPassword = async (password: string) => {
+  const normalized = password.trim();
+
+  if (typeof crypto !== 'undefined' && 'subtle' in crypto && crypto.subtle?.digest) {
+    const digest = await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(normalized),
+    );
+
+    return toHexString(digest);
+  }
+
+  return normalized;
+};
 
 const nowIso = () => new Date().toISOString();
 
@@ -859,16 +879,34 @@ const loginWithLocalAuth = async (
   rememberMe: boolean,
 ): Promise<{ user: User; token: string }> => {
   const identity = normalizeIdentity(username);
+  const normalizedPassword = password.trim();
+  const hashedPassword = await hashPassword(normalizedPassword);
   const users = (await getUsersStore()).map(normalizeStoredUser);
-  const matchedUser = users.find(
-    (user) =>
+  const matchedUser = users.find((user) => {
+    const storedPassword = user.password || '';
+    return (
       (normalizeIdentity(user.email || user.username) === identity ||
         normalizeIdentity(user.username || user.email) === identity) &&
-      (user.password || '') === password.trim(),
-  );
+      (storedPassword === normalizedPassword || storedPassword === hashedPassword)
+    );
+  });
 
   if (!matchedUser) {
     throw new Error('invalid_credentials');
+  }
+
+  if (matchedUser.password !== hashedPassword) {
+    await saveUsersStore(
+      users.map((user) =>
+        user._id === matchedUser._id
+          ? {
+              ...user,
+              password: hashedPassword,
+            }
+          : user,
+      ),
+    );
+    matchedUser.password = hashedPassword;
   }
 
   setLocalAuthSession(matchedUser._id, rememberMe ? 'remember' : 'session');
@@ -910,12 +948,16 @@ const registerWithLocalAuth = async (
     throw new Error('กรุณากรอกอีเมล');
   }
 
+  if (!isValidEmail(email)) {
+    throw new Error('auth/invalid-email');
+  }
+
   if (!password) {
     throw new Error('กรุณากรอกรหัสผ่าน');
   }
 
-  if (password.length < 6) {
-    throw new Error('password_too_short');
+  if (!isStrongPassword(password)) {
+    throw new Error('password_too_weak');
   }
 
   if (!name) {
@@ -932,12 +974,13 @@ const registerWithLocalAuth = async (
     throw new Error('duplicate_record');
   }
 
+  const hashedPassword = await hashPassword(password);
   const nextUser = createStoredUser({
     username: email,
     email,
-    password,
+    password: hashedPassword,
     name,
-    role: normalizeRole(userData.role || 'general'),
+    role: 'general',
     avatar: userData.avatar,
     phone: userData.phone,
   });
@@ -962,8 +1005,12 @@ const saveLocalUser = async (payload: SaveUserInput, id?: string) => {
       throw new Error('กรุณากรอกชื่อผู้ใช้ ชื่อ และรหัสผ่านให้ครบ');
     }
 
-    if (password.length < 6) {
-      throw new Error('password_too_short');
+    if (!isValidEmail(email)) {
+      throw new Error('auth/invalid-email');
+    }
+
+    if (!isStrongPassword(password)) {
+      throw new Error('password_too_weak');
     }
 
     if (
@@ -976,10 +1023,11 @@ const saveLocalUser = async (payload: SaveUserInput, id?: string) => {
       throw new Error('duplicate_record');
     }
 
+    const hashedPassword = await hashPassword(password);
     const nextUser = createStoredUser({
       username: email,
       email,
-      password,
+      password: hashedPassword,
       name,
       role: normalizeRole(payload.role || 'officer'),
       avatar: payload.avatar,
@@ -1019,7 +1067,7 @@ const saveLocalUser = async (payload: SaveUserInput, id?: string) => {
     email: normalizedNextIdentity,
     name: payload.name !== undefined ? payload.name : existingUser.name,
     role: payload.role !== undefined ? payload.role : existingUser.role,
-    password: payload.password?.trim() || existingUser.password,
+    password: payload.password ? await hashPassword(payload.password.trim()) : existingUser.password,
     avatar: payload.avatar !== undefined ? payload.avatar : existingUser.avatar,
     phone: payload.phone !== undefined ? payload.phone : existingUser.phone,
   });
@@ -1352,7 +1400,7 @@ export const api = {
     }
 
     if (!firebaseUser) {
-      return null;
+      return verifyLocalSession();
     }
 
     try {
@@ -1405,17 +1453,22 @@ export const api = {
     const password = (userData.password || '').trim();
     const name = (userData.name || '').trim();
     const avatar = userData.avatar?.trim() || undefined;
+    const role = userData.role === 'admin' ? 'general' : userData.role || 'general';
 
     if (!email) {
       throw new Error('กรุณากรอกอีเมล');
+    }
+
+    if (!isValidEmail(email)) {
+      throw new Error('auth/invalid-email');
     }
 
     if (!password) {
       throw new Error('กรุณากรอกรหัสผ่าน');
     }
 
-    if (password.length < 6) {
-      throw new Error('password_too_short');
+    if (!isStrongPassword(password)) {
+      throw new Error('password_too_weak');
     }
 
     if (!name) {
@@ -1433,7 +1486,7 @@ export const api = {
       const user = await syncProfileFromFirebaseAuth(
         credential.user,
         name,
-        normalizeRole(userData.role || 'general'),
+        normalizeRole(role),
       );
 
       await sendEmailVerification(credential.user);
