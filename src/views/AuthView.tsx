@@ -18,6 +18,21 @@ import type { AuthMode, User } from '../types';
 import { getErrorMessage, isStrongPassword, isValidEmail } from '../utils/auth';
 import { APP_LOGO_FALLBACK, APP_LOGO_SRC } from '../utils/assets';
 
+const getDefaultLoginIdentity = () => {
+  if (!isFirebaseConfigured) {
+    return 'admin@milosystem.local';
+  }
+
+  return (
+    (import.meta.env.VITE_ADMIN_ALLOWED_EMAILS || '')
+      .split(',')
+      .map((email) => email.trim().toLowerCase())
+      .find(Boolean) || ''
+  );
+};
+
+const getDefaultLoginPassword = () => (isFirebaseConfigured ? '' : '123456');
+
 interface AuthViewProps {
   initialMode?: AuthMode;
   onLogin: (user: User) => Promise<void> | void;
@@ -170,8 +185,8 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
   const usesFirebaseAuth = isFirebaseConfigured;
 
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
-  const [loginIdentity, setLoginIdentity] = useState('admin@milosystem.local');
-  const [loginPassword, setLoginPassword] = useState('123456');
+  const [loginIdentity, setLoginIdentity] = useState(getDefaultLoginIdentity);
+  const [loginPassword, setLoginPassword] = useState(getDefaultLoginPassword);
   const [rememberMe, setRememberMe] = useState(true);
   const [registerFirstName, setRegisterFirstName] = useState('');
   const [registerLastName, setRegisterLastName] = useState('');

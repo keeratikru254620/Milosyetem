@@ -57,6 +57,18 @@ const FIRESTORE_DOCUMENTS_COLLECTION = 'documents';
 const DOCUMENT_STORAGE_PREFIX = 'documents';
 const DEFAULT_USER_LABEL = 'ผู้ใช้งาน';
 const DEFAULT_DOC_TYPE_COLOR = '#1e3a8a';
+const ADMIN_ALLOWED_EMAILS = new Set(
+  (import.meta.env.VITE_ADMIN_ALLOWED_EMAILS || '')
+    .split(',')
+    .map((email) => normalizeIdentity(email))
+    .filter(Boolean),
+);
+const ADMIN_ALLOWED_UIDS = new Set(
+  (import.meta.env.VITE_ADMIN_ALLOWED_UIDS || '')
+    .split(',')
+    .map((uid) => uid.trim())
+    .filter(Boolean),
+);
 
 type AuthPersistenceMode = 'remember' | 'session';
 
@@ -92,6 +104,24 @@ const hashPassword = async (password: string) => {
 };
 
 const nowIso = () => new Date().toISOString();
+
+const isConfiguredAdminUser = (uid?: string, email?: string) =>
+  Boolean(
+    (uid && ADMIN_ALLOWED_UIDS.has(uid.trim())) ||
+      (email && ADMIN_ALLOWED_EMAILS.has(normalizeIdentity(email))),
+  );
+
+const resolveSyncedProfileRole = (
+  firebaseUser: FirebaseAuthUser,
+  existingUser?: User | null,
+  fallbackRole?: User['role'],
+): User['role'] => {
+  if (isConfiguredAdminUser(firebaseUser.uid, firebaseUser.email || existingUser?.email)) {
+    return 'admin';
+  }
+
+  return existingUser?.role || normalizeRole(fallbackRole || 'general');
+};
 
 const getLocalStorageItem = <T>(key: string, fallback: T): T => {
   if (!hasWindow()) {
@@ -811,7 +841,7 @@ const syncLocalProfileFromFirebaseAuth = async (
       existingUser?.name ||
       identity ||
       'ผู้ใช้งาน',
-    role: existingUser?.role || normalizeRole(fallbackRole || 'general'),
+    role: resolveSyncedProfileRole(firebaseUser, existingUser, fallbackRole),
     avatar: firebaseUser.photoURL || existingUser?.avatar,
     phone: existingUser?.phone,
     password: existingUser?.password,
@@ -847,7 +877,7 @@ const syncCloudProfileFromFirebaseAuth = async (
       existingUser?.name ||
       identity ||
       DEFAULT_USER_LABEL,
-    role: existingUser?.role || normalizeRole(fallbackRole || 'general'),
+    role: resolveSyncedProfileRole(firebaseUser, existingUser, fallbackRole),
     avatar: firebaseUser.photoURL || existingUser?.avatar,
     phone: existingUser?.phone,
   });
