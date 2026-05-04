@@ -25,6 +25,14 @@ interface UseAppHandlersArgs {
   setUsers: Dispatch<SetStateAction<User[]>>;
 }
 
+const upsertById = <T extends { _id: string }>(items: T[], nextItem: T) => {
+  const exists = items.some((item) => item._id === nextItem._id);
+
+  return exists
+    ? items.map((item) => (item._id === nextItem._id ? nextItem : item))
+    : [nextItem, ...items];
+};
+
 export const useAppHandlers = ({
   currentUser,
   navigate,
@@ -128,10 +136,12 @@ export const useAppHandlers = ({
   const handleSaveDocument = useCallback(
     async (data: SaveDocumentInput, id?: string) => {
       const savedDocument = await api.saveDocument(data, id);
+      setDocuments((current) => upsertById(current, savedDocument));
       await loadAllData();
+      setDocuments((current) => upsertById(current, savedDocument));
       return savedDocument;
     },
-    [loadAllData],
+    [loadAllData, setDocuments],
   );
 
   const handleDeleteDocument = useCallback(
