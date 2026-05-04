@@ -35,15 +35,29 @@ export const useAppHandlers = ({
 }: UseAppHandlersArgs) => {
   const loadAllData = useCallback(
     async (targetUser: User | null = currentUser) => {
-      const [loadedUsers, loadedDocTypes, loadedDocuments] = await Promise.all([
+      const [loadedUsers, loadedDocTypes, loadedDocuments] = await Promise.allSettled([
         targetUser?.role === 'admin' ? api.getUsers() : Promise.resolve([]),
         api.getDocTypes(),
         api.getDocuments(),
       ]);
 
-      setUsers(loadedUsers);
-      setDocTypes(loadedDocTypes);
-      setDocuments(loadedDocuments);
+      if (loadedUsers.status === 'fulfilled') {
+        setUsers(loadedUsers.value);
+      } else {
+        console.warn('Unable to load users:', loadedUsers.reason);
+      }
+
+      if (loadedDocTypes.status === 'fulfilled') {
+        setDocTypes(loadedDocTypes.value);
+      } else {
+        console.warn('Unable to load document types:', loadedDocTypes.reason);
+      }
+
+      if (loadedDocuments.status === 'fulfilled') {
+        setDocuments(loadedDocuments.value);
+      } else {
+        console.warn('Unable to load documents:', loadedDocuments.reason);
+      }
     },
     [currentUser, setDocTypes, setDocuments, setUsers],
   );
