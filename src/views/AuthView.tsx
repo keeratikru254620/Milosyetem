@@ -525,21 +525,21 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
 
                 <div>
                   <label className="luxury-kicker mb-3 block text-[12px] text-slate-600 dark:text-slate-300">
-                    à¸›à¸£à¸°à¹€à¸ à¸—à¸šà¸±à¸à¸Šà¸µ
+                    ประเภทบัญชี
                   </label>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <RoleCard
-                      description="à¸ªà¸³à¸«à¸£à¸±à¸šà¸œà¸¹à¹‰à¸”à¸¹à¹à¸¥à¹à¸¥à¸°à¸à¸³à¸«à¸™à¸”à¸„à¹ˆà¸²à¸£à¸°à¸šà¸šà¹ƒà¸™à¸«à¸™à¹ˆà¸§à¸¢à¸‡à¸²à¸™"
+                      description="สำหรับผู้ดูแลและกำหนดค่าระบบในหน่วยงาน"
                       icon={<ShieldCheck className="h-5 w-5" />}
                       isSelected={registerRole === 'admin'}
-                      label="à¸œà¸¹à¹‰à¸”à¸¹à¹à¸¥à¸£à¸°à¸šà¸š"
+                      label="ผู้ดูแลระบบ"
                       onClick={() => setRegisterRole('admin')}
                     />
                     <RoleCard
-                      description="à¸ªà¸³à¸«à¸£à¸±à¸šà¹€à¸ˆà¹‰à¸²à¸«à¸™à¹‰à¸²à¸—à¸µà¹ˆà¸•à¸³à¸£à¸§à¸ˆà¸œà¸¹à¹‰à¸›à¸à¸´à¸šà¸±à¸•à¸´à¸‡à¸²à¸™à¹ƒà¸™à¸£à¸°à¸šà¸š"
+                      description="สำหรับเจ้าหน้าที่ตำรวจผู้ปฏิบัติงานในระบบ"
                       icon={<UserIcon className="h-5 w-5" />}
                       isSelected={registerRole === 'general'}
-                      label="à¹€à¸ˆà¹‰à¸²à¸«à¸™à¹‰à¸²à¸—à¸µà¹ˆà¸•à¸³à¸£à¸§à¸ˆ"
+                      label="เจ้าหน้าที่ตำรวจ"
                       onClick={() => setRegisterRole('general')}
                     />
                   </div>
