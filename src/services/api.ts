@@ -721,19 +721,6 @@ const ensureFirebaseReady = () => {
   return auth;
 };
 
-const sendVerificationEmailIfNeeded = async (firebaseUser: FirebaseAuthUser) => {
-  if (firebaseUser.emailVerified) {
-    return false;
-  }
-
-  try {
-    await sendEmailVerification(firebaseUser);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 const getFirebaseErrorCode = (error: unknown) =>
   error && typeof error === 'object' && 'code' in error
     ? String((error as { code?: string }).code ?? '')
@@ -1378,15 +1365,6 @@ export const api = {
       await configureFirebasePersistence(rememberMe);
       const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
 
-      if (!credential.user.emailVerified) {
-        const verificationSent = await sendVerificationEmailIfNeeded(credential.user);
-        await signOut(firebaseAuth);
-        clearAuthPersistenceMode();
-        throw new Error(
-          verificationSent ? 'email_not_verified_verification_sent' : 'email_not_verified',
-        );
-      }
-
       setAuthPersistenceMode(rememberMe ? 'remember' : 'session');
 
       return {
@@ -1422,12 +1400,6 @@ export const api = {
     try {
       await firebaseUser.reload();
       const currentFirebaseUser = auth.currentUser ?? firebaseUser;
-
-      if (!currentFirebaseUser.emailVerified) {
-        await signOut(auth);
-        clearAuthPersistenceMode();
-        return null;
-      }
 
       return syncProfileFromFirebaseAuth(currentFirebaseUser);
     } catch {
@@ -1469,7 +1441,7 @@ export const api = {
     const password = (userData.password || '').trim();
     const name = (userData.name || '').trim();
     const avatar = userData.avatar?.trim() || undefined;
-    const role = userData.role === 'admin' ? 'general' : userData.role || 'general';
+    const role = normalizeRole(userData.role || 'general');
 
     if (!email) {
       throw new Error('กรุณากรอกอีเมล');
