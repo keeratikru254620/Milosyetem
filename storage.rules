@@ -2,8 +2,20 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isConfiguredAdmin() {
+      return signedIn()
+        && (
+          request.auth.uid == 'j5SOae8A7vYFPZXGlymLOoTuQS93'
+          || request.auth.token.email == 'teeraphon.sud@gmail.com'
+        );
+    }
+
     match /documents/{documentId}/{fileName} {
-      allow read, write: if request.auth != null;
+      allow read, write: if signedIn() || isConfiguredAdmin();
     }
   }
 }
