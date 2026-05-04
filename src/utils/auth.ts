@@ -66,6 +66,10 @@ export const getErrorMessage = (
       );
     }
 
+    if (message === 'email_not_verified_verification_sent') {
+      return 'ส่งอีเมลยืนยันให้ใหม่แล้ว กรุณาตรวจสอบกล่องจดหมายหรือ Spam ก่อนเข้าสู่ระบบ';
+    }
+
     if (message === 'account_disabled') {
       return disabledAccountMessage || 'บัญชีนี้ถูกปิดการใช้งานแล้ว';
     }

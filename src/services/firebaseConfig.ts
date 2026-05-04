@@ -9,16 +9,16 @@ import {
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-const authBackendMode = (import.meta.env.VITE_AUTH_BACKEND ?? 'firebase').toLowerCase();
+const authBackendMode = (import.meta.env.VITE_AUTH_BACKEND ?? 'local').toLowerCase();
 
 const firebaseOptions: FirebaseOptions = {
-  apiKey: 'AIzaSyAr-x-YKv6GD4cbFDJ7c6UF_5QsLzK8FgA',
-  authDomain: 'milosystem-firebase-cb1aa.firebaseapp.com',
-  projectId: 'milosystem-firebase-cb1aa',
-  storageBucket: 'milosystem-firebase-cb1aa.firebasestorage.app',
-  messagingSenderId: '382930075881',
-  appId: '1:382930075881:web:d93f778d909c06d9d13078',
-  measurementId: 'G-XWG0BJ51Z8',
+  apiKey: import.meta.env.VITE_ADMIN_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_ADMIN_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_ADMIN_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_ADMIN_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_ADMIN_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_ADMIN_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_ADMIN_FIREBASE_MEASUREMENT_ID,
 };
 
 const requiredKeys: Array<keyof FirebaseOptions> = [

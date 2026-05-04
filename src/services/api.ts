@@ -721,6 +721,19 @@ const ensureFirebaseReady = () => {
   return auth;
 };
 
+const sendVerificationEmailIfNeeded = async (firebaseUser: FirebaseAuthUser) => {
+  if (firebaseUser.emailVerified) {
+    return false;
+  }
+
+  try {
+    await sendEmailVerification(firebaseUser);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const getFirebaseErrorCode = (error: unknown) =>
   error && typeof error === 'object' && 'code' in error
     ? String((error as { code?: string }).code ?? '')
@@ -1366,9 +1379,12 @@ export const api = {
       const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
 
       if (!credential.user.emailVerified) {
+        const verificationSent = await sendVerificationEmailIfNeeded(credential.user);
         await signOut(firebaseAuth);
         clearAuthPersistenceMode();
-        throw new Error('email_not_verified');
+        throw new Error(
+          verificationSent ? 'email_not_verified_verification_sent' : 'email_not_verified',
+        );
       }
 
       setAuthPersistenceMode(rememberMe ? 'remember' : 'session');
@@ -1483,13 +1499,14 @@ export const api = {
         photoURL: avatar || null,
       });
 
+      await sendEmailVerification(credential.user);
+
       const user = await syncProfileFromFirebaseAuth(
         credential.user,
         name,
         normalizeRole(role),
       );
 
-      await sendEmailVerification(credential.user);
       await signOut(firebaseAuth);
 
       return {
