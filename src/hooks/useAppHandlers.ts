@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import type { NavigateFunction } from 'react-router-dom';
 
 import { APP_PATHS } from '../constants/views';
+import { previewDocTypes } from '../data/previewData';
 import { api } from '../services/api';
 import { confirmDialog } from '../services/confirmService';
 import type {
@@ -48,9 +49,10 @@ export const useAppHandlers = ({
       }
 
       if (loadedDocTypes.status === 'fulfilled') {
-        setDocTypes(loadedDocTypes.value);
+        setDocTypes(loadedDocTypes.value.length > 0 ? loadedDocTypes.value : previewDocTypes);
       } else {
         console.warn('Unable to load document types:', loadedDocTypes.reason);
+        setDocTypes(previewDocTypes);
       }
 
       if (loadedDocuments.status === 'fulfilled') {

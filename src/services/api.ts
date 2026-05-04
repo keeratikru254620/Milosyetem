@@ -1280,6 +1280,10 @@ const getCloudDocTypes = async () => {
   const firestore = ensureFirestoreReady();
   const snapshot = await getDocs(collection(firestore, FIRESTORE_DOC_TYPES_COLLECTION));
 
+  if (snapshot.empty) {
+    return previewDocTypes.map((docType) => ({ ...docType }));
+  }
+
   return snapshot.docs
     .map((item) => deserializeDocTypeFromCloud(item.id, item.data() as Partial<DocType>))
     .sort((left, right) => left.name.localeCompare(right.name, 'th'));
