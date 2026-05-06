@@ -72,6 +72,10 @@ const ADMIN_ALLOWED_UIDS = new Set(
     .map((uid) => uid.trim())
     .filter(Boolean),
 );
+const isAdminWhitelistBypassEnabled =
+  String(import.meta.env.VITE_BYPASS_ORGANIZATION_VERIFICATION || '')
+    .trim()
+    .toLowerCase() === 'true';
 
 type AuthPersistenceMode = 'remember' | 'session';
 
@@ -114,12 +118,15 @@ const isConfiguredAdminUser = (uid?: string, email?: string) =>
       (email && ADMIN_ALLOWED_EMAILS.has(normalizeIdentity(email))),
   );
 
+const canAssignAdminRole = (uid?: string, email?: string) =>
+  isConfiguredAdminUser(uid, email) || isAdminWhitelistBypassEnabled;
+
 const resolveSyncedProfileRole = (
   firebaseUser: FirebaseAuthUser,
   existingUser?: User | null,
   fallbackRole?: User['role'],
 ): User['role'] => {
-  if (isConfiguredAdminUser(firebaseUser.uid, firebaseUser.email || existingUser?.email)) {
+  if (canAssignAdminRole(firebaseUser.uid, firebaseUser.email || existingUser?.email)) {
     return 'admin';
   }
 
@@ -1283,7 +1290,7 @@ const saveCloudUser = async (payload: SaveUserInput, id?: string) => {
 
   if (
     isSelfRoleChange &&
-    !isConfiguredAdminUser(auth?.currentUser?.uid, auth?.currentUser?.email || undefined)
+    !canAssignAdminRole(auth?.currentUser?.uid, auth?.currentUser?.email || undefined)
   ) {
     throw new Error('role_change_requires_admin');
   }
@@ -1581,7 +1588,7 @@ export const api = {
     const name = (userData.name || '').trim();
     const avatar = userData.avatar?.trim() || undefined;
     const requestedRole = normalizeRole(userData.role || 'general');
-    const role: User['role'] = isConfiguredAdminUser(undefined, email)
+    const role: User['role'] = canAssignAdminRole(undefined, email)
       ? 'admin'
       : requestedRole === 'admin'
         ? 'general'

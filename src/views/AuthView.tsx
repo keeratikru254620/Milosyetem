@@ -56,6 +56,10 @@ interface AuthInputProps {
 }
 
 const DEFAULT_ADMIN_ALLOWED_EMAILS = ['teeraphon.sud@gmail.com'];
+const isAdminWhitelistBypassEnabled =
+  String(import.meta.env.VITE_BYPASS_ORGANIZATION_VERIFICATION || '')
+    .trim()
+    .toLowerCase() === 'true';
 
 const getAllowedAdminEmails = () =>
   new Set(
@@ -66,7 +70,7 @@ const getAllowedAdminEmails = () =>
   );
 
 const canRegisterAdminEmail = (email: string) =>
-  getAllowedAdminEmails().has(email.trim().toLowerCase());
+  isAdminWhitelistBypassEnabled || getAllowedAdminEmails().has(email.trim().toLowerCase());
 
 const accountTypeOptions: Array<{
   description: string;

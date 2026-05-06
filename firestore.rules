@@ -38,10 +38,20 @@ service cloud.firestore {
         && (!('phone' in data) || data.phone is string);
     }
 
+    function allowSelfSetupAdmin() {
+      // Self-setup mode: allow creating an admin profile from the app.
+      // Set this to `false` after bootstrap if you want strict whitelist-only admin creation.
+      return true;
+    }
+
     function safeSelfCreate(userId) {
       return isSelf(userId)
         && hasValidUserShape(request.resource.data)
-        && (request.resource.data.role != 'admin' || isConfiguredAdmin());
+        && (
+          request.resource.data.role != 'admin'
+          || isConfiguredAdmin()
+          || allowSelfSetupAdmin()
+        );
     }
 
     function safeSelfUpdate(userId) {
