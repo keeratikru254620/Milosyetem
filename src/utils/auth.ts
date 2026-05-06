@@ -90,6 +90,10 @@ export const getErrorMessage = (
       return 'ยังไม่ได้ตั้งค่า Firebase สำหรับโปรเจ็กต์นี้';
     }
 
+    if (message === 'firebase_unauthorized_domain') {
+      return 'This domain is not authorized in Firebase Authentication (Authorized domains).';
+    }
+
     if (message === 'firebase_network_failed') {
       return 'ไม่สามารถเชื่อมต่อ Firebase ได้ในขณะนี้';
     }
@@ -139,3 +143,4 @@ export const getErrorMessage = (
 
   return fallbackMessage;
 };
+

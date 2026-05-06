@@ -39,6 +39,7 @@ import {
   auth,
   configureFirebasePersistence,
   db,
+  isFirebaseAuthEnabled,
   isFirebaseConfigured,
   storage,
 } from './firebaseConfig';
@@ -278,9 +279,37 @@ const setPersistedItem = async <T>(key: string, value: T) => {
   setLocalStorageItem(key, value);
 };
 
+const mergeSeedDocuments = (documents: DocumentData[]) => {
+  const documentsById = new Map(documents.map((document) => [document._id, document] as const));
+  let hasInsertedSeed = false;
+
+  for (const seedDocument of previewDocuments) {
+    if (documentsById.has(seedDocument._id)) {
+      continue;
+    }
+
+    documentsById.set(seedDocument._id, clone(seedDocument));
+    hasInsertedSeed = true;
+  }
+
+  return {
+    documents: Array.from(documentsById.values()),
+    hasInsertedSeed,
+  };
+};
+
 const getUsersStore = () => getPersistedItem<User[]>(USERS_KEY, localAuthSeedUsers);
 const getDocTypesStore = () => getPersistedItem<DocType[]>(DOC_TYPES_KEY, previewDocTypes);
-const getDocumentsStore = () => getPersistedItem<DocumentData[]>(DOCUMENTS_KEY, previewDocuments);
+const getDocumentsStore = async () => {
+  const persisted = await getPersistedItem<DocumentData[]>(DOCUMENTS_KEY, previewDocuments);
+  const { documents, hasInsertedSeed } = mergeSeedDocuments(persisted);
+
+  if (hasInsertedSeed) {
+    await setPersistedItem(DOCUMENTS_KEY, documents);
+  }
+
+  return documents;
+};
 const saveUsersStore = (users: User[]) => setPersistedItem(USERS_KEY, users);
 const saveDocTypesStore = (docTypes: DocType[]) => setPersistedItem(DOC_TYPES_KEY, docTypes);
 const saveDocumentsStore = (documents: DocumentData[]) =>
@@ -777,6 +806,11 @@ const mapFirebaseError = (error: unknown, fallbackMessage: string) => {
       return new Error('password_too_short');
     case 'auth/operation-not-allowed':
       return new Error('email_password_not_enabled');
+    case 'auth/invalid-api-key':
+    case 'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
+      return new Error('firebase_not_configured');
+    case 'auth/unauthorized-domain':
+      return new Error('firebase_unauthorized_domain');
     case 'auth/network-request-failed':
     case 'storage/retry-limit-exceeded':
     case 'unavailable':
@@ -1441,6 +1475,10 @@ export const api = {
     password: string,
     rememberMe = false,
   ): Promise<{ user: User; token: string }> => {
+    if (isFirebaseAuthEnabled && !isFirebaseConfigured) {
+      throw new Error('firebase_not_configured');
+    }
+
     if (!isFirebaseConfigured) {
       return loginWithLocalAuth(username, password, rememberMe);
     }
@@ -1465,6 +1503,12 @@ export const api = {
   },
 
   verifySession: async (): Promise<User | null> => {
+    if (isFirebaseAuthEnabled && !isFirebaseConfigured) {
+      clearLocalAuthSession();
+      clearAuthPersistenceMode();
+      return null;
+    }
+
     if (!isFirebaseConfigured || !auth) {
       return verifyLocalSession();
     }
@@ -1504,6 +1548,10 @@ export const api = {
   },
 
   requestPasswordReset: async (email: string) => {
+    if (isFirebaseAuthEnabled && !isFirebaseConfigured) {
+      throw new Error('firebase_not_configured');
+    }
+
     if (!isFirebaseConfigured) {
       throw new Error('local_password_reset_not_supported');
     }
@@ -1519,6 +1567,10 @@ export const api = {
   },
 
   register: async (userData: Omit<User, '_id'>): Promise<{ user: User; token: string }> => {
+    if (isFirebaseAuthEnabled && !isFirebaseConfigured) {
+      throw new Error('firebase_not_configured');
+    }
+
     if (!isFirebaseConfigured) {
       return registerWithLocalAuth(userData);
     }

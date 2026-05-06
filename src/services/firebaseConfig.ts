@@ -21,6 +21,16 @@ const firebaseOptions: FirebaseOptions = {
   measurementId: import.meta.env.VITE_ADMIN_FIREBASE_MEASUREMENT_ID,
 };
 
+const firebaseEnvKeyMap: Partial<Record<keyof FirebaseOptions, string>> = {
+  apiKey: 'VITE_ADMIN_FIREBASE_API_KEY',
+  authDomain: 'VITE_ADMIN_FIREBASE_AUTH_DOMAIN',
+  projectId: 'VITE_ADMIN_FIREBASE_PROJECT_ID',
+  storageBucket: 'VITE_ADMIN_FIREBASE_STORAGE_BUCKET',
+  messagingSenderId: 'VITE_ADMIN_FIREBASE_MESSAGING_SENDER_ID',
+  appId: 'VITE_ADMIN_FIREBASE_APP_ID',
+  measurementId: 'VITE_ADMIN_FIREBASE_MEASUREMENT_ID',
+};
+
 const requiredKeys: Array<keyof FirebaseOptions> = [
   'apiKey',
   'authDomain',
@@ -29,8 +39,11 @@ const requiredKeys: Array<keyof FirebaseOptions> = [
 ];
 
 export const isFirebaseAuthEnabled = authBackendMode === 'firebase';
+export const missingFirebaseEnvVars = requiredKeys
+  .filter((key) => !firebaseOptions[key])
+  .map((key) => firebaseEnvKeyMap[key] ?? String(key));
 export const isFirebaseConfigured =
-  isFirebaseAuthEnabled && requiredKeys.every((key) => Boolean(firebaseOptions[key]));
+  isFirebaseAuthEnabled && missingFirebaseEnvVars.length === 0;
 export const firebaseApp = isFirebaseConfigured
   ? getApps().length > 0
     ? getApp()
@@ -52,6 +65,10 @@ if (import.meta.env.DEV) {
       firebaseOptions.projectId || 'none'
     }`,
   );
+
+  if (isFirebaseAuthEnabled && !isFirebaseConfigured) {
+    console.warn(`[Firebase] missing env keys: ${missingFirebaseEnvVars.join(', ')}`);
+  }
 }
 
 export const configureFirebasePersistence = async (rememberMe: boolean) => {

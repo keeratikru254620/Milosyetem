@@ -13,14 +13,18 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { api } from '../services/api';
-import { isFirebaseConfigured } from '../services/firebaseConfig';
+import {
+  isFirebaseAuthEnabled,
+  isFirebaseConfigured,
+  missingFirebaseEnvVars,
+} from '../services/firebaseConfig';
 import { showToast } from '../services/toastService';
 import type { AuthMode, User } from '../types';
 import { getErrorMessage, isStrongPassword, isValidEmail } from '../utils/auth';
 import { APP_LOGO_FALLBACK, APP_LOGO_SRC } from '../utils/assets';
 
 const getDefaultLoginIdentity = () => {
-  if (!isFirebaseConfigured) {
+  if (!isFirebaseAuthEnabled) {
     return 'admin@milosystem.local';
   }
 
@@ -32,7 +36,7 @@ const getDefaultLoginIdentity = () => {
   );
 };
 
-const getDefaultLoginPassword = () => (isFirebaseConfigured ? '' : '123456');
+const getDefaultLoginPassword = () => (isFirebaseAuthEnabled ? '' : '123456');
 
 interface AuthViewProps {
   initialMode?: AuthMode;
@@ -230,7 +234,11 @@ function AuthBrandPanel() {
 
 export default function AuthView({ initialMode = 'login', onLogin }: AuthViewProps) {
   const navigate = useNavigate();
-  const usesFirebaseAuth = isFirebaseConfigured;
+  const usesFirebaseAuth = isFirebaseAuthEnabled;
+  const isFirebaseMisconfigured = usesFirebaseAuth && !isFirebaseConfigured;
+  const firebaseConfigMessage = isFirebaseMisconfigured
+    ? `กรุณาตั้งค่า Firebase ให้ครบในไฟล์ .env.local: ${missingFirebaseEnvVars.join(', ')}`
+    : '';
 
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [loginIdentity, setLoginIdentity] = useState(getDefaultLoginIdentity);
@@ -255,6 +263,11 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     event.preventDefault();
 
     if (isLoading) {
+      return;
+    }
+
+    if (isFirebaseMisconfigured) {
+      showToast(firebaseConfigMessage, 'error');
       return;
     }
 
@@ -298,6 +311,11 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     event.preventDefault();
 
     if (isLoading) {
+      return;
+    }
+
+    if (isFirebaseMisconfigured) {
+      showToast(firebaseConfigMessage, 'error');
       return;
     }
 
@@ -374,6 +392,11 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     event.preventDefault();
 
     if (isLoading) {
+      return;
+    }
+
+    if (isFirebaseMisconfigured) {
+      showToast(firebaseConfigMessage, 'error');
       return;
     }
 
@@ -465,6 +488,11 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                     ? 'สร้างบัญชีใหม่เพื่อเริ่มใช้งานระบบงานเอกสาร'
                     : 'กรอกอีเมลเพื่อรับลิงก์รีเซ็ตรหัสผ่าน'}
               </p>
+              {isFirebaseMisconfigured ? (
+                <div className="mt-5 rounded-2xl border border-amber-300/70 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 dark:border-amber-500/50 dark:bg-amber-500/10 dark:text-amber-200">
+                  {firebaseConfigMessage}
+                </div>
+              ) : null}
             </div>
 
             {authMode === 'login' ? (
@@ -519,7 +547,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
 
                 <button
                   className="metal-button-primary h-16 w-full rounded-[1.2rem] text-2xl font-bold transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isLoading}
+                  disabled={isLoading || isFirebaseMisconfigured}
                   type="submit"
                 >
                   เข้าสู่ระบบ
@@ -631,7 +659,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
 
                 <button
                   className="metal-button-primary h-16 w-full rounded-[1.2rem] text-2xl font-bold transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isLoading}
+                  disabled={isLoading || isFirebaseMisconfigured}
                   type="submit"
                 >
                   ยืนยัน
@@ -663,7 +691,8 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                 />
 
                 <button
-                  className="metal-button-primary h-16 w-full rounded-[1.2rem] text-xl font-bold transition-all active:scale-[0.99]"
+                  className="metal-button-primary h-16 w-full rounded-[1.2rem] text-xl font-bold transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isLoading || isFirebaseMisconfigured}
                   type="submit"
                 >
                   ส่งคำขอรีเซ็ตรหัสผ่าน
