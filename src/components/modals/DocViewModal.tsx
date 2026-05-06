@@ -65,6 +65,56 @@ const getFileDownloadUrl = (file: StoredFile) => {
   }
 };
 
+const dataUrlToBlobUrl = (dataUrl: string) => {
+  const [metadata, payload] = dataUrl.split(',');
+
+  if (!metadata || !payload) {
+    return null;
+  }
+
+  const mimeType = metadata.match(/^data:([^;]+)/)?.[1] || 'application/octet-stream';
+  const isBase64 = metadata.includes(';base64');
+  const binary = isBase64 ? atob(payload) : decodeURIComponent(payload);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return URL.createObjectURL(new Blob([bytes], { type: mimeType }));
+};
+
+const openStoredFile = (file: StoredFile) => {
+  const fileUrl = getFileAccessUrl(file);
+
+  if (!fileUrl) {
+    showToast('ไม่พบ URL สำหรับเปิดไฟล์', 'warning');
+    return;
+  }
+
+  try {
+    const previewUrl = fileUrl.startsWith('data:') ? dataUrlToBlobUrl(fileUrl) : fileUrl;
+
+    if (!previewUrl) {
+      showToast('ไม่สามารถเปิดไฟล์นี้ได้', 'error');
+      return;
+    }
+
+    const openedWindow = window.open(previewUrl, '_blank', 'noopener,noreferrer');
+
+    if (!openedWindow) {
+      showToast('เบราว์เซอร์บล็อกหน้าต่างใหม่ กรุณาอนุญาต popup แล้วลองอีกครั้ง', 'warning');
+      return;
+    }
+
+    if (previewUrl.startsWith('blob:')) {
+      window.setTimeout(() => URL.revokeObjectURL(previewUrl), 60_000);
+    }
+  } catch {
+    showToast('ไม่สามารถเปิดไฟล์นี้ได้', 'error');
+  }
+};
+
 export default function DocViewModal({
   currentUser,
   doc,
@@ -73,6 +123,7 @@ export default function DocViewModal({
   onEdit,
 }: DocViewModalProps) {
   const docType = docTypes.find((item) => item._id === doc.typeId);
+  const files = Array.isArray(doc.files) ? doc.files : [];
   const canEdit =
     currentUser.role === 'admin' ||
     doc.ownerId === currentUser.username ||
@@ -162,19 +213,18 @@ export default function DocViewModal({
           <div>
             <h4 className="mb-5 flex items-center text-sm font-bold uppercase tracking-wider text-slate-500">
               <Paperclip className="mr-2 h-5 w-5 text-[var(--app-gold)]" />
-              ไฟล์แนบ ({doc.files.length})
+              ไฟล์แนบ ({files.length})
             </h4>
             <div className="flex flex-col gap-4">
-              {doc.files.length === 0 ? (
+              {files.length === 0 ? (
                 <div className="luxury-panel-soft rounded-2xl border-dashed p-8 text-center text-sm font-medium italic text-slate-400">
                   ไม่มีไฟล์แนบ
                 </div>
               ) : (
-                doc.files.map((file: StoredFile, index) => {
+                files.map((file: StoredFile, index) => {
                   const fileName = getStoredFileName(file);
                   const { Icon, color } = getFilePresentation(fileName);
                   const isIndexedPdf = hasSearchablePdfContent(file);
-                  const fileUrl = getFileAccessUrl(file);
                   const fileDownloadUrl = getFileDownloadUrl(file);
 
                   return (
@@ -210,14 +260,7 @@ export default function DocViewModal({
                         <div className="ml-4 flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
                           <button
                             className="metal-button-secondary inline-flex min-w-[108px] items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold transition active:scale-95"
-                            onClick={() => {
-                              if (fileUrl) {
-                                window.open(fileUrl, '_blank', 'noopener,noreferrer');
-                                return;
-                              }
-
-                              showToast('จำลองเปิดดูไฟล์', 'info');
-                            }}
+                            onClick={() => openStoredFile(file)}
                           >
                             <Eye className="mr-2 h-4 w-4" />
                             เปิดดู
