@@ -49,6 +49,7 @@ const DOC_TYPES_KEY = 'milosystem:docTypes';
 const DOCUMENTS_KEY = 'milosystem:documents';
 const LOCAL_AUTH_SESSION_KEY = 'milosystem:auth-session';
 const AUTH_PERSISTENCE_KEY = 'milosystem:auth-persistence';
+const PENDING_FIREBASE_ROLE_KEY = 'milosystem:pending-firebase-roles';
 const LOCAL_DB_NAME = 'milosystem-local-db';
 const LOCAL_DB_VERSION = 1;
 const LOCAL_DB_STORE = 'app-data';
@@ -125,12 +126,13 @@ const resolveSyncedProfileRole = (
   firebaseUser: FirebaseAuthUser,
   existingUser?: User | null,
   fallbackRole?: User['role'],
+  pendingRole?: User['role'],
 ): User['role'] => {
   if (canAssignAdminRole(firebaseUser.uid, firebaseUser.email || existingUser?.email)) {
     return 'admin';
   }
 
-  return existingUser?.role || normalizeRole(fallbackRole || 'general');
+  return normalizeRole(existingUser?.role || fallbackRole || pendingRole || 'general');
 };
 
 const getLocalStorageItem = <T>(key: string, fallback: T): T => {
@@ -165,6 +167,49 @@ const setLocalStorageItem = <T>(key: string, value: T) => {
   }
 
   window.localStorage.setItem(key, JSON.stringify(value));
+};
+
+const getPendingFirebaseRoles = () =>
+  getLocalStorageItem<Record<string, User['role']>>(PENDING_FIREBASE_ROLE_KEY, {});
+
+const setPendingFirebaseRole = (identity: string, role: User['role']) => {
+  const normalizedIdentity = normalizeIdentity(identity);
+
+  if (!normalizedIdentity) {
+    return;
+  }
+
+  setLocalStorageItem(PENDING_FIREBASE_ROLE_KEY, {
+    ...getPendingFirebaseRoles(),
+    [normalizedIdentity]: normalizeRole(role),
+  });
+};
+
+const getPendingFirebaseRole = (identity?: string) => {
+  const normalizedIdentity = normalizeIdentity(identity);
+
+  if (!normalizedIdentity) {
+    return undefined;
+  }
+
+  return getPendingFirebaseRoles()[normalizedIdentity];
+};
+
+const clearPendingFirebaseRole = (identity?: string) => {
+  const normalizedIdentity = normalizeIdentity(identity);
+
+  if (!normalizedIdentity) {
+    return;
+  }
+
+  const currentRoles = getPendingFirebaseRoles();
+
+  if (!(normalizedIdentity in currentRoles)) {
+    return;
+  }
+
+  const { [normalizedIdentity]: _removedRole, ...rest } = currentRoles;
+  setLocalStorageItem(PENDING_FIREBASE_ROLE_KEY, rest);
 };
 
 const removeBrowserStorageItem = (key: string) => {
@@ -874,6 +919,7 @@ const syncLocalProfileFromFirebaseAuth = async (
   const users = (await getUsersStore()).map(normalizeStoredUser);
   const existingUser = users.find((user) => user._id === firebaseUser.uid);
   const identity = normalizeIdentity(firebaseUser.email || existingUser?.email || '');
+  const pendingRole = getPendingFirebaseRole(identity);
   const nextUser = normalizeStoredUser({
     _id: firebaseUser.uid,
     username: identity,
@@ -884,7 +930,7 @@ const syncLocalProfileFromFirebaseAuth = async (
       existingUser?.name ||
       identity ||
       'ผู้ใช้งาน',
-    role: resolveSyncedProfileRole(firebaseUser, existingUser, fallbackRole),
+    role: resolveSyncedProfileRole(firebaseUser, existingUser, fallbackRole, pendingRole),
     avatar: firebaseUser.photoURL || existingUser?.avatar,
     phone: existingUser?.phone,
     password: existingUser?.password,
@@ -895,6 +941,7 @@ const syncLocalProfileFromFirebaseAuth = async (
     : [nextUser, ...users];
 
   await saveUsersStore(nextUsers);
+  clearPendingFirebaseRole(identity);
   return stripPassword(nextUser);
 };
 
@@ -910,6 +957,7 @@ const syncCloudProfileFromFirebaseAuth = async (
     ? deserializeUserFromCloud(snapshot.id, snapshot.data() as Partial<User>)
     : null;
   const identity = normalizeIdentity(firebaseUser.email || existingUser?.email || '');
+  const pendingRole = getPendingFirebaseRole(identity);
   const nextUser = normalizeStoredUser({
     _id: firebaseUser.uid,
     username: identity,
@@ -920,12 +968,13 @@ const syncCloudProfileFromFirebaseAuth = async (
       existingUser?.name ||
       identity ||
       DEFAULT_USER_LABEL,
-    role: resolveSyncedProfileRole(firebaseUser, existingUser, fallbackRole),
+    role: resolveSyncedProfileRole(firebaseUser, existingUser, fallbackRole, pendingRole),
     avatar: firebaseUser.photoURL || existingUser?.avatar,
     phone: existingUser?.phone,
   });
 
   await setDoc(userRef, serializeUserForCloud(nextUser), { merge: true });
+  clearPendingFirebaseRole(identity);
 
   return stripPassword(nextUser);
 };
@@ -945,7 +994,12 @@ const createFallbackProfileFromFirebaseAuth = (
         fallbackName?.trim() ||
         firebaseUser.email?.trim() ||
         DEFAULT_USER_LABEL,
-      role: resolveSyncedProfileRole(firebaseUser, null, fallbackRole),
+      role: resolveSyncedProfileRole(
+        firebaseUser,
+        null,
+        fallbackRole,
+        getPendingFirebaseRole(firebaseUser.email || ''),
+      ),
       avatar: firebaseUser.photoURL || undefined,
     }),
   );
@@ -1612,6 +1666,8 @@ export const api = {
 
     try {
       const credential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+
+      setPendingFirebaseRole(email, role);
 
       await updateProfile(credential.user, {
         displayName: name,
