@@ -19,6 +19,29 @@ export const previewDocTypes: DocType[] = [
 
 export const previewDocuments: DocumentData[] = [
   {
+    _id: 'preview-doc-legal-20260505',
+    docNo: 'กม 0505/2569',
+    subject: 'เอกสารงานกฎหมาย (ไฟล์แนบ)',
+    typeId: 'preview-official-letter',
+    fiscalYear: 2569,
+    date: '2026-05-05',
+    origin: 'งานกฎหมาย',
+    resp: 'เจ้าหน้าที่งานกฎหมาย',
+    files: [
+      {
+        originalName: 'งานกฎหมาย.rar',
+        storedName: 'งานกฎหมาย.rar',
+        mimeType: 'application/vnd.rar',
+        size: 642245897,
+      },
+    ],
+    ownerId: previewCurrentUser._id,
+    createdAt: '2026-05-05T20:18:00+07:00',
+    searchableContent: 'งานกฎหมาย เอกสารล่าสุด ไฟล์แนบ',
+    semanticKeywords: ['งานกฎหมาย', 'เอกสารล่าสุด', 'ไฟล์แนบ'],
+    contentIndexedAt: '2026-05-05T20:18:00+07:00',
+  },
+  {
     _id: 'preview-doc-1',
     docNo: 'กม 0401/2569',
     subject: 'ตัวอย่างเอกสารสำหรับโหมดพรีวิว',
