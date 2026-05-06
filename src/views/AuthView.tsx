@@ -55,23 +55,6 @@ interface AuthInputProps {
   value: string;
 }
 
-const DEFAULT_ADMIN_ALLOWED_EMAILS = ['teeraphon.sud@gmail.com'];
-const isAdminWhitelistBypassEnabled =
-  String(import.meta.env.VITE_BYPASS_ORGANIZATION_VERIFICATION || '')
-    .trim()
-    .toLowerCase() === 'true';
-
-const getAllowedAdminEmails = () =>
-  new Set(
-    (import.meta.env.VITE_ADMIN_ALLOWED_EMAILS || DEFAULT_ADMIN_ALLOWED_EMAILS.join(','))
-      .split(',')
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean),
-  );
-
-const canRegisterAdminEmail = (email: string) =>
-  isAdminWhitelistBypassEnabled || getAllowedAdminEmails().has(email.trim().toLowerCase());
-
 const accountTypeOptions: Array<{
   description: string;
   icon: ReactNode;
@@ -132,14 +115,9 @@ function AuthInput({
 interface AccountTypeSelectorProps {
   onChange: (role: User['role']) => void;
   selectedRole: User['role'];
-  showAdminRestriction: boolean;
 }
 
-function AccountTypeSelector({
-  onChange,
-  selectedRole,
-  showAdminRestriction,
-}: AccountTypeSelectorProps) {
+function AccountTypeSelector({ onChange, selectedRole }: AccountTypeSelectorProps) {
   return (
     <fieldset>
       <legend className="luxury-kicker mb-3 block text-[12px] text-slate-600 dark:text-slate-300">
@@ -185,11 +163,6 @@ function AccountTypeSelector({
           );
         })}
       </div>
-      {showAdminRestriction ? (
-        <p className="mt-3 text-xs font-medium leading-5 text-amber-700 dark:text-amber-200">
-          บัญชีผู้ดูแลระบบต้องใช้อีเมลที่ได้รับอนุญาตไว้ในระบบเท่านั้น
-        </p>
-      ) : null}
     </fieldset>
   );
 }
@@ -337,12 +310,6 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
       showToast('กรุณากรอกอีเมลที่ถูกต้อง', 'error');
       return;
     }
-
-    if (usesFirebaseAuth && registerRole === 'admin' && !canRegisterAdminEmail(registerEmail)) {
-      showToast('บัญชีผู้ดูแลระบบต้องใช้อีเมลที่ได้รับอนุญาตไว้ในระบบเท่านั้น', 'error');
-      return;
-    }
-
     if (!registerPassword) {
       showToast('กรุณากรอกรหัสผ่าน', 'error');
       return;
@@ -623,16 +590,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
                   value={registerConfirmPassword}
                 />
 
-                <AccountTypeSelector
-                  onChange={setRegisterRole}
-                  selectedRole={registerRole}
-                  showAdminRestriction={
-                    usesFirebaseAuth &&
-                    registerRole === 'admin' &&
-                    registerEmail.trim().length > 0 &&
-                    !canRegisterAdminEmail(registerEmail)
-                  }
-                />
+                <AccountTypeSelector onChange={setRegisterRole} selectedRole={registerRole} />
 
                 <label className="luxury-panel-soft flex items-start gap-3 rounded-[1.2rem] px-4 py-4 text-sm leading-6 text-slate-700 dark:text-slate-200">
                   <input
@@ -719,3 +677,4 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     </div>
   );
 }
+

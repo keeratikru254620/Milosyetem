@@ -1588,11 +1588,7 @@ export const api = {
     const name = (userData.name || '').trim();
     const avatar = userData.avatar?.trim() || undefined;
     const requestedRole = normalizeRole(userData.role || 'general');
-    const role: User['role'] = canAssignAdminRole(undefined, email)
-      ? 'admin'
-      : requestedRole === 'admin'
-        ? 'general'
-        : requestedRole;
+    const role: User['role'] = requestedRole;
 
     if (!email) {
       throw new Error('กรุณากรอกอีเมล');
