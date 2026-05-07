@@ -132,7 +132,7 @@ const resolveSyncedProfileRole = (
     return 'admin';
   }
 
-  return normalizeRole(existingUser?.role || fallbackRole || pendingRole || 'general');
+  return normalizeRole(fallbackRole || pendingRole || existingUser?.role || 'general');
 };
 
 const getLocalStorageItem = <T>(key: string, fallback: T): T => {
