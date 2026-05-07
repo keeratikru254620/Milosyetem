@@ -118,6 +118,10 @@ export const getErrorMessage = (
       return 'การเปลี่ยนสิทธิ์ผู้ใช้งานต้องดำเนินการโดยผู้ดูแลระบบ';
     }
 
+    if (message === 'registered_role_mismatch') {
+      return 'Unable to assign the selected account role. Please try another email or contact an admin.';
+    }
+
     if (message === 'firebase_user_creation_requires_backend') {
       return 'โหมด Firebase ยังไม่รองรับการสร้างผู้ใช้ใหม่จากหน้าแอดมินโดยตรง ต้องให้ผู้ใช้สมัครเองหรือมี backend/admin SDK';
     }

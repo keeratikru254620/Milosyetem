@@ -148,7 +148,9 @@ function AccountTypeSelector({ onChange, selectedRole }: AccountTypeSelectorProp
               >
                 {option.icon}
               </span>
-              <span className="block text-sm font-bold leading-6">{option.title}</span>
+              <span className="block text-sm font-bold leading-6">
+                {option.role === 'admin' ? 'ผู้จัดการบุคลากร' : option.title}
+              </span>
               <span
                 className={`mt-1 block text-xs leading-5 ${
                   isSelected ? 'text-white/78' : 'text-slate-600 dark:text-slate-200'
@@ -677,4 +679,3 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
     </div>
   );
 }
-

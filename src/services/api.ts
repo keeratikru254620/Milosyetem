@@ -1682,6 +1682,10 @@ export const api = {
         role,
       );
 
+      if (user.role !== role) {
+        throw new Error('registered_role_mismatch');
+      }
+
       await signOut(firebaseAuth);
 
       return {

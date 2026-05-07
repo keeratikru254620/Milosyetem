@@ -5,7 +5,7 @@ export const formatThaiDate = (value?: string) =>
 
 export const getRoleText = (role: UserRole) => {
   if (role === 'admin') {
-    return 'ผู้ดูแลระบบ';
+    return 'ผู้จัดการบุคลากร';
   }
 
   if (role === 'officer') {
