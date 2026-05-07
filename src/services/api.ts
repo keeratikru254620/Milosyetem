@@ -51,6 +51,8 @@ import {
 const USERS_KEY = 'milosystem:users';
 const DOC_TYPES_KEY = 'milosystem:docTypes';
 const DOCUMENTS_KEY = 'milosystem:documents';
+const PENDING_CLOUD_USERS_KEY = 'milosystem:pending-cloud-users';
+const PENDING_CLOUD_DOCUMENTS_KEY = 'milosystem:pending-cloud-documents';
 const LOCAL_AUTH_SESSION_KEY = 'milosystem:auth-session';
 const AUTH_PERSISTENCE_KEY = 'milosystem:auth-persistence';
 const PENDING_FIREBASE_ROLE_KEY = 'milosystem:pending-firebase-roles';
@@ -377,6 +379,13 @@ const mergeSeedDocuments = (documents: DocumentData[]) => {
 
 const getUsersStore = () => getPersistedItem<User[]>(USERS_KEY, localAuthSeedUsers);
 const getDocTypesStore = () => getPersistedItem<DocType[]>(DOC_TYPES_KEY, previewDocTypes);
+const getPendingCloudUsersStore = () => getPersistedItem<User[]>(PENDING_CLOUD_USERS_KEY, []);
+const savePendingCloudUsersStore = (users: User[]) =>
+  setPersistedItem(PENDING_CLOUD_USERS_KEY, users);
+const getPendingCloudDocumentsStore = () =>
+  getPersistedItem<DocumentData[]>(PENDING_CLOUD_DOCUMENTS_KEY, []);
+const savePendingCloudDocumentsStore = (documents: DocumentData[]) =>
+  setPersistedItem(PENDING_CLOUD_DOCUMENTS_KEY, documents);
 const getDocumentsStore = async () => {
   const persisted = await getPersistedItem<DocumentData[]>(DOCUMENTS_KEY, previewDocuments);
   const { documents, hasInsertedSeed } = mergeSeedDocuments(persisted);
@@ -535,10 +544,28 @@ const normalizeStoredUser = (user: User): User => ({
 const sortUsersByName = (users: User[]) =>
   [...users].sort((left, right) => left.name.localeCompare(right.name, 'th'));
 
+const upsertStoredItem = <T extends { _id: string }>(items: T[], nextItem: T) =>
+  items.some((item) => item._id === nextItem._id)
+    ? items.map((item) => (item._id === nextItem._id ? nextItem : item))
+    : [nextItem, ...items];
+
 const mapStoredUsersToPublicUsers = (users: User[]) =>
   sortUsersByName(users)
     .filter((user) => user.username && user.role)
     .map((user) => stripPassword(normalizeStoredUser(user)));
+
+const savePendingCloudUser = async (user: User) => {
+  const nextUser = normalizeStoredUser(user);
+  await savePendingCloudUsersStore(upsertStoredItem(await getPendingCloudUsersStore(), nextUser));
+  return stripPassword(nextUser);
+};
+
+const savePendingCloudDocument = async (document: DocumentData) => {
+  await savePendingCloudDocumentsStore(
+    upsertStoredItem(await getPendingCloudDocumentsStore(), document),
+  );
+  return document;
+};
 
 const serializeUserForCloud = (user: User) =>
   stripUndefinedDeep({
@@ -1033,6 +1060,9 @@ const syncCloudProfileFromFirebaseAuth = async (
   });
 
   await setDoc(userRef, serializeUserForCloud(nextUser), { merge: true });
+  await savePendingCloudUsersStore(
+    (await getPendingCloudUsersStore()).filter((user) => user._id !== nextUser._id),
+  );
   clearPendingFirebaseRole(identity);
 
   return stripPassword(nextUser);
@@ -1082,7 +1112,13 @@ const syncProfileFromFirebaseAuth = async (
       mappedError.message === 'firebase_profile_access_denied'
     ) {
       console.warn('Using Firebase auth profile without Firestore profile sync:', error);
-      return createFallbackProfileFromFirebaseAuth(firebaseUser, fallbackName, fallbackRole);
+      const fallbackUser = createFallbackProfileFromFirebaseAuth(
+        firebaseUser,
+        fallbackName,
+        fallbackRole,
+      );
+      await savePendingCloudUser(fallbackUser);
+      return fallbackUser;
     }
 
     throw mappedError;
@@ -1344,10 +1380,26 @@ const deleteLocalUser = async (id: string) => {
 
 const getCloudUsers = async () => {
   const firestore = ensureFirestoreReady();
-  const snapshot = await getDocs(collection(firestore, FIRESTORE_USERS_COLLECTION));
+  const pendingUsers = await getPendingCloudUsersStore();
+  let snapshot;
+
+  try {
+    snapshot = await getDocs(collection(firestore, FIRESTORE_USERS_COLLECTION));
+  } catch (error) {
+    console.warn('Unable to load Firestore users; showing local pending users:', error);
+    return mapStoredUsersToPublicUsers(pendingUsers);
+  }
+
+  const cloudUsers = snapshot.docs.map((item) =>
+    deserializeUserFromCloud(item.id, item.data() as Partial<User>),
+  );
+  const cloudUserIds = new Set(cloudUsers.map((user) => user._id));
 
   return mapStoredUsersToPublicUsers(
-    snapshot.docs.map((item) => deserializeUserFromCloud(item.id, item.data() as Partial<User>)),
+    [
+      ...cloudUsers,
+      ...pendingUsers.filter((user) => !cloudUserIds.has(user._id)),
+    ],
   );
 };
 
@@ -1414,11 +1466,19 @@ const saveCloudUser = async (payload: SaveUserInput, id?: string) => {
         phone: payload.phone,
       });
 
-      await setDoc(
-        doc(secondaryFirestore, FIRESTORE_USERS_COLLECTION, nextUser._id),
-        serializeUserForCloud(nextUser),
-        { merge: true },
-      );
+      try {
+        await setDoc(
+          doc(secondaryFirestore, FIRESTORE_USERS_COLLECTION, nextUser._id),
+          serializeUserForCloud(nextUser),
+          { merge: true },
+        );
+        await savePendingCloudUsersStore(
+          (await getPendingCloudUsersStore()).filter((user) => user._id !== nextUser._id),
+        );
+      } catch (error) {
+        console.warn('Unable to save user profile to Firestore; keeping local pending profile:', error);
+        await savePendingCloudUser(nextUser);
+      }
 
       return stripPassword(nextUser);
     } finally {
@@ -1557,12 +1617,27 @@ const deleteCloudDocType = async (id: string) => {
 
 const getCloudDocuments = async () => {
   const firestore = ensureFirestoreReady();
-  const snapshot = await getDocs(collection(firestore, FIRESTORE_DOCUMENTS_COLLECTION));
+  const pendingDocuments = await getPendingCloudDocumentsStore();
+  let snapshot;
 
-  return snapshot.docs
-    .map((item) =>
-      deserializeDocumentFromCloud(item.id, item.data() as Partial<DocumentData>),
-    )
+  try {
+    snapshot = await getDocs(collection(firestore, FIRESTORE_DOCUMENTS_COLLECTION));
+  } catch (error) {
+    console.warn('Unable to load Firestore documents; showing local pending documents:', error);
+    return pendingDocuments.sort((left, right) =>
+      (right.updatedAt || right.createdAt).localeCompare(left.updatedAt || left.createdAt),
+    );
+  }
+
+  const cloudDocuments = snapshot.docs.map((item) =>
+    deserializeDocumentFromCloud(item.id, item.data() as Partial<DocumentData>),
+  );
+  const cloudDocumentIds = new Set(cloudDocuments.map((document) => document._id));
+
+  return [
+    ...cloudDocuments,
+    ...pendingDocuments.filter((document) => !cloudDocumentIds.has(document._id)),
+  ]
     .sort((left, right) =>
       (right.updatedAt || right.createdAt).localeCompare(left.updatedAt || left.createdAt),
     );
@@ -1620,13 +1695,26 @@ const saveCloudDocument = async (payload: SaveDocumentInput, id?: string) => {
     throw new Error('กรุณากรอกเรื่องและเลือกประเภทเอกสาร');
   }
 
-  await withTimeout(
-    setDoc(documentRef, serializeDocumentForCloud(nextDocument), { merge: true }),
-    20000,
-    'firestore_save_timeout',
-  );
+  let savedToCloud = false;
 
-  if (existingDocument) {
+  try {
+    await withTimeout(
+      setDoc(documentRef, serializeDocumentForCloud(nextDocument), { merge: true }),
+      30000,
+      'firestore_save_timeout',
+    );
+    savedToCloud = true;
+    await savePendingCloudDocumentsStore(
+      (await getPendingCloudDocumentsStore()).filter(
+        (document) => document._id !== nextDocument._id,
+      ),
+    );
+  } catch (error) {
+    console.warn('Unable to save document to Firestore; keeping local pending document:', error);
+    await savePendingCloudDocument(nextDocument);
+  }
+
+  if (savedToCloud && existingDocument) {
     const nextPaths = new Set(
       nextDocument.files
         .map((file) => file.path?.trim())
