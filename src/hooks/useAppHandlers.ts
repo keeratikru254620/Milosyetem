@@ -42,6 +42,40 @@ export const useAppHandlers = ({
   setIsSidebarOpen,
   setUsers,
 }: UseAppHandlersArgs) => {
+  const loadUsersOnly = useCallback(
+    async (targetUser: User | null = currentUser) => {
+      if (targetUser?.role !== 'admin') {
+        setUsers([]);
+        return;
+      }
+
+      try {
+        setUsers(await api.getUsers());
+      } catch (error) {
+        console.warn('Unable to load users:', error);
+      }
+    },
+    [currentUser, setUsers],
+  );
+
+  const loadDocTypesOnly = useCallback(async () => {
+    try {
+      const loadedDocTypes = await api.getDocTypes();
+      setDocTypes(loadedDocTypes.length > 0 ? loadedDocTypes : previewDocTypes);
+    } catch (error) {
+      console.warn('Unable to load document types:', error);
+      setDocTypes(previewDocTypes);
+    }
+  }, [setDocTypes]);
+
+  const loadDocumentsOnly = useCallback(async () => {
+    try {
+      setDocuments(await api.getDocuments());
+    } catch (error) {
+      console.warn('Unable to load documents:', error);
+    }
+  }, [setDocuments]);
+
   const loadAllData = useCallback(
     async (targetUser: User | null = currentUser) => {
       const [loadedUsers, loadedDocTypes, loadedDocuments] = await Promise.allSettled([
@@ -99,57 +133,56 @@ export const useAppHandlers = ({
   const handleSaveUser = useCallback(
     async (data: SaveUserInput, id?: string) => {
       const savedUser = await api.saveUser(data, id);
-      await loadAllData();
+      await loadUsersOnly();
       setCurrentUser((previous) =>
         previous && previous._id === savedUser._id ? { ...previous, ...savedUser } : previous,
       );
       return savedUser;
     },
-    [loadAllData, setCurrentUser],
+    [loadUsersOnly, setCurrentUser],
   );
 
   const handleDeleteUser = useCallback(
     async (id: string) => {
       await api.deleteUser(id);
-      await loadAllData();
+      await loadUsersOnly();
     },
-    [loadAllData],
+    [loadUsersOnly],
   );
 
   const handleSaveDocType = useCallback(
     async (data: SaveDocTypeInput, id?: string) => {
       const savedDocType = await api.saveDocType(data, id);
-      await loadAllData();
+      await loadDocTypesOnly();
       return savedDocType;
     },
-    [loadAllData],
+    [loadDocTypesOnly],
   );
 
   const handleDeleteDocType = useCallback(
     async (id: string) => {
       await api.deleteDocType(id);
-      await loadAllData();
+      await loadDocTypesOnly();
     },
-    [loadAllData],
+    [loadDocTypesOnly],
   );
 
   const handleSaveDocument = useCallback(
     async (data: SaveDocumentInput, id?: string) => {
       const savedDocument = await api.saveDocument(data, id);
       setDocuments((current) => upsertById(current, savedDocument));
-      await loadAllData();
-      setDocuments((current) => upsertById(current, savedDocument));
+      await loadDocumentsOnly();
       return savedDocument;
     },
-    [loadAllData, setDocuments],
+    [loadDocumentsOnly, setDocuments],
   );
 
   const handleDeleteDocument = useCallback(
     async (id: string) => {
       await api.deleteDocument(id);
-      await loadAllData();
+      await loadDocumentsOnly();
     },
-    [loadAllData],
+    [loadDocumentsOnly],
   );
 
   return {
