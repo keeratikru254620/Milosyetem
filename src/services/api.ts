@@ -26,6 +26,7 @@ import {
 import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 import { localAuthSeedUsers } from '../data/localAuthUsers';
+import { importedLegalDocType, importedLegalDocuments } from '../data/importedLegalDocuments';
 import { previewDocTypes, previewDocuments } from '../data/previewData';
 import type {
   DocType,
@@ -362,7 +363,7 @@ const mergeSeedDocuments = (documents: DocumentData[]) => {
   const documentsById = new Map(documents.map((document) => [document._id, document] as const));
   let hasInsertedSeed = false;
 
-  for (const seedDocument of previewDocuments) {
+  for (const seedDocument of [...importedLegalDocuments, ...previewDocuments]) {
     if (documentsById.has(seedDocument._id)) {
       continue;
     }
@@ -375,6 +376,14 @@ const mergeSeedDocuments = (documents: DocumentData[]) => {
     documents: Array.from(documentsById.values()),
     hasInsertedSeed,
   };
+};
+
+const mergeImportedDocTypes = (docTypes: DocType[]) => {
+  if (docTypes.some((docType) => docType._id === importedLegalDocType._id)) {
+    return docTypes;
+  }
+
+  return [importedLegalDocType, ...docTypes];
 };
 
 const getUsersStore = () => getPersistedItem<User[]>(USERS_KEY, localAuthSeedUsers);
@@ -1604,12 +1613,14 @@ const getCloudDocTypes = async () => {
   const snapshot = await getDocs(collection(firestore, FIRESTORE_DOC_TYPES_COLLECTION));
 
   if (snapshot.empty) {
-    return previewDocTypes.map((docType) => ({ ...docType }));
+    return mergeImportedDocTypes(previewDocTypes.map((docType) => ({ ...docType })));
   }
 
-  return snapshot.docs
-    .map((item) => deserializeDocTypeFromCloud(item.id, item.data() as Partial<DocType>))
-    .sort((left, right) => left.name.localeCompare(right.name, 'th'));
+  return mergeImportedDocTypes(
+    snapshot.docs.map((item) =>
+      deserializeDocTypeFromCloud(item.id, item.data() as Partial<DocType>),
+    ),
+  ).sort((left, right) => left.name.localeCompare(right.name, 'th'));
 };
 
 const saveCloudDocType = async (payload: SaveDocTypeInput, id?: string) => {
@@ -1663,7 +1674,7 @@ const getCloudDocuments = async () => {
     snapshot = await getDocs(collection(firestore, FIRESTORE_DOCUMENTS_COLLECTION));
   } catch (error) {
     console.warn('Unable to load Firestore documents; showing local pending documents:', error);
-    return pendingDocuments.sort((left, right) =>
+    return [...importedLegalDocuments, ...pendingDocuments].sort((left, right) =>
       (right.updatedAt || right.createdAt).localeCompare(left.updatedAt || left.createdAt),
     );
   }
@@ -1674,6 +1685,7 @@ const getCloudDocuments = async () => {
   const cloudDocumentIds = new Set(cloudDocuments.map((document) => document._id));
 
   return [
+    ...importedLegalDocuments.filter((document) => !cloudDocumentIds.has(document._id)),
     ...cloudDocuments,
     ...pendingDocuments.filter((document) => !cloudDocumentIds.has(document._id)),
   ]
@@ -1995,7 +2007,7 @@ export const api = {
 
   getDocTypes: async () => {
     if (!isCloudDataEnabled) {
-      return [...(await getDocTypesStore())].sort((left, right) =>
+      return mergeImportedDocTypes(await getDocTypesStore()).sort((left, right) =>
         left.name.localeCompare(right.name, 'th'),
       );
     }
