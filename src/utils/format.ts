@@ -8,9 +8,9 @@ export const getRoleText = (role: UserRole) => {
     return 'ผู้ดูแลระบบ';
   }
 
-  if (role === 'general') {
+  if (role === 'officer') {
     return 'เจ้าหน้าที่ตำรวจ';
   }
 
-  return 'เจ้าหน้าที่';
+  return 'ผู้ใช้งานทั่วไป';
 };

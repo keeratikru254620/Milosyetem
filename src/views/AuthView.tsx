@@ -68,7 +68,7 @@ const accountTypeOptions: Array<{
     icon: <ShieldCheck className="h-5 w-5" />,
   },
   {
-    role: 'general',
+    role: 'officer',
     title: 'เจ้าหน้าที่ตำรวจ',
     description: 'สำหรับเจ้าหน้าที่ตำรวจผู้ปฏิบัติงานในระบบ',
     icon: <UserIcon className="h-5 w-5" />,
@@ -226,7 +226,7 @@ export default function AuthView({ initialMode = 'login', onLogin }: AuthViewPro
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState('');
-  const [registerRole, setRegisterRole] = useState<User['role']>('general');
+  const [registerRole, setRegisterRole] = useState<User['role']>('officer');
   const [forgotEmail, setForgotEmail] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);

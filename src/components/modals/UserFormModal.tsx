@@ -150,9 +150,9 @@ export default function UserFormModal({
               }
               value={form.role}
             >
-              <option value="general">เจ้าหน้าที่ตำรวจ</option>
+              <option value="officer">เจ้าหน้าที่ตำรวจ</option>
               <option value="admin">ผู้ดูแลระบบ</option>
-              <option value="officer">เจ้าหน้าที่</option>
+              <option value="general">ผู้ใช้งานทั่วไป</option>
             </select>
           </div>
         </div>
