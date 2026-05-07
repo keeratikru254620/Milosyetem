@@ -110,6 +110,18 @@ export const getErrorMessage = (
       return 'พื้นที่หรือโควต้าของ Firebase ไม่เพียงพอสำหรับการดำเนินการนี้';
     }
 
+    if (message === 'storage_upload_timeout') {
+      return 'อัปโหลดไฟล์ไป Firebase Storage นานเกินไป กรุณาตรวจสอบอินเทอร์เน็ตหรือสิทธิ์ Storage แล้วลองใหม่';
+    }
+
+    if (message === 'storage_download_url_timeout') {
+      return 'อัปโหลดไฟล์สำเร็จแต่ขอ URL ไฟล์ไม่สำเร็จ กรุณาตรวจสอบ Firebase Storage rules';
+    }
+
+    if (message === 'firestore_save_timeout') {
+      return 'บันทึกข้อมูลลง Firestore นานเกินไป กรุณาตรวจสอบสิทธิ์ Firestore แล้วลองใหม่';
+    }
+
     if (message === 'record_not_found') {
       return 'ไม่พบข้อมูลที่ต้องการ';
     }

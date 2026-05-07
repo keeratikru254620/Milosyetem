@@ -117,6 +117,27 @@ const hashPassword = async (password: string) => {
 
 const nowIso = () => new Date().toISOString();
 
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  message: string,
+): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+};
+
 const isConfiguredAdminUser = (uid?: string, email?: string) =>
   Boolean(
     (uid && ADMIN_ALLOWED_UIDS.has(uid.trim())) ||
@@ -710,11 +731,19 @@ const uploadFileToCloud = async (
   );
   const storageRef = ref(cloudStorage, storagePath);
 
-  await uploadBytes(storageRef, uploadedFile, {
-    contentType: uploadedFile.type || normalized.mimeType || undefined,
-  });
+  await withTimeout(
+    uploadBytes(storageRef, uploadedFile, {
+      contentType: uploadedFile.type || normalized.mimeType || undefined,
+    }),
+    45000,
+    'storage_upload_timeout',
+  );
 
-  const downloadUrl = await getDownloadURL(storageRef);
+  const downloadUrl = await withTimeout(
+    getDownloadURL(storageRef),
+    15000,
+    'storage_download_url_timeout',
+  );
 
   return normalizeStoredFile({
     ...normalized,
@@ -1565,7 +1594,11 @@ const saveCloudDocument = async (payload: SaveDocumentInput, id?: string) => {
     throw new Error('กรุณากรอกเรื่องและเลือกประเภทเอกสาร');
   }
 
-  await setDoc(documentRef, serializeDocumentForCloud(nextDocument), { merge: true });
+  await withTimeout(
+    setDoc(documentRef, serializeDocumentForCloud(nextDocument), { merge: true }),
+    20000,
+    'firestore_save_timeout',
+  );
 
   if (existingDocument) {
     const nextPaths = new Set(

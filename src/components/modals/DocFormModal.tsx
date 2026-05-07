@@ -11,6 +11,7 @@ import { useRef, useState } from 'react';
 
 import { showToast } from '../../services/toastService';
 import type { DocType, DocumentData, SaveDocumentInput, StoredFile, User } from '../../types';
+import { getErrorMessage } from '../../utils/auth';
 import {
   createStoredFileFromUpload,
   getStoredFileName,
@@ -100,7 +101,15 @@ export default function DocFormModal({
         },
         doc._id,
       );
+      showToast(isEdit ? 'อัปเดตเอกสารสำเร็จ' : 'บันทึกเอกสารสำเร็จ');
       onClose();
+    } catch (error) {
+      showToast(
+        getErrorMessage(error, {
+          fallbackMessage: 'ไม่สามารถบันทึกเอกสารได้',
+        }),
+        'error',
+      );
     } finally {
       setIsSaving(false);
     }
