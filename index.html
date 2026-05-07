@@ -12,7 +12,21 @@
     <title>Milosystem</title>
   </head>
   <body>
+    <div
+      id="boot-fallback"
+      style="margin:16px;border:1px solid #fecaca;border-radius:12px;background:#fef2f2;padding:16px;font-family:Arial,sans-serif;color:#7f1d1d;"
+    >
+      <strong>Application did not start.</strong>
+      <div style="margin-top:8px;font-size:14px;">
+        If this message stays on screen, the app script did not load from <code>/src/main.tsx</code>.
+      </div>
+    </div>
     <div id="root"></div>
+    <noscript>
+      <div style="margin:16px;border:1px solid #f59e0b;border-radius:12px;background:#fffbeb;padding:16px;font-family:Arial,sans-serif;color:#92400e;">
+        JavaScript is disabled in this browser. Please enable JavaScript and reload.
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --open",
+    "dev": "vite --configLoader native",
     "build": "npm run build:client",
-    "build:client": "tsc -b && vite build",
-    "preview": "vite preview"
+    "build:client": "tsc -b && vite build --configLoader native",
+    "preview": "vite preview --configLoader native"
   },
   "dependencies": {
     "firebase": "^12.12.1",
