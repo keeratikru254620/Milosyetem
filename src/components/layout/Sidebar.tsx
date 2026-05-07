@@ -139,6 +139,7 @@ export default function Sidebar({
               </p>
               <p className="luxury-kicker mt-0.5 truncate text-[10px]">
                 {getRoleText(currentUser.role)}
+                <span className="ml-2 inline-block text-[10px] text-slate-400">({currentUser.role})</span>
               </p>
             </div>
           </div>
