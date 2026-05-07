@@ -171,7 +171,7 @@ export const useAppHandlers = ({
     async (data: SaveDocumentInput, id?: string) => {
       const savedDocument = await api.saveDocument(data, id);
       setDocuments((current) => upsertById(current, savedDocument));
-      await loadDocumentsOnly();
+      void loadDocumentsOnly();
       return savedDocument;
     },
     [loadDocumentsOnly, setDocuments],
