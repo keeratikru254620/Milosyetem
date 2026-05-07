@@ -1466,19 +1466,14 @@ const saveCloudUser = async (payload: SaveUserInput, id?: string) => {
         phone: payload.phone,
       });
 
-      try {
-        await setDoc(
-          doc(secondaryFirestore, FIRESTORE_USERS_COLLECTION, nextUser._id),
-          serializeUserForCloud(nextUser),
-          { merge: true },
-        );
-        await savePendingCloudUsersStore(
-          (await getPendingCloudUsersStore()).filter((user) => user._id !== nextUser._id),
-        );
-      } catch (error) {
-        console.warn('Unable to save user profile to Firestore; keeping local pending profile:', error);
-        await savePendingCloudUser(nextUser);
-      }
+      await setDoc(
+        doc(secondaryFirestore, FIRESTORE_USERS_COLLECTION, nextUser._id),
+        serializeUserForCloud(nextUser),
+        { merge: true },
+      );
+      await savePendingCloudUsersStore(
+        (await getPendingCloudUsersStore()).filter((user) => user._id !== nextUser._id),
+      );
 
       return stripPassword(nextUser);
     } finally {
@@ -1695,26 +1690,18 @@ const saveCloudDocument = async (payload: SaveDocumentInput, id?: string) => {
     throw new Error('กรุณากรอกเรื่องและเลือกประเภทเอกสาร');
   }
 
-  let savedToCloud = false;
+  await withTimeout(
+    setDoc(documentRef, serializeDocumentForCloud(nextDocument), { merge: true }),
+    30000,
+    'firestore_save_timeout',
+  );
+  await savePendingCloudDocumentsStore(
+    (await getPendingCloudDocumentsStore()).filter(
+      (document) => document._id !== nextDocument._id,
+    ),
+  );
 
-  try {
-    await withTimeout(
-      setDoc(documentRef, serializeDocumentForCloud(nextDocument), { merge: true }),
-      30000,
-      'firestore_save_timeout',
-    );
-    savedToCloud = true;
-    await savePendingCloudDocumentsStore(
-      (await getPendingCloudDocumentsStore()).filter(
-        (document) => document._id !== nextDocument._id,
-      ),
-    );
-  } catch (error) {
-    console.warn('Unable to save document to Firestore; keeping local pending document:', error);
-    await savePendingCloudDocument(nextDocument);
-  }
-
-  if (savedToCloud && existingDocument) {
+  if (existingDocument) {
     const nextPaths = new Set(
       nextDocument.files
         .map((file) => file.path?.trim())
