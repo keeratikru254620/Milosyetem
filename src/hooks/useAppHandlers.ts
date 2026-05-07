@@ -133,6 +133,7 @@ export const useAppHandlers = ({
   const handleSaveUser = useCallback(
     async (data: SaveUserInput, id?: string) => {
       const savedUser = await api.saveUser(data, id);
+      setUsers((currentUsers) => upsertById(currentUsers, savedUser));
       await loadUsersOnly();
       setCurrentUser((previous) =>
         previous && previous._id === savedUser._id ? { ...previous, ...savedUser } : previous,

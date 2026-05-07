@@ -14,7 +14,9 @@ service cloud.firestore {
       return signedIn()
         && (
           request.auth.uid == 'CMfAk2XtYCNTafxbw7CaHtSumls1'
+          || request.auth.uid == 'j5SOae8A7vYFPZXGlymLOoTuQS93'
           || request.auth.token.email == 'adminlocal@gmail.com'
+          || request.auth.token.email == 'teeraphon.sud@gmail.com'
         );
     }
 
