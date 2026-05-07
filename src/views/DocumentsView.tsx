@@ -65,6 +65,13 @@ export default function DocumentsView({
   );
 
   const compareBySort = (left: DocumentData, right: DocumentData) => {
+    if (sort.col === 'createdAt') {
+      const leftTimestamp = left.updatedAt || left.createdAt;
+      const rightTimestamp = right.updatedAt || right.createdAt;
+      const result = String(leftTimestamp ?? '').localeCompare(String(rightTimestamp ?? ''));
+      return sort.dir === 'asc' ? result : -result;
+    }
+
     const leftValue = left[sort.col];
     const rightValue = right[sort.col];
 

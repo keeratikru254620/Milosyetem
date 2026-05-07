@@ -84,8 +84,8 @@ export default function DashboardView({
   const recentDocuments = [...documents]
     .sort(
       (left, right) =>
-        new Date(right.createdAt || right.date).getTime() -
-        new Date(left.createdAt || left.date).getTime(),
+        new Date(right.updatedAt || right.createdAt || right.date).getTime() -
+        new Date(left.updatedAt || left.createdAt || left.date).getTime(),
     )
     .slice(0, 5);
 

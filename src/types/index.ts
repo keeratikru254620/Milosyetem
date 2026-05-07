@@ -44,6 +44,7 @@ export interface DocumentData {
   files: StoredFile[];
   ownerId: string;
   createdAt: string;
+  updatedAt?: string;
   searchableContent?: string;
   semanticKeywords?: string[];
   contentIndexedAt?: string;

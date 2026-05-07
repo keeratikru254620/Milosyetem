@@ -578,6 +578,7 @@ const serializeDocumentForCloud = (document: DocumentData) =>
     ownerId: document.ownerId.trim(),
     files: document.files.map((file) => serializeStoredFileForCloud(file)),
     createdAt: document.createdAt,
+    updatedAt: document.updatedAt,
     searchableContent: document.searchableContent,
     semanticKeywords: normalizeStringArray(document.semanticKeywords),
     contentIndexedAt: document.contentIndexedAt,
@@ -611,6 +612,7 @@ const deserializeDocumentFromCloud = (
     files,
     ownerId: payload?.ownerId?.trim() || '',
     createdAt: payload?.createdAt || nowIso(),
+    updatedAt: payload?.updatedAt || payload?.createdAt || nowIso(),
     searchableContent: payload?.searchableContent?.trim() || fallbackIndex.searchableContent,
     semanticKeywords: semanticKeywords.length > 0 ? semanticKeywords : fallbackIndex.semanticKeywords,
     contentIndexedAt: payload?.contentIndexedAt || fallbackIndex.contentIndexedAt,
@@ -727,69 +729,67 @@ const mapCloudFiles = async (
   filesMeta: StoredFile[] = [],
   uploadedFiles: File[] = [],
 ) => {
-  const pendingUploads = [...uploadedFiles];
-  const nextFiles: StoredFile[] = [];
+  let uploadIndex = 0;
+  const fileTasks: Array<Promise<StoredFile>> = [];
 
   for (const rawFile of filesMeta) {
     const normalized = normalizeStoredFile(rawFile);
 
     if (normalized.url) {
-      nextFiles.push(normalized);
+      fileTasks.push(Promise.resolve(normalized));
       continue;
     }
 
-    const upload = pendingUploads.shift();
+    const upload = uploadedFiles[uploadIndex];
+    uploadIndex += 1;
 
     if (!upload) {
-      nextFiles.push(normalized);
+      fileTasks.push(Promise.resolve(normalized));
       continue;
     }
 
     if (!isCloudStorageEnabled) {
-      const dataUrl = await fileToDataUrl(upload);
-
-      nextFiles.push(
-        normalizeStoredFile({
-          ...normalized,
-          fileId: normalized.fileId || normalized.clientId || createId('file'),
-          storedName: normalized.storedName || normalized.originalName || upload.name,
-          originalName: normalized.originalName || upload.name,
-          url: dataUrl,
-          mimeType: normalized.mimeType || upload.type || undefined,
-          size: normalized.size || upload.size,
-        }),
+      fileTasks.push(
+        fileToDataUrl(upload).then((dataUrl) =>
+          normalizeStoredFile({
+            ...normalized,
+            fileId: normalized.fileId || normalized.clientId || createId('file'),
+            storedName: normalized.storedName || normalized.originalName || upload.name,
+            originalName: normalized.originalName || upload.name,
+            url: dataUrl,
+            mimeType: normalized.mimeType || upload.type || undefined,
+            size: normalized.size || upload.size,
+          }),
+        ),
       );
       continue;
     }
 
-    nextFiles.push(await uploadFileToCloud(documentId, normalized, upload));
+    fileTasks.push(uploadFileToCloud(documentId, normalized, upload));
   }
 
-  while (pendingUploads.length > 0) {
-    const upload = pendingUploads.shift();
-
-    if (!upload) {
-      continue;
-    }
+  while (uploadIndex < uploadedFiles.length) {
+    const upload = uploadedFiles[uploadIndex];
+    uploadIndex += 1;
 
     if (!isCloudStorageEnabled) {
-      const dataUrl = await fileToDataUrl(upload);
-
-      nextFiles.push(
-        normalizeStoredFile({
-          fileId: createId('file'),
-          storedName: upload.name,
-          originalName: upload.name,
-          url: dataUrl,
-          mimeType: upload.type || undefined,
-          size: upload.size,
-        }),
+      fileTasks.push(
+        fileToDataUrl(upload).then((dataUrl) =>
+          normalizeStoredFile({
+            fileId: createId('file'),
+            storedName: upload.name,
+            originalName: upload.name,
+            url: dataUrl,
+            mimeType: upload.type || undefined,
+            size: upload.size,
+          }),
+        ),
       );
       continue;
     }
 
-    nextFiles.push(
-      await uploadFileToCloud(
+    fileTasks.push(
+      uploadFileToCloud(
         documentId,
         normalizeStoredFile({
           originalName: upload.name,
@@ -801,7 +801,7 @@ const mapCloudFiles = async (
     );
   }
 
-  return nextFiles;
+  return Promise.all(fileTasks);
 };
 
 const deleteCloudFiles = async (paths: string[]) => {
@@ -1435,7 +1435,9 @@ const getCloudDocuments = async () => {
     .map((item) =>
       deserializeDocumentFromCloud(item.id, item.data() as Partial<DocumentData>),
     )
-    .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+    .sort((left, right) =>
+      (right.updatedAt || right.createdAt).localeCompare(left.updatedAt || left.createdAt),
+    );
 };
 
 const saveCloudDocument = async (payload: SaveDocumentInput, id?: string) => {
@@ -1480,6 +1482,7 @@ const saveCloudDocument = async (payload: SaveDocumentInput, id?: string) => {
     ownerId: payload.ownerId || existingDocument?.ownerId || '',
     files: indexed.files.map((file) => normalizeStoredFile(file)),
     createdAt: existingDocument?.createdAt || timestamp,
+    updatedAt: timestamp,
     searchableContent: indexed.searchableContent,
     semanticKeywords: indexed.semanticKeywords ?? [],
     contentIndexedAt: indexed.contentIndexedAt,
@@ -1810,7 +1813,7 @@ export const api = {
   getDocuments: async () => {
     if (!isCloudDataEnabled) {
       return [...(await getDocumentsStore())].sort((left, right) =>
-        right.createdAt.localeCompare(left.createdAt),
+        (right.updatedAt || right.createdAt).localeCompare(left.updatedAt || left.createdAt),
       );
     }
 
@@ -1846,6 +1849,7 @@ export const api = {
         ownerId: payload.ownerId || existingDocument?.ownerId || '',
         files: indexed.files.map((file) => normalizeStoredFile(file)),
         createdAt: existingDocument?.createdAt || timestamp,
+        updatedAt: timestamp,
         searchableContent: indexed.searchableContent,
         semanticKeywords: indexed.semanticKeywords ?? [],
         contentIndexedAt: indexed.contentIndexedAt,
