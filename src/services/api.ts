@@ -17,6 +17,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  getFirestore,
   limit,
   query,
   setDoc,
@@ -1336,6 +1337,7 @@ const saveCloudUser = async (payload: SaveUserInput, id?: string) => {
       `milosystem-user-create-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     );
     const secondaryAuth = getAuth(secondaryApp);
+    const secondaryFirestore = getFirestore(secondaryApp);
 
     try {
       const credential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
@@ -1358,7 +1360,7 @@ const saveCloudUser = async (payload: SaveUserInput, id?: string) => {
       });
 
       await setDoc(
-        doc(firestore, FIRESTORE_USERS_COLLECTION, nextUser._id),
+        doc(secondaryFirestore, FIRESTORE_USERS_COLLECTION, nextUser._id),
         serializeUserForCloud(nextUser),
         { merge: true },
       );
