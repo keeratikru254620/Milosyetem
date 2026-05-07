@@ -169,14 +169,14 @@ export default function DocFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="luxury-panel flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] transform animate-in zoom-in-95">
-        <div className="metal-section-band flex items-center justify-between border-b border-white/10 px-8 py-6">
-          <h3 className="flex items-center text-xl font-bold text-slate-900 dark:text-white">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/60 p-3 py-6 backdrop-blur-md animate-in fade-in duration-200 sm:items-center sm:p-4">
+      <div className="luxury-panel flex max-h-[calc(100dvh-3rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl transform animate-in zoom-in-95 sm:rounded-[2rem]">
+        <div className="metal-section-band flex items-center justify-between gap-3 border-b border-white/10 px-4 py-4 sm:px-8 sm:py-6">
+          <h3 className="flex min-w-0 items-center text-base font-bold text-slate-900 dark:text-white sm:text-xl">
             {isEdit ? (
-              <Edit2 className="mr-3 h-6 w-6 text-[var(--app-gold)]" />
+              <Edit2 className="mr-3 h-5 w-5 shrink-0 text-[var(--app-gold)] sm:h-6 sm:w-6" />
             ) : (
-              <FilePlus className="mr-3 h-6 w-6 text-[var(--app-gold)]" />
+              <FilePlus className="mr-3 h-5 w-5 shrink-0 text-[var(--app-gold)] sm:h-6 sm:w-6" />
             )}
             {isEdit ? 'แก้ไขข้อมูลเอกสาร' : 'เพิ่มเอกสารใหม่'}
           </h3>
@@ -188,7 +188,7 @@ export default function DocFormModal({
           </button>
         </div>
 
-        <div className="overflow-y-auto p-8">
+        <div className="overflow-y-auto p-4 sm:p-8">
           <form className="space-y-8" id="doc-form" onSubmit={handleSubmit}>
             <h4 className="border-b border-white/10 pb-3 text-base font-bold text-slate-800 dark:text-white">
               ข้อมูลเอกสาร
@@ -309,7 +309,7 @@ export default function DocFormModal({
               </div>
 
               <div
-                className="luxury-panel-soft group cursor-pointer rounded-[2rem] border-2 border-dashed border-white/14 p-12 text-center transition-all hover:border-[var(--app-ember-ring)] hover:bg-white/6"
+                className="luxury-panel-soft group cursor-pointer rounded-3xl border-2 border-dashed border-white/14 p-6 text-center transition-all hover:border-[var(--app-ember-ring)] hover:bg-white/6 sm:rounded-[2rem] sm:p-12"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <div className="metal-icon-shell mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full transition-transform group-hover:scale-110">
@@ -400,16 +400,16 @@ export default function DocFormModal({
           </form>
         </div>
 
-        <div className="metal-section-band flex justify-end gap-4 border-t border-white/10 px-8 py-6">
+        <div className="metal-section-band flex flex-col-reverse gap-3 border-t border-white/10 px-4 py-4 sm:flex-row sm:justify-end sm:gap-4 sm:px-8 sm:py-6">
           <button
-            className="metal-button-secondary rounded-2xl px-8 py-3.5 text-base font-bold transition active:scale-95"
+            className="metal-button-secondary rounded-2xl px-8 py-3.5 text-sm font-bold transition active:scale-95 sm:text-base"
             onClick={onClose}
             type="button"
           >
             ยกเลิก
           </button>
           <button
-            className="metal-button-primary rounded-2xl px-10 py-3.5 text-base font-bold transition hover:brightness-105 active:scale-95 disabled:opacity-50"
+            className="metal-button-primary rounded-2xl px-10 py-3.5 text-sm font-bold transition hover:brightness-105 active:scale-95 disabled:opacity-50 sm:text-base"
             disabled={isSaving || isExtractingFiles}
             form="doc-form"
             type="submit"

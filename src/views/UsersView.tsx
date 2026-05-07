@@ -78,13 +78,13 @@ export default function UsersView({
   };
 
   return (
-    <div className="luxury-panel flex h-[calc(100vh-140px)] flex-col overflow-hidden rounded-3xl animate-slide-blur">
-      <div className="metal-section-band flex shrink-0 items-center justify-between border-b border-white/10 p-5 sm:p-6">
+    <div className="luxury-panel flex min-h-[calc(100dvh-7rem)] flex-col overflow-hidden rounded-3xl animate-slide-blur lg:h-[calc(100vh-140px)]">
+      <div className="metal-section-band flex shrink-0 flex-col gap-4 border-b border-white/10 p-5 sm:p-6 md:flex-row md:items-center md:justify-between">
         <h2 className="flex items-center text-lg font-bold text-slate-900 dark:text-white">
           <Users className="mr-3 h-5 w-5 text-[var(--app-gold)]" /> จัดการบุคลากร
         </h2>
         <button
-          className="metal-button-primary flex items-center rounded-xl px-6 py-2.5 text-sm font-bold transition-all hover:brightness-105 active:scale-95"
+          className="metal-button-primary flex w-full items-center justify-center rounded-xl px-6 py-2.5 text-sm font-bold transition-all hover:brightness-105 active:scale-95 md:w-auto"
           onClick={() => setEditingUser({})}
           type="button"
         >

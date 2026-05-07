@@ -89,7 +89,7 @@ export default function UserFormModal({
       onClose={onClose}
       title={isEdit ? 'แก้ไขผู้ใช้งาน' : 'เพิ่มผู้ใช้งาน'}
     >
-      <form className="space-y-6 p-6" onSubmit={handleSubmit}>
+      <form className="space-y-5 p-4 sm:space-y-6 sm:p-6" onSubmit={handleSubmit}>
         <div className="grid grid-cols-2 gap-5">
           <div className="col-span-2 sm:col-span-1">
             <label className="mb-1.5 block text-xs font-bold text-slate-500 dark:text-slate-400">
@@ -157,7 +157,7 @@ export default function UserFormModal({
           </div>
         </div>
 
-        <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+        <div className="mt-6 flex flex-col-reverse gap-3 border-t border-slate-100 pt-4 dark:border-slate-800 sm:flex-row sm:justify-end">
           <button
             className="metal-button-secondary rounded-xl px-6 py-3 text-sm font-bold transition active:scale-95"
             onClick={onClose}

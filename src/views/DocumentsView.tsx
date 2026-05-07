@@ -194,15 +194,15 @@ export default function DocumentsView({
   const hasSemanticQuery = activeSemanticQuery.length > 0;
 
   return (
-    <div className="flex h-full flex-col animate-slide-blur">
+    <div className="flex min-h-[calc(100dvh-7rem)] flex-col animate-slide-blur lg:h-full">
       <div className="luxury-panel flex flex-1 flex-col overflow-hidden rounded-3xl">
         <div className="metal-section-band shrink-0 border-b border-white/10 p-6">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div>
-                <div className="luxury-panel-soft inline-flex rounded-2xl p-1 shadow-sm">
+                <div className="luxury-panel-soft grid grid-cols-2 rounded-2xl p-1 shadow-sm sm:inline-flex">
                   <button
-                    className={`metal-segment inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
+                    className={`metal-segment inline-flex items-center justify-center rounded-xl px-3 py-2.5 text-xs font-bold transition-all sm:px-4 sm:text-sm ${
                       searchMode === 'normal'
                         ? 'metal-segment-active'
                         : 'hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'
@@ -217,7 +217,7 @@ export default function DocumentsView({
                     ค้นหาปกติ
                   </button>
                   <button
-                    className={`metal-segment inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
+                    className={`metal-segment inline-flex items-center justify-center rounded-xl px-3 py-2.5 text-xs font-bold transition-all sm:px-4 sm:text-sm ${
                       searchMode === 'semantic'
                         ? 'metal-segment-active'
                         : 'hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'

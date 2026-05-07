@@ -58,7 +58,7 @@ export default function Sidebar({
       ) : null}
 
       <aside
-        className={`luxury-panel fixed z-30 flex h-screen w-[20rem] flex-col border-r border-white/14 bg-[rgba(90,66,128,0.22)] shadow-[18px_0_55px_rgba(12,6,22,0.32)] backdrop-blur-2xl transition-transform duration-300 ease-out lg:relative lg:translate-x-0 lg:shadow-none ${
+        className={`luxury-panel fixed z-30 flex h-dvh w-[min(20rem,calc(100vw-1.5rem))] flex-col border-r border-white/14 bg-[rgba(90,66,128,0.22)] shadow-[18px_0_55px_rgba(12,6,22,0.32)] backdrop-blur-2xl transition-transform duration-300 ease-out lg:relative lg:h-screen lg:w-[20rem] lg:translate-x-0 lg:shadow-none ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

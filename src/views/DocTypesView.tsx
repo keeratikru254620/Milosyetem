@@ -165,63 +165,65 @@ export default function DocTypesView({
       </div>
 
       <div className="luxury-panel overflow-hidden rounded-3xl lg:col-span-2">
-        <table className="w-full border-collapse text-left">
-          <thead>
-            <tr className="border-b border-white/10 bg-[rgba(78,86,96,0.76)] text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              <th className="px-6 py-4">ประเภทเอกสาร</th>
-              <th className="px-6 py-4 text-center">จำนวนในระบบ</th>
-              <th className="px-6 py-4 text-right">จัดการ</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 text-sm dark:divide-slate-800">
-            {[...docTypes]
-              .sort((left, right) => left.name.localeCompare(right.name, 'th'))
-              .map((docType) => {
-                const count = documents.filter((document) => document.typeId === docType._id).length;
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[620px] border-collapse text-left">
+            <thead>
+              <tr className="border-b border-white/10 bg-[rgba(78,86,96,0.76)] text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <th className="px-6 py-4">ประเภทเอกสาร</th>
+                <th className="px-6 py-4 text-center">จำนวนในระบบ</th>
+                <th className="px-6 py-4 text-right">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm dark:divide-slate-800">
+              {[...docTypes]
+                .sort((left, right) => left.name.localeCompare(right.name, 'th'))
+                .map((docType) => {
+                  const count = documents.filter((document) => document.typeId === docType._id).length;
 
-                return (
-                  <tr className="group transition-colors hover:bg-white/6" key={docType._id}>
-                    <td className="flex items-center gap-4 px-6 py-4">
-                      <span
-                        className="h-4 w-4 rounded-full shadow-sm"
-                        style={{ backgroundColor: docType.color }}
-                      ></span>
-                      <span className="font-bold text-slate-800 dark:text-white">
-                        {docType.name}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="metal-badge rounded-lg px-3 py-1 text-xs font-bold text-slate-700 dark:text-slate-200">
-                        {count}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right">
-                      <div className="opacity-70 transition-opacity group-hover:opacity-100">
-                        <button
-                          className="metal-icon-shell mx-1 rounded-lg p-2 text-slate-400 transition hover:text-[var(--app-gold)]"
-                          onClick={() => {
-                            setEditing(docType);
-                            setForm({
-                              name: docType.name,
-                              color: docType.color,
-                            });
-                          }}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <button
-                          className="metal-icon-shell ml-1 rounded-lg p-2 text-slate-400 transition hover:text-red-400"
-                          onClick={() => handleDelete(docType, count)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-          </tbody>
-        </table>
+                  return (
+                    <tr className="group transition-colors hover:bg-white/6" key={docType._id}>
+                      <td className="flex items-center gap-4 px-6 py-4">
+                        <span
+                          className="h-4 w-4 rounded-full shadow-sm"
+                          style={{ backgroundColor: docType.color }}
+                        ></span>
+                        <span className="font-bold text-slate-800 dark:text-white">
+                          {docType.name}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="metal-badge rounded-lg px-3 py-1 text-xs font-bold text-slate-700 dark:text-slate-200">
+                          {count}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-right">
+                        <div className="opacity-70 transition-opacity group-hover:opacity-100">
+                          <button
+                            className="metal-icon-shell mx-1 rounded-lg p-2 text-slate-400 transition hover:text-[var(--app-gold)]"
+                            onClick={() => {
+                              setEditing(docType);
+                              setForm({
+                                name: docType.name,
+                                color: docType.color,
+                              });
+                            }}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            className="metal-icon-shell ml-1 rounded-lg p-2 text-slate-400 transition hover:text-red-400"
+                            onClick={() => handleDelete(docType, count)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

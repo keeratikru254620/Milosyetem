@@ -200,9 +200,9 @@ export default function AppContainer() {
         routePrefix={routePrefix}
       />
 
-      <main className="relative z-10 flex h-screen flex-1 flex-col overflow-hidden">
+      <main className="relative z-10 flex h-dvh min-w-0 flex-1 flex-col overflow-hidden">
         <Navbar onMenuClick={() => setIsSidebarOpen(true)} />
-        <div className="relative flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <div className="relative flex-1 overflow-x-hidden overflow-y-auto px-3 py-4 sm:p-6 lg:p-8">
           <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(171,134,219,0.28),transparent)] opacity-50" />
           <AppRoutes
             currentUser={effectiveCurrentUser}

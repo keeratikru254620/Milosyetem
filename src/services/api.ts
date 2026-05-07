@@ -1,5 +1,7 @@
+import { deleteApp, initializeApp } from 'firebase/app';
 import {
   createUserWithEmailAndPassword,
+  getAuth,
   onAuthStateChanged,
   sendEmailVerification,
   sendPasswordResetEmail,
@@ -39,6 +41,7 @@ import {
   auth,
   configureFirebasePersistence,
   db,
+  firebaseApp,
   isFirebaseAuthEnabled,
   isFirebaseConfigured,
   storage,
@@ -1296,7 +1299,75 @@ const saveCloudUser = async (payload: SaveUserInput, id?: string) => {
   const firestore = ensureFirestoreReady();
 
   if (!id) {
-    throw new Error('firebase_user_creation_requires_backend');
+    const email = normalizeIdentity(payload.email || payload.username);
+    const password = (payload.password || '').trim();
+    const name = (payload.name || '').trim();
+    const role = normalizeRole(payload.role || 'officer');
+
+    if (!firebaseApp) {
+      throw new Error('firebase_not_configured');
+    }
+
+    if (!email || !password || !name) {
+      throw new Error('กรุณากรอกชื่อผู้ใช้ ชื่อ และรหัสผ่านให้ครบ');
+    }
+
+    if (!isValidEmail(email)) {
+      throw new Error('auth/invalid-email');
+    }
+
+    if (!isStrongPassword(password)) {
+      throw new Error('password_too_weak');
+    }
+
+    const duplicateQuery = query(
+      collection(firestore, FIRESTORE_USERS_COLLECTION),
+      where('email', '==', email),
+      limit(1),
+    );
+    const duplicateSnapshot = await getDocs(duplicateQuery);
+
+    if (!duplicateSnapshot.empty) {
+      throw new Error('duplicate_record');
+    }
+
+    const secondaryApp = initializeApp(
+      firebaseApp.options,
+      `milosystem-user-create-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    const secondaryAuth = getAuth(secondaryApp);
+
+    try {
+      const credential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+
+      if (name || payload.avatar) {
+        await updateProfile(credential.user, {
+          displayName: name,
+          photoURL: payload.avatar || null,
+        });
+      }
+
+      const nextUser = normalizeStoredUser({
+        _id: credential.user.uid,
+        username: email,
+        email,
+        name,
+        role,
+        avatar: payload.avatar,
+        phone: payload.phone,
+      });
+
+      await setDoc(
+        doc(firestore, FIRESTORE_USERS_COLLECTION, nextUser._id),
+        serializeUserForCloud(nextUser),
+        { merge: true },
+      );
+
+      return stripPassword(nextUser);
+    } finally {
+      await signOut(secondaryAuth).catch(() => undefined);
+      await deleteApp(secondaryApp).catch(() => undefined);
+    }
   }
 
   const userRef = doc(firestore, FIRESTORE_USERS_COLLECTION, id);
