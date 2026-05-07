@@ -15,7 +15,7 @@ export async function extractTextFromPdf(file: File): Promise<string> {
     data: buffer,
     isEvalSupported: false,
     useWorkerFetch: false,
-  });
+  } as Parameters<typeof getDocument>[0]);
 
   let pdf: PDFDocumentProxy | null = null;
 

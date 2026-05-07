@@ -890,6 +890,50 @@ const mapCloudFiles = async (
   return Promise.all(fileTasks);
 };
 
+const mapCloudFileMetadata = (
+  filesMeta: StoredFile[] = [],
+  uploadedFiles: File[] = [],
+) => {
+  let uploadIndex = 0;
+  const nextFiles: StoredFile[] = [];
+
+  for (const rawFile of filesMeta) {
+    const normalized = normalizeStoredFile(rawFile);
+
+    if (normalized.url) {
+      nextFiles.push(normalized);
+      continue;
+    }
+
+    const upload = uploadedFiles[uploadIndex];
+
+    if (upload) {
+      uploadIndex += 1;
+      nextFiles.push(mapUploadFallbackFile(normalized, upload));
+      continue;
+    }
+
+    nextFiles.push(normalized);
+  }
+
+  while (uploadIndex < uploadedFiles.length) {
+    const upload = uploadedFiles[uploadIndex];
+    uploadIndex += 1;
+
+    nextFiles.push(
+      normalizeStoredFile({
+        fileId: createId('file'),
+        storedName: upload.name,
+        originalName: upload.name,
+        mimeType: upload.type || undefined,
+        size: upload.size,
+      }),
+    );
+  }
+
+  return nextFiles;
+};
+
 const deleteCloudFiles = async (paths: string[]) => {
   if (!isCloudStorageEnabled || paths.length === 0) {
     return;
@@ -1655,11 +1699,7 @@ const saveCloudDocument = async (payload: SaveDocumentInput, id?: string) => {
     throw new Error('record_not_found');
   }
 
-  const nextFiles = await mapCloudFiles(
-    documentId,
-    payload.files ?? [],
-    payload.uploadedFiles ?? [],
-  );
+  const nextFiles = mapCloudFileMetadata(payload.files ?? [], payload.uploadedFiles ?? []);
   const indexed = buildDocumentSearchIndex({
     docNo: payload.docNo,
     subject: payload.subject,
@@ -1692,7 +1732,7 @@ const saveCloudDocument = async (payload: SaveDocumentInput, id?: string) => {
 
   await withTimeout(
     setDoc(documentRef, serializeDocumentForCloud(nextDocument), { merge: true }),
-    30000,
+    8000,
     'firestore_save_timeout',
   );
   await savePendingCloudDocumentsStore(
