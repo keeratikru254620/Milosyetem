@@ -735,7 +735,7 @@ const uploadFileToCloud = async (
     uploadBytes(storageRef, uploadedFile, {
       contentType: uploadedFile.type || normalized.mimeType || undefined,
     }),
-    45000,
+    15000,
     'storage_upload_timeout',
   );
 
@@ -755,6 +755,32 @@ const uploadFileToCloud = async (
     mimeType: normalized.mimeType || uploadedFile.type || undefined,
     size: normalized.size || uploadedFile.size,
   });
+};
+
+const mapUploadFallbackFile = (
+  fileMeta: StoredFile,
+  uploadedFile: File,
+): StoredFile =>
+  normalizeStoredFile({
+    ...normalizeStoredFile(fileMeta),
+    fileId: fileMeta.fileId || fileMeta.clientId || createId('file'),
+    storedName: fileMeta.storedName || fileMeta.originalName || uploadedFile.name,
+    originalName: fileMeta.originalName || uploadedFile.name,
+    mimeType: fileMeta.mimeType || uploadedFile.type || undefined,
+    size: fileMeta.size || uploadedFile.size,
+  });
+
+const uploadFileToCloudOrFallback = async (
+  documentId: string,
+  fileMeta: StoredFile,
+  uploadedFile: File,
+): Promise<StoredFile> => {
+  try {
+    return await uploadFileToCloud(documentId, fileMeta, uploadedFile);
+  } catch (error) {
+    console.warn('Unable to upload file to Firebase Storage; saving document metadata only:', error);
+    return mapUploadFallbackFile(fileMeta, uploadedFile);
+  }
 };
 
 const mapCloudFiles = async (
@@ -798,7 +824,7 @@ const mapCloudFiles = async (
       continue;
     }
 
-    fileTasks.push(uploadFileToCloud(documentId, normalized, upload));
+    fileTasks.push(uploadFileToCloudOrFallback(documentId, normalized, upload));
   }
 
   while (uploadIndex < uploadedFiles.length) {
@@ -822,7 +848,7 @@ const mapCloudFiles = async (
     }
 
     fileTasks.push(
-      uploadFileToCloud(
+      uploadFileToCloudOrFallback(
         documentId,
         normalizeStoredFile({
           originalName: upload.name,
