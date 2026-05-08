@@ -1694,6 +1694,47 @@ const getCloudDocuments = async () => {
     );
 };
 
+const buildLocalDocumentFromPayload = async (payload: SaveDocumentInput, id?: string) => {
+  const documents = await getDocumentsStore();
+  const existingDocument = id ? documents.find((document) => document._id === id) : null;
+  const nextFiles = await mapLocalFiles(payload.files ?? [], payload.uploadedFiles ?? []);
+  const indexed = buildDocumentSearchIndex({
+    docNo: payload.docNo,
+    subject: payload.subject,
+    origin: payload.origin,
+    resp: payload.resp,
+    files: nextFiles,
+  });
+  const timestamp = nowIso();
+  const nextDocument: DocumentData = {
+    _id: id || createId('document'),
+    docNo: (payload.docNo || '').trim(),
+    subject: (payload.subject || '').trim(),
+    typeId: (payload.typeId || '').trim(),
+    fiscalYear: Number(payload.fiscalYear || new Date().getFullYear() + 543),
+    date: payload.date || '',
+    origin: (payload.origin || '').trim(),
+    resp: (payload.resp || '').trim(),
+    ownerId: payload.ownerId || existingDocument?.ownerId || '',
+    files: indexed.files.map((file) => normalizeStoredFile(file)),
+    createdAt: existingDocument?.createdAt || timestamp,
+    updatedAt: timestamp,
+    searchableContent: indexed.searchableContent,
+    semanticKeywords: indexed.semanticKeywords ?? [],
+    contentIndexedAt: indexed.contentIndexedAt,
+  };
+
+  if (!nextDocument.subject || !nextDocument.typeId) {
+    throw new Error('กรุณากรอกเรื่องและเลือกประเภทเอกสาร');
+  }
+
+  const nextDocuments = existingDocument
+    ? documents.map((document) => (document._id === nextDocument._id ? nextDocument : document))
+    : [nextDocument, ...documents];
+
+  return { nextDocument, nextDocuments };
+};
+
 const saveCloudDocument = async (payload: SaveDocumentInput, id?: string) => {
   const firestore = ensureFirestoreReady();
   const documentId = id || createId('document');
@@ -2085,43 +2126,7 @@ export const api = {
 
   saveDocument: async (payload: SaveDocumentInput, id?: string) => {
     if (!isCloudDataEnabled) {
-      const documents = await getDocumentsStore();
-      const existingDocument = id ? documents.find((document) => document._id === id) : null;
-      const nextFiles = await mapLocalFiles(payload.files ?? [], payload.uploadedFiles ?? []);
-      const indexed = buildDocumentSearchIndex({
-        docNo: payload.docNo,
-        subject: payload.subject,
-        origin: payload.origin,
-        resp: payload.resp,
-        files: nextFiles,
-      });
-      const timestamp = nowIso();
-      const nextDocument: DocumentData = {
-        _id: id || createId('document'),
-        docNo: (payload.docNo || '').trim(),
-        subject: (payload.subject || '').trim(),
-        typeId: (payload.typeId || '').trim(),
-        fiscalYear: Number(payload.fiscalYear || new Date().getFullYear() + 543),
-        date: payload.date || '',
-        origin: (payload.origin || '').trim(),
-        resp: (payload.resp || '').trim(),
-        ownerId: payload.ownerId || existingDocument?.ownerId || '',
-        files: indexed.files.map((file) => normalizeStoredFile(file)),
-        createdAt: existingDocument?.createdAt || timestamp,
-        updatedAt: timestamp,
-        searchableContent: indexed.searchableContent,
-        semanticKeywords: indexed.semanticKeywords ?? [],
-        contentIndexedAt: indexed.contentIndexedAt,
-      };
-
-      if (!nextDocument.subject || !nextDocument.typeId) {
-        throw new Error('กรุณากรอกเรื่องและเลือกประเภทเอกสาร');
-      }
-
-      const nextDocuments = existingDocument
-        ? documents.map((document) => (document._id === nextDocument._id ? nextDocument : document))
-        : [nextDocument, ...documents];
-
+      const { nextDocument, nextDocuments } = await buildLocalDocumentFromPayload(payload, id);
       await saveDocumentsStore(nextDocuments);
       return nextDocument;
     }
@@ -2129,7 +2134,15 @@ export const api = {
     try {
       return await saveCloudDocument(payload, id);
     } catch (error) {
-      throw mapFirebaseError(error, 'ไม่สามารถบันทึกเอกสารได้');
+      try {
+        const { nextDocument, nextDocuments } = await buildLocalDocumentFromPayload(payload, id);
+        await saveDocumentsStore(nextDocuments);
+        await savePendingCloudDocument(nextDocument);
+        console.warn('Unable to save document to Firebase; saved locally instead:', error);
+        return nextDocument;
+      } catch (fallbackError) {
+        throw mapFirebaseError(fallbackError, 'ไม่สามารถบันทึกเอกสารได้');
+      }
     }
   },
 
