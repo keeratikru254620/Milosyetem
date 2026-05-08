@@ -1877,11 +1877,23 @@ export const api = {
       return null;
     }
 
+    const persistenceMode = getAuthPersistenceMode();
+
+    if (persistenceMode === 'remember') {
+      clearLocalAuthSession();
+      clearAuthPersistenceMode();
+
+      if (auth?.currentUser) {
+        await signOut(auth).catch(() => undefined);
+      }
+
+      return null;
+    }
+
     if (!isFirebaseConfigured || !auth) {
       return verifyLocalSession();
     }
 
-    const persistenceMode = getAuthPersistenceMode();
     const firebaseUser = await resolveCurrentFirebaseUser();
 
     if (!persistenceMode) {

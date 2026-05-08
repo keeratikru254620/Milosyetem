@@ -44,6 +44,7 @@ export default function DocumentsView({
   onDeleteDocument,
   onSaveDocument,
 }: DocumentsViewProps) {
+  const hiddenDocsStorageKey = `milosystem:hidden-documents:${currentUser._id}`;
   const [searchMode, setSearchMode] = useState<SearchMode>('normal');
   const [search, setSearch] = useState('');
   const [semanticSearch, setSemanticSearch] = useState('');
@@ -56,7 +57,22 @@ export default function DocumentsView({
   });
   const [editingDoc, setEditingDoc] = useState<Partial<DocumentData> | null>(null);
   const [viewingDoc, setViewingDoc] = useState<DocumentData | null>(null);
-  const [hiddenDocumentIds, setHiddenDocumentIds] = useState<Set<string>>(new Set());
+  const [hiddenDocumentIds, setHiddenDocumentIds] = useState<Set<string>>(() => {
+    try {
+      const raw = window.localStorage.getItem(hiddenDocsStorageKey);
+      if (!raw) {
+        return new Set<string>();
+      }
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? new Set(parsed.filter((id) => typeof id === 'string')) : new Set<string>();
+    } catch {
+      return new Set<string>();
+    }
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(hiddenDocsStorageKey, JSON.stringify([...hiddenDocumentIds]));
+  }, [hiddenDocumentIds, hiddenDocsStorageKey]);
 
   const years = useMemo(
     () =>
