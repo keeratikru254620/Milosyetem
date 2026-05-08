@@ -56,6 +56,7 @@ export default function DocumentsView({
   });
   const [editingDoc, setEditingDoc] = useState<Partial<DocumentData> | null>(null);
   const [viewingDoc, setViewingDoc] = useState<DocumentData | null>(null);
+  const [hiddenDocumentIds, setHiddenDocumentIds] = useState<Set<string>>(new Set());
 
   const years = useMemo(
     () =>
@@ -105,6 +106,10 @@ export default function DocumentsView({
     const normalizedSearch = normalizeSearchText(activeNormalQuery);
 
     const filtered = documents.filter((document) => {
+      if (hiddenDocumentIds.has(document._id)) {
+        return false;
+      }
+
       const metadataBlob = normalizeSearchText(
         [
           document.docNo,
@@ -144,6 +149,7 @@ export default function DocumentsView({
     documents,
     filterType,
     filterYear,
+    hiddenDocumentIds,
     semanticScores,
     sort,
   ]);
@@ -192,12 +198,21 @@ export default function DocumentsView({
       await onDeleteDocument(id);
       showToast('ลบเอกสารสำเร็จ');
     } catch (error) {
-      showToast(
-        getErrorMessage(error, {
-          fallbackMessage: 'ไม่สามารถลบเอกสารได้',
-        }),
-        'error',
-      );
+      const message = getErrorMessage(error, {
+        fallbackMessage: 'ไม่สามารถลบเอกสารได้',
+      });
+
+      if (error instanceof Error && error.message === 'firebase_data_access_denied') {
+        setHiddenDocumentIds((current) => {
+          const next = new Set(current);
+          next.add(id);
+          return next;
+        });
+        showToast('ซ่อนเอกสารจากหน้าจอแล้ว (บัญชีนี้ไม่มีสิทธิ์ลบถาวรใน Firebase)', 'warning');
+        return;
+      }
+
+      showToast(message, 'error');
     }
   };
 
