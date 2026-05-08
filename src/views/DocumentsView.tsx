@@ -18,6 +18,7 @@ import DocViewModal from '../components/modals/DocViewModal';
 import { confirmDialog } from '../services/confirmService';
 import { showToast } from '../services/toastService';
 import type { DocType, DocumentData, SaveDocumentInput, User } from '../types';
+import { getErrorMessage } from '../utils/auth';
 import {
   getDocumentSemanticScore,
   getStoredFileName,
@@ -187,8 +188,17 @@ export default function DocumentsView({
       return;
     }
 
-    await onDeleteDocument(id);
-    showToast('ลบเอกสารสำเร็จ');
+    try {
+      await onDeleteDocument(id);
+      showToast('ลบเอกสารสำเร็จ');
+    } catch (error) {
+      showToast(
+        getErrorMessage(error, {
+          fallbackMessage: 'ไม่สามารถลบเอกสารได้',
+        }),
+        'error',
+      );
+    }
   };
 
   const hasSemanticQuery = activeSemanticQuery.length > 0;

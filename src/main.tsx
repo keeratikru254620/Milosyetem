@@ -27,14 +27,6 @@ const renderStartupError = (error: unknown) => {
     </div>`;
 };
 
-window.addEventListener('error', (event) => {
-  renderStartupError(event.error || event.message);
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-  renderStartupError(event.reason);
-});
-
 try {
   ReactDOM.createRoot(rootElement).render(<App />);
 } catch (error) {
