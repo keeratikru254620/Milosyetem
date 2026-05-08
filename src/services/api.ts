@@ -1804,7 +1804,9 @@ const saveCloudDocument = async (payload: SaveDocumentInput, id?: string) => {
       .map((file) => file.path?.trim() || '')
       .filter((path) => Boolean(path) && !nextPaths.has(path));
 
-    await deleteCloudFiles(removedPaths);
+    void deleteCloudFiles(removedPaths).catch((error) => {
+      console.warn('Background cleanup for removed cloud files failed:', error);
+    });
   }
 
   return nextDocument;
@@ -1825,7 +1827,9 @@ const deleteCloudDocument = async (id: string) => {
       .filter((path): path is string => Boolean(path));
 
     await deleteDoc(documentRef);
-    await deleteCloudFiles(storedPaths);
+    void deleteCloudFiles(storedPaths).catch((error) => {
+      console.warn('Background cleanup for deleted document files failed:', error);
+    });
     return true;
   }
 
